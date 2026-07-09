@@ -1,6 +1,6 @@
 {
-  "name": "钉钉记账",
-  "short_name": "钉钉记账",
+  "name": "青孤记账",
+  "short_name": "青孤记账",
   "description": "个人日常记账工具",
   "start_url": "./",
   "display": "standalone",

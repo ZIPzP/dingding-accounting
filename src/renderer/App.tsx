@@ -51,7 +51,7 @@ const App: React.FC = () => {
       <Layout style={{ minHeight: '100vh', paddingBottom: 56 }}>
         <Content className="main-content mobile-content">
           <div className="mobile-header">
-            📒 钉钉记账
+            📒 青孤记账
           </div>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -94,7 +94,7 @@ const App: React.FC = () => {
         style={{ borderRight: '1px solid #f0f0f0' }}
       >
         <div className="logo">
-          {collapsed ? '📒' : '📒 钉钉记账'}
+          {collapsed ? '📒' : '📒 青孤记账'}
         </div>
         <Menu
           mode="inline"

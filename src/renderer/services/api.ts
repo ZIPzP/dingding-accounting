@@ -55,7 +55,7 @@ export const api = {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `钉钉记账_导出_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `青孤记账_导出_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     return Promise.resolve({ success: true });
@@ -70,7 +70,7 @@ export const api = {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `钉钉记账_备份_${new Date().toISOString().slice(0, 10)}.db`;
+      a.download = `青孤记账_备份_${new Date().toISOString().slice(0, 10)}.db`;
       a.click();
       URL.revokeObjectURL(url);
       return { success: true };
@@ -187,7 +187,7 @@ class WebDatabase {
 
   private idbOpen(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
-      const req = indexedDB.open('dingding-accounting', 1);
+      const req = indexedDB.open('qinggu-accounting', 1);
       req.onupgradeneeded = () => {
         req.result.createObjectStore('database');
       };

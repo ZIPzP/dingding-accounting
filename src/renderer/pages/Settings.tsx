@@ -192,7 +192,7 @@ const Settings: React.FC = () => {
       {/* 关于 */}
       <Card title="ℹ️ 关于">
         <Descriptions column={1} size="small">
-          <Descriptions.Item label="应用名称">钉钉记账</Descriptions.Item>
+          <Descriptions.Item label="应用名称">青孤记账</Descriptions.Item>
           <Descriptions.Item label="版本">1.0.0</Descriptions.Item>
           <Descriptions.Item label="技术栈">Electron + React + TypeScript</Descriptions.Item>
           <Descriptions.Item label="数据存储">
@@ -201,7 +201,7 @@ const Settings: React.FC = () => {
         </Descriptions>
         <Divider />
         <Paragraph type="secondary" style={{ fontSize: 13 }}>
-          钉钉记账是一款本地运行的个人记账工具，所有数据均保存在您的电脑上，
+          青孤记账是一款本地运行的个人记账工具，所有数据均保存在您的电脑上，
           不会上传至任何服务器。请定期备份数据以防丢失。
         </Paragraph>
       </Card>

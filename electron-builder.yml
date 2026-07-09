@@ -1,6 +1,6 @@
-appId: com.dingding.accounting
-productName: 钉钉记账
-copyright: Copyright © 2026 钉钉记账
+appId: com.qinggu.accounting
+productName: 青孤记账
+copyright: Copyright © 2026 青孤记账
 directories:
   output: release
   buildResources: resources
@@ -31,7 +31,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: 钉钉记账
+  shortcutName: 青孤记账
 
 mac:
   target:
@@ -43,4 +43,4 @@ mac:
   category: public.app-category.finance
 
 dmg:
-  title: 钉钉记账 ${version}
+  title: 青孤记账 ${version}

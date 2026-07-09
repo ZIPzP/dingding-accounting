@@ -1,10 +1,10 @@
-# 钉钉记账 — 项目文档
+# 青孤记账 — 项目文档
 
 ## 项目信息
 
 | 项目 | 详情 |
 |------|------|
-| **产品名称** | 钉钉记账 |
+| **产品名称** | 青孤记账 |
 | **产品定位** | 个人日常记账工具，本地运行，数据完全私有 |
 | **目标平台** | Windows 10+ / macOS 12+ |
 | **货币单位** | 人民币（¥） |
@@ -99,7 +99,7 @@
 ## 项目结构
 
 ```
-钉钉记账/
+青孤记账/
 ├── CLAUDE.md                    # 本文档
 ├── package.json                 # 项目依赖与脚本
 ├── electron-builder.yml         # 打包配置
@@ -160,13 +160,13 @@ git commit -m "修改了分类，增加了咖啡选项"
 
 **桌面端（Windows）：**
 ```bash
-cd "C:\Users\34968\Desktop\钉钉记账"
+cd "C:\Users\34968\Desktop\青孤记账"
 npm run dev
 ```
 
 **手机端：**
 ```bash
-cd "C:\Users\34968\Desktop\钉钉记账"
+cd "C:\Users\34968\Desktop\青孤记账"
 npm run dev:renderer
 ```
 然后用隧道工具生成公网链接，手机浏览器打开即可。
@@ -174,7 +174,7 @@ npm run dev:renderer
 ### 打包桌面安装包
 
 ```bash
-cd "C:\Users\34968\Desktop\钉钉记账"
+cd "C:\Users\34968\Desktop\青孤记账"
 npm run build        # 先编译
 npm run pack:win     # 打包 Windows 安装包
 ```
