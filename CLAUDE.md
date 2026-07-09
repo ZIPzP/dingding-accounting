@@ -136,8 +136,8 @@
 
 ### 线上访问
 
-部署在 Vercel，全球可访问：
-- 🔗 **https://renderer-taupe.vercel.app**
+永久域名（全球可访问，含国内）：
+- 🔗 **https://qinggujizhang.top**
 
 ### Git 保存代码
 
