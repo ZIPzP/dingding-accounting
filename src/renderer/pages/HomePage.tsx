@@ -90,6 +90,21 @@ const HomePage: React.FC = () => {
     <div className="page-card">
       <div className="page-title">账单记录</div>
 
+      {/* 醒目的红色警告 */}
+      <div style={{
+        background: '#fff2f0',
+        border: '1px solid #ff4d4f',
+        borderRadius: 8,
+        padding: '12px 16px',
+        marginBottom: 16,
+        textAlign: 'center',
+        fontSize: 16,
+        fontWeight: 700,
+        color: '#ff4d4f',
+      }}>
+        ⚠️ 谨慎网恋诈骗
+      </div>
+
       {/* 筛选栏 */}
       <Card size="small" style={{ marginBottom: 16, background: '#fafafa' }}>
         <Row gutter={[16, 12]} align="middle">
