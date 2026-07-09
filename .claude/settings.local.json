@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ELECTRON_RUN_AS_NODE=\"\" npx electron -e \"const e = require\\('electron'\\); console.log\\('type:', typeof e\\); console.log\\('keys:', Object.keys\\(e||{}\\).slice\\(0,5\\)\\)\")",
+      "Bash(rm -rf dist)",
+      "Bash(npx tsc *)",
+      "Bash(npx vite *)"
+    ]
+  }
+}

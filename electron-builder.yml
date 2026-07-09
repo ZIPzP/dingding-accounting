@@ -1,0 +1,46 @@
+appId: com.dingding.accounting
+productName: 钉钉记账
+copyright: Copyright © 2026 钉钉记账
+directories:
+  output: release
+  buildResources: resources
+
+files:
+  - dist/**/*
+  - package.json
+
+# 确保运行时依赖被包含
+includeSubNodeModules: true
+
+# sql.js 包含 WASM 文件，需要从 asar 中解压到真实文件系统
+asarUnpack:
+  - node_modules/sql.js/**/*
+
+asar: true
+compression: maximum
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: resources/icon.png
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: 钉钉记账
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  icon: resources/icon.png
+  category: public.app-category.finance
+
+dmg:
+  title: 钉钉记账 ${version}
