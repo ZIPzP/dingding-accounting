@@ -4,8 +4,6 @@
  * 浏览器环境：使用 sql.js (WASM) + IndexedDB 持久化
  */
 import { isElectron, getElectronAPI } from './env';
-// 告诉 Vite 把 sql.js 的 WASM 文件作为静态资源
-import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
 
 // ==================== 统一 API 接口 ====================
 
@@ -132,19 +130,54 @@ class WebDatabase {
   static async create(): Promise<WebDatabase> {
     const wdb = new WebDatabase();
     const initSqlJs = (await import('sql.js')).default;
-    wdb.SQL = await initSqlJs({
-      locateFile: () => sqlWasmUrl,
-    });
+
+    // 多种方式加载 WASM：先试本地，失败则用 CDN
+    let SQL: any = null;
+    const wasmSources = [
+      // 方式1：Vite 静态资源路径（生产构建）
+      () => import('sql.js/dist/sql-wasm.wasm?url').then(m => m.default),
+      // 方式2：CDN（兜底）
+      () => Promise.resolve('https://sql.js.org/dist/sql-wasm.wasm'),
+    ];
+
+    let wasmUrl = '';
+    for (const source of wasmSources) {
+      try {
+        wasmUrl = await source();
+        SQL = await initSqlJs({ locateFile: () => wasmUrl });
+        console.log('sql.js WASM 加载成功:', wasmUrl);
+        break;
+      } catch (e) {
+        console.warn('WASM 源失败:', e);
+      }
+    }
+
+    if (!SQL) {
+      throw new Error('数据库引擎加载失败，请检查网络连接后刷新页面');
+    }
+
+    wdb.SQL = SQL;
 
     // 尝试从 IndexedDB 加载已有数据库
-    const saved = await wdb.loadFromIndexedDB();
+    let saved: Uint8Array | null = null;
+    try {
+      saved = await wdb.loadFromIndexedDB();
+    } catch (e) {
+      console.warn('IndexedDB 读取失败，将创建新数据库:', e);
+    }
+
     if (saved) {
       wdb.db = new wdb.SQL.Database(saved);
+      console.log('从 IndexedDB 加载已有数据库');
     } else {
       wdb.db = new wdb.SQL.Database();
       wdb.initTables();
       wdb.seedCategories();
-      await wdb.saveToIndexedDB();
+      try {
+        await wdb.saveToIndexedDB();
+      } catch (e) {
+        console.warn('IndexedDB 保存失败（数据仅存在于内存中）:', e);
+      }
     }
 
     return wdb;

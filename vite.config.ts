@@ -19,5 +19,6 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     host: true,  // 允许局域网内手机访问测试
+    allowedHosts: true,  // 允许所有隧道域名访问
   },
 });
