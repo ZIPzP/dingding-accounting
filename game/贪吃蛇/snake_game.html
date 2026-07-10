@@ -189,6 +189,30 @@
   .btn-rotate { background:#3c2e1e; color:#dca; }
   .btn-rotate:active { background:#5a4a2e; }
 
+  /* 开始/重开按钮 */
+  .btn-start {
+    margin-top:12px; padding:14px 36px;
+    border-radius:28px; border:none;
+    background:#3cb43c; color:#fff;
+    font-size:clamp(16px,4vw,22px); font-family:inherit; font-weight:700;
+    cursor:pointer; pointer-events:auto;
+    transition:background 0.15s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .btn-start:active { background:#2d8f2d; }
+  #btnRestart { background:#c83c3c; }
+  #btnRestart:active { background:#9d2d2d; }
+
+  /* 开始界面选项按钮 */
+  .btn-start-opt {
+    width:36px; height:36px; border-radius:18px; border:none;
+    background:#2e2e48; color:#aab; font-size:16px; font-weight:700;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    -webkit-tap-highlight-color:transparent;
+    pointer-events:auto;
+  }
+  .btn-start-opt:active { background:#505080; color:#fff; }
+
   /* 桌面端隐藏触屏控件（可选） */
   @media (hover:hover) and (pointer:fine) {
     .touch-controls { opacity:0.35; transition:opacity 0.3s; }
@@ -229,6 +253,33 @@
   <div class="canvas-container" id="canvasContainer">
     <canvas id="gameCanvas"></canvas>
 
+    <!-- 开始界面 -->
+    <div class="overlay" id="startOverlay">
+      <div class="title" style="color:#64dc64">🐍 贪吃蛇</div>
+      <div class="subtitle">经典贪吃蛇小游戏</div>
+      <div class="start-settings" style="margin-top:14px; display:flex; flex-direction:column; align-items:center; gap:10px; pointer-events:auto">
+        <div style="display:flex; align-items:center; gap:10px">
+          <span style="color:#dcdcdc; font-size:14px; white-space:nowrap">👤 名字：</span>
+          <input type="text" id="nameInput" maxlength="10" placeholder="输入名字上榜" autocomplete="off" enterkeyhint="done"
+            style="background:#28283c;border:2px solid #6464a0;color:#fff;font-size:15px;padding:6px 12px;border-radius:6px;width:140px;text-align:center;outline:none;font-family:inherit">
+        </div>
+        <div style="display:flex; align-items:center; gap:10px">
+          <span style="color:#dcdcdc; font-size:14px; white-space:nowrap">🎨 颜色：</span>
+          <button class="btn-start-opt" id="btnColorPrev">◀</button>
+          <span id="colorName" style="color:#ffc832; font-size:14px; min-width:70px; text-align:center">🟢 绿色</span>
+          <button class="btn-start-opt" id="btnColorNext">▶</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px">
+          <span style="color:#dcdcdc; font-size:14px; white-space:nowrap">⚡ 速度：</span>
+          <button class="btn-start-opt" id="btnSpdDown">−</button>
+          <span id="speedVal" style="color:#ffc832; font-size:14px; min-width:40px; text-align:center">6</span>
+          <button class="btn-start-opt" id="btnSpdUp">+</button>
+        </div>
+      </div>
+      <button class="btn-start" id="btnStartGame">🎮 开始游戏</button>
+      <div class="hint">也支持键盘 ↑↓←→ 或 WASD 操作</div>
+    </div>
+
     <div class="overlay hidden" id="pauseOverlay">
       <div class="title" style="color:#c8c864">暂停中</div>
       <div class="subtitle">按 P / 点按暂停键继续</div>
@@ -238,13 +289,9 @@
     <div class="overlay hidden" id="gameOverOverlay">
       <div class="title" style="color:#f05050">游戏结束</div>
       <div class="subtitle" id="finalScore"></div>
-      <div class="name-entry hidden" id="nameEntryBlock">
-        <div class="prompt">🏆 新纪录！请输入你的名字：</div>
-        <input type="text" id="nameInput" maxlength="10" placeholder="你的名字" autocomplete="off" enterkeyhint="done">
-        <div class="confirm-hint">Enter 确认 · ESC 跳过 · 点空白处可关闭键盘</div>
-      </div>
       <div class="lb-panel" id="goLbPanel"></div>
-      <div class="hint">按 R / 点按重开键开始新游戏</div>
+      <button class="btn-start" id="btnRestart" style="margin-top:10px; pointer-events:auto">🔄 再来一局</button>
+      <div class="hint">点击画面任意处 或 按 R 也能重开</div>
     </div>
 
     <div class="lb-full hidden" id="lbFullPage">
@@ -315,10 +362,10 @@ const container = document.getElementById('canvasContainer');
 
 const scoreDisplay   = document.getElementById('scoreDisplay');
 const speedDisplay   = document.getElementById('speedDisplay');
+const startOverlay   = document.getElementById('startOverlay');
 const pauseOverlay   = document.getElementById('pauseOverlay');
 const gameOverOverlay= document.getElementById('gameOverOverlay');
 const finalScore     = document.getElementById('finalScore');
-const nameEntryBlock = document.getElementById('nameEntryBlock');
 const nameInput      = document.getElementById('nameInput');
 const goLbPanel      = document.getElementById('goLbPanel');
 const lbFullPage     = document.getElementById('lbFullPage');
@@ -326,6 +373,7 @@ const lbFullTable    = document.getElementById('lbFullTable');
 const pauseLbHint    = document.getElementById('pauseLbHint');
 const lbLink         = document.getElementById('lbLink');
 const touchControls  = document.getElementById('touchControls');
+const actionBtns     = document.querySelector('.action-btns');
 
 // ═══════════════════════════════════════════════════
 //  排行榜
@@ -373,18 +421,36 @@ function renderLBFull(entries) {
 //  状态
 // ═══════════════════════════════════════════════════
 const DIR={ UP:[0,-1], DOWN:[0,1], LEFT:[-1,0], RIGHT:[1,0] };
-let snake, direction, nextDirection, score, food, state, inputName, highlightRank;
+let snake, direction, nextDirection, score, food, state, playerName, highlightRank;
 let showPauseLB=false, lastTime=0, tickAccum=0;
 let baseFPS = 6, colorIndex = 0, isRainbow = false;
 
 function initGame(){
+  // 首次加载显示开始界面
+  state='idle'; playerName=''; highlightRank=-1;
+  score=0; updateHUD();
+  showStartScreen();
+}
+
+function showStartScreen(){
+  hideAllOverlays();
+  startOverlay.classList.remove('hidden');
+  actionBtns.style.display='';  // 开始前显示所有按钮
+  updateHUD();
+}
+
+function startGame(){
   const sx=Math.floor(GW/2), sy=Math.floor(GH/2);
   snake=[[sx,sy],[sx-1,sy],[sx-2,sy]];
   direction=DIR.RIGHT; nextDirection=DIR.RIGHT;
   score=0; food=spawnFood();
-  state='playing'; inputName=''; highlightRank=-1;
+  state='playing'; highlightRank=-1;
   showPauseLB=false; lastTime=performance.now(); tickAccum=0;
-  updateHUD(); hideAllOverlays();
+  playerName=nameInput.value.trim()||'无名';
+  hideAllOverlays();
+  startOverlay.classList.add('hidden');
+  actionBtns.style.display='none';  // 游戏中隐藏功能按钮
+  updateHUD();
 }
 function spawnFood(){
   const set=new Set(snake.map(p=>p[0]+','+p[1]));
@@ -402,12 +468,17 @@ function updateHUD(){
   speedDisplay.textContent=`速度: ${currentFPS()} [=/-]`;
   const ci = colorIndex; const cn = SNAKE_COLORS[ci].name;
   lbLink.textContent=`${cn} [C] ▸ 排行榜`;
+  // 更新开始界面显示
+  const cnEl=document.getElementById('colorName');
+  if(cnEl) cnEl.textContent=cn;
+  const svEl=document.getElementById('speedVal');
+  if(svEl) svEl.textContent=String(baseFPS);
 }
 function hideAllOverlays(){
+  startOverlay.classList.add('hidden');
   pauseOverlay.classList.add('hidden');
   gameOverOverlay.classList.add('hidden');
   lbFullPage.classList.add('hidden');
-  nameEntryBlock.classList.add('hidden');
   showPauseLB=false;
 }
 
@@ -546,16 +617,15 @@ function update(){
 function onGameOver(){
   state='gameover'; updateHUD();
   updateBtnPauseLabel();
-  if(isQualifying(score)){ state='nameentry'; inputName=''; nameInput.value=''; setTimeout(()=>nameInput.focus(),100); }
-  highlightRank=-1; showGameOver();
-}
-function confirmName(){
-  const name=inputName.trim()||'无名';
-  const lb=addToLB(name,score);
-  highlightRank=lb.findIndex(e=>e.name===name&&e.score===score);
-  state='gameover'; nameEntryBlock.classList.add('hidden');
-  updateBtnPauseLabel();
-  renderLB(lb,highlightRank,goLbPanel); updateHUD();
+  actionBtns.style.display='';  // 游戏结束恢复显示功能按钮
+  // 如果分数够上榜，自动用开始前输入的名字
+  if(isQualifying(score)){
+    const lb=addToLB(playerName||'无名',score);
+    highlightRank=lb.findIndex(e=>e.name===playerName&&e.score===score);
+  }else{
+    highlightRank=-1;
+  }
+  showGameOver();
 }
 
 // ═══════════════════════════════════════════════════
@@ -564,22 +634,23 @@ function confirmName(){
 function showGameOver(){
   hideAllOverlays(); gameOverOverlay.classList.remove('hidden');
   finalScore.textContent=`最终得分: ${score}`;
-  if(state==='nameentry'){ nameEntryBlock.classList.remove('hidden'); nameInput.focus(); }
-  else nameEntryBlock.classList.add('hidden');
   renderLB(loadLB(),highlightRank,goLbPanel);
 }
 function updateOverlays(){
-  if(state==='paused'){
+  if(state==='idle'){
+    startOverlay.classList.remove('hidden');
+    pauseOverlay.classList.add('hidden'); gameOverOverlay.classList.add('hidden'); lbFullPage.classList.add('hidden');
+  }else if(state==='paused'){
     pauseOverlay.classList.remove('hidden');
     if(showPauseLB){ pauseLbHint.innerHTML='<div class="lb-panel" style="margin-top:8px"></div>'; renderLB(loadLB(),-1,pauseLbHint.querySelector('.lb-panel')); }
     else pauseLbHint.innerHTML='按 L 查看排行榜';
-    gameOverOverlay.classList.add('hidden'); lbFullPage.classList.add('hidden');
-  }else if(state==='gameover'||state==='nameentry'){
-    pauseOverlay.classList.add('hidden'); lbFullPage.classList.add('hidden');
+    gameOverOverlay.classList.add('hidden'); lbFullPage.classList.add('hidden'); startOverlay.classList.add('hidden');
+  }else if(state==='gameover'){
+    pauseOverlay.classList.add('hidden'); lbFullPage.classList.add('hidden'); startOverlay.classList.add('hidden');
   }else if(state==='leaderboard'){
-    pauseOverlay.classList.add('hidden'); gameOverOverlay.classList.add('hidden');
+    pauseOverlay.classList.add('hidden'); gameOverOverlay.classList.add('hidden'); startOverlay.classList.add('hidden');
     lbFullPage.classList.remove('hidden'); renderLBFull(loadLB());
-  }else{ hideAllOverlays(); }
+  }else{ hideAllOverlays(); startOverlay.classList.add('hidden'); }
 }
 function updateBtnPauseLabel(){
   const btn=document.getElementById('btnPause');
@@ -591,16 +662,29 @@ function updateBtnPauseLabel(){
 //  键盘事件
 // ═══════════════════════════════════════════════════
 document.addEventListener('keydown',e=>{
-  if(state==='nameentry'){
-    if(e.key==='Enter'){ e.preventDefault(); inputName=nameInput.value.trim(); confirmName(); return; }
-    if(e.key==='Escape'){ e.preventDefault(); inputName=''; confirmName(); return; }
+  const k=e.key.toLowerCase();
+
+  // 任何时候都可以重开
+  if(k==='r'){
+    if(state==='idle'){ startGame(); }else{ startGame(); }
+    updateBtnPauseLabel(); return;
+  }
+  // 开始界面按 Enter 开始
+  if(state==='idle'){
+    if(k==='enter'){ startGame(); updateBtnPauseLabel(); return; }
+    if(k==='='||k==='+'){ e.preventDefault(); changeSpeed(1); return; }
+    if(k==='-'){ e.preventDefault(); changeSpeed(-1); return; }
+    if(k==='c'){ e.preventDefault();
+      colorIndex=(colorIndex+1)%SNAKE_COLORS.length;
+      isRainbow=(colorIndex===SNAKE_COLORS.length-1);
+      updateHUD(); return;
+    }
     return;
   }
-  const k=e.key.toLowerCase();
 
   if(k==='escape'||k==='q'){
     if(state==='leaderboard'){ state='playing'; hideAllOverlays(); updateBtnPauseLabel(); return; }
-    initGame(); updateBtnPauseLabel(); return;
+    startGame(); updateBtnPauseLabel(); return;
   }
   if(k==='l'){ e.preventDefault();
     if(state==='playing') state='leaderboard';
@@ -608,7 +692,6 @@ document.addEventListener('keydown',e=>{
     else if(state==='paused') showPauseLB=!showPauseLB;
     updateOverlays(); return;
   }
-  if(k==='r'){ initGame(); updateBtnPauseLabel(); return; }
   // 速度调节
   if(k==='='||k==='+'){ e.preventDefault(); changeSpeed(1); return; }
   if(k==='-'){ e.preventDefault(); changeSpeed(-1); return; }
@@ -621,7 +704,7 @@ document.addEventListener('keydown',e=>{
   if(state==='gameover'||state==='leaderboard') return;
   if(k==='p'){
     if(state==='playing'){ state='paused'; showPauseLB=false; }
-    else if(state==='paused'){ state='playing'; hideAllOverlays(); }
+    else if(state==='paused'){ state='playing'; hideAllOverlays(); startOverlay.classList.add('hidden'); }
     updateOverlays(); updateBtnPauseLabel(); return;
   }
   tryChangeDir(e.key);
@@ -682,13 +765,14 @@ setupBtn('btnDown',  null, 'down');
 setupBtn('btnLeft',  null, 'left');
 setupBtn('btnRight', null, 'right');
 setupBtn('btnPause', ()=>{
-  if(state==='gameover'||state==='nameentry'||state==='leaderboard') return;
-  if(state==='playing'){ state='paused'; showPauseLB=false; }
-  else if(state==='paused'){ state='playing'; hideAllOverlays(); }
+  if(state==='idle'||state==='gameover'||state==='leaderboard') return;
+  if(state==='playing'){ state='paused'; showPauseLB=false; actionBtns.style.display=''; }
+  else if(state==='paused'){ state='playing'; hideAllOverlays(); actionBtns.style.display='none'; }
   updateOverlays(); updateBtnPauseLabel();
 });
-setupBtn('btnReset', ()=>{ initGame(); updateBtnPauseLabel(); });
+setupBtn('btnReset', ()=>{ startGame(); updateBtnPauseLabel(); });
 setupBtn('btnLB', ()=>{
+  if(state==='idle'){ state='leaderboard'; updateOverlays(); return; }
   if(state==='playing') state='leaderboard';
   else if(state==='leaderboard'){ state='playing'; updateBtnPauseLabel(); }
   else if(state==='paused') showPauseLB=!showPauseLB;
@@ -700,6 +784,28 @@ setupBtn('btnColor', ()=>{
   colorIndex=(colorIndex+1)%SNAKE_COLORS.length;
   isRainbow=(colorIndex===SNAKE_COLORS.length-1);
   updateHUD();
+});
+
+// 开始界面颜色/速度按钮
+document.getElementById('btnColorPrev')?.addEventListener('click',(e)=>{
+  e.preventDefault(); e.stopPropagation();
+  colorIndex=(colorIndex-1+SNAKE_COLORS.length)%SNAKE_COLORS.length;
+  isRainbow=(colorIndex===SNAKE_COLORS.length-1);
+  updateHUD();
+});
+document.getElementById('btnColorNext')?.addEventListener('click',(e)=>{
+  e.preventDefault(); e.stopPropagation();
+  colorIndex=(colorIndex+1)%SNAKE_COLORS.length;
+  isRainbow=(colorIndex===SNAKE_COLORS.length-1);
+  updateHUD();
+});
+document.getElementById('btnSpdDown')?.addEventListener('click',(e)=>{
+  e.preventDefault(); e.stopPropagation();
+  changeSpeed(-1);
+});
+document.getElementById('btnSpdUp')?.addEventListener('click',(e)=>{
+  e.preventDefault(); e.stopPropagation();
+  changeSpeed(1);
 });
 
 // 切换网格尺寸
@@ -730,25 +836,30 @@ btnRotate.addEventListener('click',(e)=>{
     btnRotate.textContent='📱 横屏';
   }
   setGridSize(forceLandscape);
-  initGame(); updateBtnPauseLabel();
+  startGame(); updateBtnPauseLabel();
   setTimeout(resize,100);
 });
 
 // ═══════════════════════════════════════════════════
 //  其他 UI 事件
 // ═══════════════════════════════════════════════════
-nameInput.addEventListener('input',()=>{ inputName=nameInput.value.slice(0,10); });
-// 点击画布：游戏结束时可重开，名字输入中关闭键盘
+// 开始按钮
+document.getElementById('btnStartGame').addEventListener('click',(e)=>{
+  e.preventDefault(); startGame(); updateBtnPauseLabel();
+});
+// 再来一局按钮
+document.getElementById('btnRestart').addEventListener('click',(e)=>{
+  e.preventDefault(); startGame(); updateBtnPauseLabel();
+});
+// 点击画布：idle 时开始，gameover 时重开
 canvas.addEventListener('click',()=>{
-  if(state==='gameover'||state==='nameentry'){
-    initGame(); updateBtnPauseLabel();
-  }else if(state==='nameentry'){
-    nameInput.blur();
-  }
+  if(state==='idle'){ startGame(); updateBtnPauseLabel(); }
+  else if(state==='gameover'){ startGame(); updateBtnPauseLabel(); }
 });
 lbLink.addEventListener('click',()=>{
+  if(state==='idle'){ state='leaderboard'; updateOverlays(); return; }
   if(state==='playing'){ state='leaderboard'; updateOverlays(); }
-  else if(state==='leaderboard'){ state='playing'; hideAllOverlays(); updateBtnPauseLabel(); }
+  else if(state==='leaderboard'){ state='playing'; hideAllOverlays(); updateBtnPauseLabel(); startOverlay.classList.add('hidden'); }
 });
 
 // ═══════════════════════════════════════════════════
@@ -787,7 +898,7 @@ resize();
 // ═══════════════════════════════════════════════════
 //  启动
 // ═══════════════════════════════════════════════════
-initGame();
+initGame();  // 显示开始界面
 updateBtnPauseLabel();
 requestAnimationFrame(gameLoop);
 </script>
