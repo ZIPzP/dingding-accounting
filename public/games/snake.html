@@ -125,9 +125,10 @@
      虚拟触屏控件
      ══════════════════════════════════════════════ */
   .touch-controls {
-    display:flex; flex-shrink:0; gap:clamp(16px,5vw,36px);
+    display:flex; flex-shrink:0; gap:clamp(8px,3vw,20px);
     align-items:center; justify-content:center;
-    width:calc(var(--cell) * var(--grid-w)); padding:0 10px;
+    width:100%; max-width:100vw; padding:0 8px;
+    flex-wrap:wrap;
   }
   /* 横屏时控件在右侧，竖排 */
   @media (orientation:landscape) {
@@ -283,8 +284,11 @@
 //  配置
 // ═══════════════════════════════════════════════════
 const CELL = 20;
-const GW = 40, GH = 30;
-const W = CELL * GW, H = CELL * GH;
+// 网格尺寸（横屏/竖屏各自配置，横屏更宽）
+const GRID_PORTRAIT  = { w:40, h:30 };
+const GRID_LANDSCAPE = { w:55, h:22 };
+let GW = GRID_PORTRAIT.w, GH = GRID_PORTRAIT.h;
+let W = CELL * GW, H = CELL * GH;
 const MAX_FPS = 18, MIN_BASE_FPS = 1, MAX_BASE_FPS = 20;
 const SCORE_PER_FOOD = 10, MAX_LB = 10;
 
@@ -698,6 +702,20 @@ setupBtn('btnColor', ()=>{
   updateHUD();
 });
 
+// 切换网格尺寸
+function setGridSize(landscape){
+  const g=landscape?GRID_LANDSCAPE:GRID_PORTRAIT;
+  GW=g.w; GH=g.h; W=CELL*GW; H=CELL*GH;
+  canvas.width=W; canvas.height=H;
+  // 更新 CSS 变量
+  wrapper.style.setProperty('--grid-w',GW);
+  wrapper.style.setProperty('--grid-h',GH);
+  // 更新 info-bar 宽度
+  document.querySelector('.info-bar').style.width=(CELL*GW)+'px';
+  document.querySelector('.canvas-container').style.width=(CELL*GW)+'px';
+  document.querySelector('.canvas-container').style.height=(CELL*GH)+'px';
+}
+
 // 强制横屏切换
 let forceLandscape=false;
 const btnRotate=document.getElementById('btnRotate');
@@ -711,6 +729,8 @@ btnRotate.addEventListener('click',(e)=>{
     document.body.classList.remove('force-landscape');
     btnRotate.textContent='📱 横屏';
   }
+  setGridSize(forceLandscape);
+  initGame(); updateBtnPauseLabel();
   setTimeout(resize,100);
 });
 
@@ -718,8 +738,14 @@ btnRotate.addEventListener('click',(e)=>{
 //  其他 UI 事件
 // ═══════════════════════════════════════════════════
 nameInput.addEventListener('input',()=>{ inputName=nameInput.value.slice(0,10); });
-// 点击画布关闭名字输入中的键盘
-canvas.addEventListener('click',()=>{ if(state==='nameentry') nameInput.blur(); });
+// 点击画布：游戏结束时可重开，名字输入中关闭键盘
+canvas.addEventListener('click',()=>{
+  if(state==='gameover'||state==='nameentry'){
+    initGame(); updateBtnPauseLabel();
+  }else if(state==='nameentry'){
+    nameInput.blur();
+  }
+});
 lbLink.addEventListener('click',()=>{
   if(state==='playing'){ state='leaderboard'; updateOverlays(); }
   else if(state==='leaderboard'){ state='playing'; hideAllOverlays(); updateBtnPauseLabel(); }
