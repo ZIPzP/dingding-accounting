@@ -18,7 +18,8 @@ import HomePage from './pages/HomePage';
 import AddRecord from './pages/AddRecord';
 import Statistics from './pages/Statistics';
 import Settings from './pages/Settings';
-import GamePage from './pages/GamePage';
+import GameHub from './pages/GameHub';
+import SnakeGamePage from './pages/SnakeGamePage';
 
 const { Sider, Content } = Layout;
 
@@ -62,7 +63,8 @@ const App: React.FC = () => {
             <Route path="/edit/:id" element={<AddRecord />} />
             <Route path="/stats" element={<Statistics />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/game" element={<GamePage />} />
+            <Route path="/game" element={<GameHub />} />
+            <Route path="/game/snake" element={<SnakeGamePage />} />
           </Routes>
         </Content>
 
@@ -115,7 +117,8 @@ const App: React.FC = () => {
             <Route path="/edit/:id" element={<AddRecord />} />
             <Route path="/stats" element={<Statistics />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/game" element={<GamePage />} />
+            <Route path="/game" element={<GameHub />} />
+            <Route path="/game/snake" element={<SnakeGamePage />} />
           </Routes>
         </Content>
       </Layout>

@@ -18,7 +18,7 @@ import {
   Tag,
   Space,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 
@@ -104,6 +104,23 @@ const HomePage: React.FC = () => {
       }}>
         ⚠️ 谨慎网恋诈骗
       </div>
+
+      {/* 小游戏入口 */}
+      <Card
+        hoverable
+        size="small"
+        style={{ marginBottom: 16, borderRadius: 8, borderLeft: '4px solid #722ed1' }}
+        onClick={() => navigate('/game')}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 28 }}>🎮</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 15, fontWeight: 600 }}>小游戏</div>
+            <div style={{ fontSize: 12, color: '#8c8c8c' }}>贪吃蛇等休闲小游戏，记账累了来玩玩</div>
+          </div>
+          <ThunderboltOutlined style={{ fontSize: 18, color: '#722ed1' }} />
+        </div>
+      </Card>
 
       {/* 筛选栏 */}
       <Card size="small" style={{ marginBottom: 16, background: '#fafafa' }}>
