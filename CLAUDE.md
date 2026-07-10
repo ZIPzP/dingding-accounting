@@ -18,7 +18,7 @@
 | React 18 | 前端 UI 框架 | 生态丰富，组件化开发 |
 | TypeScript | 编程语言 | 类型安全，减少运行时错误 |
 | Ant Design 5 | UI 组件库 | 中文生态好，组件丰富，适合企业级应用 |
-| better-sqlite3 | 本地数据库 | 轻量 SQLite，数据存本地，无需网络 |
+| sql.js (WASM) | 本地数据库 | 轻量 SQLite，纯 JS 免编译，数据存本地 |
 | Vite | 构建工具 | 快速开发服务器，秒级热更新 |
 | electron-builder | 打包工具 | 支持 Windows .exe 和 Mac .dmg |
 | ECharts | 图表库 | 功能强大，中文文档完善 |
@@ -93,8 +93,11 @@
 | 2026-07-09 | 主进程编译 | tsc | esbuild 打包与 Electron 内置模块不兼容，改用 TypeScript 官方编译器 |
 | 2026-07-09 | Electron 版本 | 31.7 | 原选 33.x，网络下载超时，降级到 31 稳定版 |
 | 2026-07-09 | 环境变量修复 | 移除 ELECTRON_RUN_AS_NODE | 系统环境变量导致 Electron 伪装成 Node.js，需在启动脚本中删除 |
-| 2026-07-10 | 开放分类权限 | 允许自定义添加分类 | 用户应能自主添加自己的分类和子分类；删除已有分类时，记录自动归入「已删除」 |
-| 2026-07-09 | 环境变量修复 | 移除 ELECTRON_RUN_AS_NODE | 系统环境变量导致 Electron 伪装成 Node.js，需在启动脚本中删除 |
+| 2026-07-09 | 手机端方案 | 响应式布局 + PWA | 一套代码同时适配桌面和手机浏览器，支持离线使用 |
+| 2026-07-09 | 部署方案 | GitHub Pages + Cloudflare CDN | 免费、全球可访问（含国内）、支持自定义域名 |
+| 2026-07-09 | 自定义域名 | qinggujizhang.top | 阿里云注册，Cloudflare 管理 DNS |
+| 2026-07-10 | 开放分类权限 | 允许自定义添加分类 | 用户应能自主添加、编辑、删除分类和子分类 |
+| 2026-07-10 | 贪吃蛇小游戏 | 集成到游戏中心 | 用户自制网页游戏，通过 iframe 嵌入，支持横竖屏 |
 
 ---
 
@@ -124,11 +127,17 @@
 │       │   ├── HomePage.tsx     # 首页（账单列表）
 │       │   ├── AddRecord.tsx    # 记一笔
 │       │   ├── Statistics.tsx   # 统计页
-│       │   └── Settings.tsx     # 设置页
-│       ├── components/          # 通用组件
+│       │   ├── Settings.tsx     # 设置页
+│       │   ├── GameHub.tsx      # 游戏中心
+│       │   └── SnakeGamePage.tsx # 贪吃蛇游戏
+│       ├── components/
+│       │   └── CategoryManager/ # 分类管理组件
 │       ├── hooks/               # 自定义 Hooks
 │       ├── utils/               # 工具函数
 │       └── styles/              # 样式文件
+├── public/
+│   └── games/                    # 小游戏 HTML 文件
+├── game/                         # 用户提供的游戏源文件
 └── resources/                   # 应用图标等资源
 ```
 
@@ -148,6 +157,7 @@
 ```bash
 git add -A
 git commit -m "这里写你改了什么"
+git push
 ```
 
 示例：
@@ -162,13 +172,13 @@ git commit -m "修改了分类，增加了咖啡选项"
 
 **桌面端（Windows）：**
 ```bash
-cd "C:\Users\34968\Desktop\青孤记账"
+cd "C:\Users\34968\Desktop\钉钉记账"
 npm run dev
 ```
 
 **手机端：**
 ```bash
-cd "C:\Users\34968\Desktop\青孤记账"
+cd "C:\Users\34968\Desktop\钉钉记账"
 npm run dev:renderer
 ```
 然后用隧道工具生成公网链接，手机浏览器打开即可。
@@ -176,7 +186,7 @@ npm run dev:renderer
 ### 打包桌面安装包
 
 ```bash
-cd "C:\Users\34968\Desktop\青孤记账"
+cd "C:\Users\34968\Desktop\钉钉记账"
 npm run build        # 先编译
 npm run pack:win     # 打包 Windows 安装包
 ```
