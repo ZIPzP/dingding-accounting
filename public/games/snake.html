@@ -179,11 +179,32 @@
   .btn-speed:active  { background:#2e5a44; }
   .btn-color  { background:#3c1e3c; color:#c8a8c8; }
   .btn-color:active  { background:#5a2e5a; }
+  .btn-rotate { background:#3c2e1e; color:#dca; }
+  .btn-rotate:active { background:#5a4a2e; }
 
   /* 桌面端隐藏触屏控件（可选） */
   @media (hover:hover) and (pointer:fine) {
     .touch-controls { opacity:0.35; transition:opacity 0.3s; }
     .touch-controls:hover { opacity:1; }
+  }
+
+  /* ══════════════════════════════════════════════
+     强制横屏模式
+     ══════════════════════════════════════════════ */
+  body.force-landscape {
+    display:flex; justify-content:center; align-items:center;
+    overflow:hidden;
+  }
+  body.force-landscape .game-wrapper {
+    width:calc(100vh - 20px);
+    height:auto;
+    flex-shrink:0;
+  }
+  body.force-landscape .info-bar {
+    width:calc(var(--cell) * var(--grid-w));
+  }
+  body.force-landscape .touch-controls {
+    width:auto;
   }
 </style>
 </head>
@@ -246,6 +267,7 @@
       <button class="btn-act btn-speed" id="btnSpeedDown">− 减速</button>
       <button class="btn-act btn-speed" id="btnSpeedUp">+ 加速</button>
       <button class="btn-act btn-color" id="btnColor">🎨 换色</button>
+      <button class="btn-act btn-rotate" id="btnRotate">📱 横屏</button>
     </div>
   </div>
 </div>
@@ -670,6 +692,22 @@ setupBtn('btnColor', ()=>{
   updateHUD();
 });
 
+// 强制横屏切换
+let forceLandscape=false;
+const btnRotate=document.getElementById('btnRotate');
+btnRotate.addEventListener('click',(e)=>{
+  e.preventDefault(); e.stopPropagation();
+  forceLandscape=!forceLandscape;
+  if(forceLandscape){
+    document.body.classList.add('force-landscape');
+    btnRotate.textContent='📱 竖屏';
+  }else{
+    document.body.classList.remove('force-landscape');
+    btnRotate.textContent='📱 横屏';
+  }
+  setTimeout(resize,100);
+});
+
 // ═══════════════════════════════════════════════════
 //  其他 UI 事件
 // ═══════════════════════════════════════════════════
@@ -687,15 +725,15 @@ lbLink.addEventListener('click',()=>{
 function resize(){
   const padV=24, padH=16;
   const infoH=32;
-  const isLandscape=window.innerWidth > window.innerHeight;
+  const isLandscape=forceLandscape || (window.innerWidth > window.innerHeight);
 
   let availW, availH;
 
   if(isLandscape){
-    // 横屏：控件在右侧
+    // 横屏模式（自动或强制）：控件在右侧
     const ctrlW=touchControls.offsetWidth||180;
-    availW=window.innerWidth-padH-ctrlW-20;
-    availH=window.innerHeight-padV-infoH;
+    availW=(forceLandscape ? window.innerHeight : window.innerWidth)-padH-ctrlW-20;
+    availH=(forceLandscape ? window.innerWidth : window.innerHeight)-padV-infoH;
   }else{
     // 竖屏：控件在下方
     const ctrlH=touchControls.offsetHeight||160;
@@ -706,7 +744,9 @@ function resize(){
   const scaleW=availW/(W+4);
   const scaleH=availH/(H+4);
   const scale=Math.min(1, scaleW, scaleH);
-  wrapper.style.transform=`scale(${scale})`;
+  wrapper.style.transform=forceLandscape
+    ? `rotate(90deg) scale(${scale})`
+    : `scale(${scale})`;
 }
 window.addEventListener('resize',resize);
 window.addEventListener('orientationchange',()=>setTimeout(resize,300));
