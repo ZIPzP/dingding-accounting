@@ -30,6 +30,16 @@
     align-items:center; gap:6px;
     transform-origin:center center;
   }
+  /* 横屏时改为横向排列 */
+  @media (orientation:landscape) {
+    .game-wrapper {
+      flex-direction:row; gap:12px;
+      align-items:center; justify-content:center;
+    }
+    .info-bar {
+      width:calc(var(--cell) * var(--grid-w));
+    }
+  }
 
   /* ── 信息栏 ── */
   .info-bar {
@@ -115,9 +125,15 @@
      虚拟触屏控件
      ══════════════════════════════════════════════ */
   .touch-controls {
-    display:flex; flex-shrink:0; gap:clamp(12px,4vw,30px);
+    display:flex; flex-shrink:0; gap:clamp(16px,5vw,36px);
     align-items:center; justify-content:center;
     width:calc(var(--cell) * var(--grid-w)); padding:0 10px;
+  }
+  /* 横屏时控件在右侧，竖排 */
+  @media (orientation:landscape) {
+    .touch-controls {
+      flex-direction:column; width:auto; gap:16px;
+    }
   }
 
   /* D-Pad 十字键 */
@@ -125,13 +141,13 @@
     display:grid;
     grid-template-columns:1fr 1fr 1fr;
     grid-template-rows:1fr 1fr 1fr;
-    gap:4px;
+    gap:6px;
   }
   .dpad .btn-dir {
-    width:clamp(42px,10vw,56px); height:clamp(42px,10vw,56px);
-    border-radius:10px; border:none;
+    width:clamp(52px,15vw,76px); height:clamp(52px,15vw,76px);
+    border-radius:12px; border:none;
     background:#1e1e32; color:#aab;
-    font-size:clamp(20px,5vw,28px);
+    font-size:clamp(24px,6vw,34px);
     display:flex; align-items:center; justify-content:center;
     cursor:pointer; transition:background 0.1s;
     -webkit-tap-highlight-color:transparent;
@@ -147,8 +163,8 @@
     display:flex; flex-direction:column; gap:8px;
   }
   .action-btns .btn-act {
-    padding:10px 16px; border-radius:22px; border:none;
-    font-size:clamp(13px,2.5vw,15px); font-family:inherit;
+    padding:12px 18px; border-radius:24px; border:none;
+    font-size:clamp(14px,3vw,17px); font-family:inherit; font-weight:600;
     cursor:pointer; white-space:nowrap;
     -webkit-tap-highlight-color:transparent;
     touch-action:manipulation; transition:background 0.1s;
@@ -666,21 +682,34 @@ lbLink.addEventListener('click',()=>{
 });
 
 // ═══════════════════════════════════════════════════
-//  响应式缩放
+//  响应式缩放（支持横竖屏）
 // ═══════════════════════════════════════════════════
 function resize(){
-  const padV=40, padH=16;
-  const ctrlH=touchControls.offsetHeight||140;
+  const padV=24, padH=16;
   const infoH=32;
-  const availW=window.innerWidth-padH;
-  const availH=window.innerHeight-padV-infoH-ctrlH-12;
+  const isLandscape=window.innerWidth > window.innerHeight;
+
+  let availW, availH;
+
+  if(isLandscape){
+    // 横屏：控件在右侧
+    const ctrlW=touchControls.offsetWidth||180;
+    availW=window.innerWidth-padH-ctrlW-20;
+    availH=window.innerHeight-padV-infoH;
+  }else{
+    // 竖屏：控件在下方
+    const ctrlH=touchControls.offsetHeight||160;
+    availW=window.innerWidth-padH;
+    availH=window.innerHeight-padV-infoH-ctrlH-12;
+  }
+
   const scaleW=availW/(W+4);
   const scaleH=availH/(H+4);
   const scale=Math.min(1, scaleW, scaleH);
   wrapper.style.transform=`scale(${scale})`;
 }
 window.addEventListener('resize',resize);
-window.addEventListener('orientationchange',()=>setTimeout(resize,200));
+window.addEventListener('orientationchange',()=>setTimeout(resize,300));
 resize();
 
 // ═══════════════════════════════════════════════════
