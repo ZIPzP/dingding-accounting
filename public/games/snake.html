@@ -134,6 +134,9 @@
     .touch-controls {
       flex-direction:column; width:auto; gap:16px;
     }
+    .action-btns {
+      grid-template-columns:1fr;
+    }
   }
 
   /* D-Pad 十字键 */
@@ -158,16 +161,19 @@
   }
   .dpad .empty { visibility:hidden; }
 
-  /* 动作按钮 */
+  /* 动作按钮 — 两列网格，手机端不用滚动 */
   .action-btns {
-    display:flex; flex-direction:column; gap:8px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
   }
   .action-btns .btn-act {
-    padding:12px 18px; border-radius:24px; border:none;
-    font-size:clamp(14px,3vw,17px); font-family:inherit; font-weight:600;
+    padding:14px 12px; border-radius:24px; border:none;
+    font-size:clamp(15px,3.5vw,18px); font-family:inherit; font-weight:600;
     cursor:pointer; white-space:nowrap;
     -webkit-tap-highlight-color:transparent;
     touch-action:manipulation; transition:background 0.1s;
+    min-height:44px;
   }
   .btn-pause  { background:#3c3c1e; color:#c8c864; }
   .btn-pause:active  { background:#5a5a2e; }
