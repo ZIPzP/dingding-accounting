@@ -12,6 +12,7 @@ import {
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import { api } from '../services/api';
+import CategoryManager from '../components/CategoryManager/CategoryManager';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -109,6 +110,11 @@ const Settings: React.FC = () => {
   return (
     <div className="page-card">
       <div className="page-title">设置</div>
+
+      {/* 分类管理 */}
+      <Card title="📂 分类管理" style={{ marginBottom: 24 }}>
+        <CategoryManager />
+      </Card>
 
       {/* 数据管理 */}
       <Card title="💾 数据管理" style={{ marginBottom: 24 }}>

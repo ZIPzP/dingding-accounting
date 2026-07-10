@@ -79,6 +79,19 @@ interface TrendItem {
 
 interface ElectronAPI {
   getCategories: () => Promise<CategoryWithSubs[]>;
+  getAllCategories: () => Promise<CategoryWithSubs[]>;
+  addCategory: (params: { name: string; icon: string; code: string }) =>
+    Promise<{ success: true; id: number } | { success: false; error: string }>;
+  updateCategory: (id: number, params: { name: string; icon: string }) =>
+    Promise<{ success: true } | { success: false; error: string }>;
+  deleteCategory: (id: number) =>
+    Promise<{ success: true; affectedRecords: number } | { success: false; error: string }>;
+  addSubCategory: (params: { category_id: number; name: string }) =>
+    Promise<{ success: true; id: number } | { success: false; error: string }>;
+  updateSubCategory: (id: number, name: string) =>
+    Promise<{ success: true } | { success: false; error: string }>;
+  deleteSubCategory: (id: number) =>
+    Promise<{ success: true; affectedRecords: number } | { success: false; error: string }>;
   addRecord: (params: RecordParams) => Promise<number>;
   updateRecord: (params: RecordUpdateParams) => Promise<boolean>;
   deleteRecord: (id: number) => Promise<boolean>;

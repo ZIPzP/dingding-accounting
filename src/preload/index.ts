@@ -10,6 +10,24 @@ const electronAPI = {
   // 分类
   getCategories: () => ipcRenderer.invoke('get-categories'),
 
+  getAllCategories: () => ipcRenderer.invoke('get-all-categories'),
+
+  addCategory: (params: { name: string; icon: string; code: string }) =>
+    ipcRenderer.invoke('add-category', params),
+
+  updateCategory: (id: number, params: { name: string; icon: string }) =>
+    ipcRenderer.invoke('update-category', id, params),
+
+  deleteCategory: (id: number) => ipcRenderer.invoke('delete-category', id),
+
+  addSubCategory: (params: { category_id: number; name: string }) =>
+    ipcRenderer.invoke('add-sub-category', params),
+
+  updateSubCategory: (id: number, name: string) =>
+    ipcRenderer.invoke('update-sub-category', id, name),
+
+  deleteSubCategory: (id: number) => ipcRenderer.invoke('delete-sub-category', id),
+
   // 记账记录
   addRecord: (params: {
     amount: number;

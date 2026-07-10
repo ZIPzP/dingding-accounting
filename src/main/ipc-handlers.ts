@@ -6,6 +6,13 @@
 import { ipcMain, dialog } from 'electron';
 import {
   getCategories,
+  getAllCategories,
+  addCategory,
+  updateCategory,
+  deleteCategory,
+  addSubCategory,
+  updateSubCategory,
+  deleteSubCategory,
   addRecord,
   updateRecord,
   deleteRecord,
@@ -23,6 +30,34 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('get-categories', () => {
     return getCategories();
+  });
+
+  ipcMain.handle('get-all-categories', () => {
+    return getAllCategories();
+  });
+
+  ipcMain.handle('add-category', (_event, params) => {
+    return addCategory(params);
+  });
+
+  ipcMain.handle('update-category', (_event, id: number, params) => {
+    return updateCategory(id, params);
+  });
+
+  ipcMain.handle('delete-category', (_event, id: number) => {
+    return deleteCategory(id);
+  });
+
+  ipcMain.handle('add-sub-category', (_event, params) => {
+    return addSubCategory(params);
+  });
+
+  ipcMain.handle('update-sub-category', (_event, id: number, name: string) => {
+    return updateSubCategory(id, name);
+  });
+
+  ipcMain.handle('delete-sub-category', (_event, id: number) => {
+    return deleteSubCategory(id);
   });
 
   // ============ 记账记录 CRUD ============

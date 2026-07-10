@@ -38,6 +38,42 @@ export const api = {
     return getWebDB().then((db) => db.getRecordById(id));
   },
 
+  // 分类管理
+  getAllCategories: (): Promise<CategoryWithSubs[]> => {
+    if (isElectron()) return getElectronAPI().getAllCategories();
+    return getWebDB().then((db) => db.getAllCategories());
+  },
+
+  addCategory: (params: { name: string; icon: string; code: string }): Promise<any> => {
+    if (isElectron()) return getElectronAPI().addCategory(params);
+    return getWebDB().then((db) => db.addCategory(params));
+  },
+
+  updateCategory: (id: number, params: { name: string; icon: string }): Promise<any> => {
+    if (isElectron()) return getElectronAPI().updateCategory(id, params);
+    return getWebDB().then((db) => db.updateCategory(id, params));
+  },
+
+  deleteCategory: (id: number): Promise<any> => {
+    if (isElectron()) return getElectronAPI().deleteCategory(id);
+    return getWebDB().then((db) => db.deleteCategory(id));
+  },
+
+  addSubCategory: (params: { category_id: number; name: string }): Promise<any> => {
+    if (isElectron()) return getElectronAPI().addSubCategory(params);
+    return getWebDB().then((db) => db.addSubCategory(params));
+  },
+
+  updateSubCategory: (id: number, name: string): Promise<any> => {
+    if (isElectron()) return getElectronAPI().updateSubCategory(id, name);
+    return getWebDB().then((db) => db.updateSubCategory(id, name));
+  },
+
+  deleteSubCategory: (id: number): Promise<any> => {
+    if (isElectron()) return getElectronAPI().deleteSubCategory(id);
+    return getWebDB().then((db) => db.deleteSubCategory(id));
+  },
+
   getMonthlyStats: (year: number, month: number): Promise<MonthlyStats> => {
     if (isElectron()) return getElectronAPI().getMonthlyStats(year, month);
     return getWebDB().then((db) => db.getMonthlyStats(year, month));
@@ -173,6 +209,7 @@ class WebDatabase {
       wdb.db = new wdb.SQL.Database();
       wdb.initTables();
       wdb.seedCategories();
+      wdb.ensureSystemCategory();
       try {
         await wdb.saveToIndexedDB();
       } catch (e) {
@@ -297,6 +334,13 @@ class WebDatabase {
     this.saveToIndexedDB();
   }
 
+  private ensureSystemCategory(): void {
+    const existing = this.db.exec("SELECT id FROM categories WHERE code = '_deleted'");
+    if (existing.length > 0 && existing[0].values.length > 0) return;
+    this.db.run("INSERT INTO categories (name, icon, code) VALUES ('已删除', '🗑️', '_deleted')");
+    this.saveToIndexedDB();
+  }
+
   // ========= 数据操作 =========
 
   private rowsToObjects<T>(result: { columns: string[]; values: unknown[][] }[]): T[] {
@@ -310,6 +354,12 @@ class WebDatabase {
   }
 
   getCategories(): CategoryWithSubs[] {
+    const cats = this.rowsToObjects<Category>(this.db.exec("SELECT * FROM categories WHERE code != '_deleted' ORDER BY id"));
+    const subs = this.rowsToObjects<SubCategory>(this.db.exec('SELECT * FROM sub_categories ORDER BY id'));
+    return cats.map((c) => ({ ...c, subs: subs.filter((s) => s.category_id === c.id) }));
+  }
+
+  getAllCategories(): CategoryWithSubs[] {
     const cats = this.rowsToObjects<Category>(this.db.exec('SELECT * FROM categories ORDER BY id'));
     const subs = this.rowsToObjects<SubCategory>(this.db.exec('SELECT * FROM sub_categories ORDER BY id'));
     return cats.map((c) => ({ ...c, subs: subs.filter((s) => s.category_id === c.id) }));
@@ -374,6 +424,80 @@ class WebDatabase {
        WHERE r.id=?`, [id]
     );
     return this.rowsToObjects<RecordItem>(r)[0];
+  }
+
+  // ========= 分类管理 =========
+
+  addCategory(params: { name: string; icon: string; code: string }): { success: true; id: number } | { success: false; error: string } {
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(params.code)) {
+      return { success: false, error: '分类代码只能包含字母、数字和下划线，且必须以字母或下划线开头' };
+    }
+    try {
+      this.db.run('INSERT INTO categories (name, icon, code) VALUES (?, ?, ?)', [params.name, params.icon, params.code]);
+      const r = this.db.exec('SELECT last_insert_rowid() as id');
+      this.saveToIndexedDB();
+      return { success: true, id: (r[0]?.values[0]?.[0] as number) || 0 };
+    } catch (e: any) {
+      if (e.message?.includes('UNIQUE')) return { success: false, error: '分类代码已存在，请换一个' };
+      return { success: false, error: '添加失败，请重试' };
+    }
+  }
+
+  updateCategory(id: number, params: { name: string; icon: string }): { success: true } | { success: false; error: string } {
+    try {
+      this.db.run('UPDATE categories SET name = ?, icon = ? WHERE id = ?', [params.name, params.icon, id]);
+      this.saveToIndexedDB();
+      return { success: true };
+    } catch { return { success: false, error: '更新失败，请重试' }; }
+  }
+
+  deleteCategory(id: number): { success: true; affectedRecords: number } | { success: false; error: string } {
+    const catCheck = this.db.exec("SELECT code FROM categories WHERE id = ?", [id]);
+    const code = catCheck[0]?.values[0]?.[0] as string;
+    if (code === '_deleted') return { success: false, error: '不能删除系统分类' };
+
+    const countR = this.db.exec('SELECT COUNT(*) as cnt FROM records WHERE category_id = ?', [id]);
+    const affectedRecords = (countR[0]?.values[0]?.[0] as number) || 0;
+
+    const deletedR = this.db.exec("SELECT id FROM categories WHERE code = '_deleted'");
+    const deletedId = deletedR[0]?.values[0]?.[0] as number;
+
+    if (affectedRecords > 0) {
+      this.db.run('UPDATE records SET category_id = ?, sub_category_id = NULL WHERE category_id = ?', [deletedId, id]);
+    }
+    this.db.run('DELETE FROM sub_categories WHERE category_id = ?', [id]);
+    this.db.run('DELETE FROM categories WHERE id = ?', [id]);
+    this.saveToIndexedDB();
+    return { success: true, affectedRecords };
+  }
+
+  addSubCategory(params: { category_id: number; name: string }): { success: true; id: number } | { success: false; error: string } {
+    const catCheck = this.db.exec('SELECT COUNT(*) as cnt FROM categories WHERE id = ?', [params.category_id]);
+    if ((catCheck[0]?.values[0]?.[0] as number) === 0) return { success: false, error: '所属分类不存在' };
+
+    this.db.run('INSERT INTO sub_categories (category_id, name) VALUES (?, ?)', [params.category_id, params.name]);
+    const r = this.db.exec('SELECT last_insert_rowid() as id');
+    this.saveToIndexedDB();
+    return { success: true, id: (r[0]?.values[0]?.[0] as number) || 0 };
+  }
+
+  updateSubCategory(id: number, name: string): { success: true } | { success: false; error: string } {
+    try {
+      this.db.run('UPDATE sub_categories SET name = ? WHERE id = ?', [name, id]);
+      this.saveToIndexedDB();
+      return { success: true };
+    } catch { return { success: false, error: '更新失败，请重试' }; }
+  }
+
+  deleteSubCategory(id: number): { success: true; affectedRecords: number } | { success: false; error: string } {
+    const countR = this.db.exec('SELECT COUNT(*) as cnt FROM records WHERE sub_category_id = ?', [id]);
+    const affectedRecords = (countR[0]?.values[0]?.[0] as number) || 0;
+    if (affectedRecords > 0) {
+      this.db.run('UPDATE records SET sub_category_id = NULL WHERE sub_category_id = ?', [id]);
+    }
+    this.db.run('DELETE FROM sub_categories WHERE id = ?', [id]);
+    this.saveToIndexedDB();
+    return { success: true, affectedRecords };
   }
 
   getMonthlyStats(year: number, month: number): MonthlyStats {

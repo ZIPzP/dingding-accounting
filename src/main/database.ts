@@ -119,6 +119,9 @@ export async function initDatabase(): Promise<void> {
 
   // 预置分类（仅首次）
   seedCategories();
+
+  // 确保系统兜底分类存在
+  ensureSystemCategory();
 }
 
 function seedCategories(): void {
@@ -146,10 +149,34 @@ function seedCategories(): void {
   console.log('✅ 预置分类数据已写入');
 }
 
+/** 确保系统兜底分类存在（用于存放被删除分类的旧记录） */
+function ensureSystemCategory(): void {
+  const existing = db.exec("SELECT id FROM categories WHERE code = '_deleted'");
+  if (existing.length > 0 && existing[0].values.length > 0) return;
+
+  db.run("INSERT INTO categories (name, icon, code) VALUES ('已删除', '🗑️', '_deleted')");
+  persist();
+  console.log('✅ 系统兜底分类已创建');
+}
+
 // ==================== 数据查询与操作 ====================
 
-// 获取所有一级分类（含二级分类）
+// 获取所有一级分类（含二级分类，排除系统分类）
 export function getCategories(): CategoryWithSubs[] {
+  const catResult = db.exec("SELECT * FROM categories WHERE code != '_deleted' ORDER BY id");
+  const subResult = db.exec('SELECT * FROM sub_categories ORDER BY id');
+
+  const categories = rowsToObjects<Category>(catResult);
+  const subs = rowsToObjects<SubCategory>(subResult);
+
+  return categories.map((cat) => ({
+    ...cat,
+    subs: subs.filter((s) => s.category_id === cat.id),
+  }));
+}
+
+// 获取全部一级分类（含系统分类，供管理页使用）
+export function getAllCategories(): CategoryWithSubs[] {
   const catResult = db.exec('SELECT * FROM categories ORDER BY id');
   const subResult = db.exec('SELECT * FROM sub_categories ORDER BY id');
 
@@ -160,6 +187,146 @@ export function getCategories(): CategoryWithSubs[] {
     ...cat,
     subs: subs.filter((s) => s.category_id === cat.id),
   }));
+}
+
+// ==================== 分类管理 ====================
+
+// 新增一级分类
+export function addCategory(params: {
+  name: string;
+  icon: string;
+  code: string;
+}): { success: true; id: number } | { success: false; error: string } {
+  // 校验代码格式
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(params.code)) {
+    return { success: false, error: '分类代码只能包含字母、数字和下划线，且必须以字母或下划线开头' };
+  }
+  try {
+    db.run('INSERT INTO categories (name, icon, code) VALUES (?, ?, ?)', [
+      params.name,
+      params.icon,
+      params.code,
+    ]);
+    const result = db.exec('SELECT last_insert_rowid() as id');
+    persist();
+    return { success: true, id: (result[0]?.values[0]?.[0] as number) || 0 };
+  } catch (e: any) {
+    if (e.message?.includes('UNIQUE')) {
+      return { success: false, error: '分类代码已存在，请换一个' };
+    }
+    return { success: false, error: '添加失败，请重试' };
+  }
+}
+
+// 编辑一级分类
+export function updateCategory(
+  id: number,
+  params: { name: string; icon: string }
+): { success: true } | { success: false; error: string } {
+  try {
+    db.run('UPDATE categories SET name = ?, icon = ? WHERE id = ?', [
+      params.name,
+      params.icon,
+      id,
+    ]);
+    persist();
+    return { success: true };
+  } catch {
+    return { success: false, error: '更新失败，请重试' };
+  }
+}
+
+// 删除一级分类
+export function deleteCategory(id: number): {
+  success: true;
+  affectedRecords: number;
+} | { success: false; error: string } {
+  // 不允许删除系统兜底分类
+  const catCheck = db.exec("SELECT code FROM categories WHERE id = ?", [id]);
+  const code = catCheck[0]?.values[0]?.[0] as string;
+  if (code === '_deleted') {
+    return { success: false, error: '不能删除系统分类' };
+  }
+
+  // 计数受影响记录
+  const countResult = db.exec('SELECT COUNT(*) as cnt FROM records WHERE category_id = ?', [id]);
+  const affectedRecords = (countResult[0]?.values[0]?.[0] as number) || 0;
+
+  // 获取兜底分类 ID
+  const deletedResult = db.exec("SELECT id FROM categories WHERE code = '_deleted'");
+  const deletedId = deletedResult[0]?.values[0]?.[0] as number;
+
+  // 将已有记录迁移到兜底分类
+  if (affectedRecords > 0) {
+    db.run('UPDATE records SET category_id = ?, sub_category_id = NULL WHERE category_id = ?', [
+      deletedId,
+      id,
+    ]);
+  }
+
+  // 删除子分类
+  db.run('DELETE FROM sub_categories WHERE category_id = ?', [id]);
+
+  // 删除分类本身
+  db.run('DELETE FROM categories WHERE id = ?', [id]);
+
+  persist();
+  return { success: true, affectedRecords };
+}
+
+// 新增子分类
+export function addSubCategory(params: {
+  category_id: number;
+  name: string;
+}): { success: true; id: number } | { success: false; error: string } {
+  // 验证父分类存在
+  const catCheck = db.exec('SELECT COUNT(*) as cnt FROM categories WHERE id = ?', [
+    params.category_id,
+  ]);
+  if ((catCheck[0]?.values[0]?.[0] as number) === 0) {
+    return { success: false, error: '所属分类不存在' };
+  }
+
+  db.run('INSERT INTO sub_categories (category_id, name) VALUES (?, ?)', [
+    params.category_id,
+    params.name,
+  ]);
+  const result = db.exec('SELECT last_insert_rowid() as id');
+  persist();
+  return { success: true, id: (result[0]?.values[0]?.[0] as number) || 0 };
+}
+
+// 编辑子分类
+export function updateSubCategory(
+  id: number,
+  name: string
+): { success: true } | { success: false; error: string } {
+  try {
+    db.run('UPDATE sub_categories SET name = ? WHERE id = ?', [name, id]);
+    persist();
+    return { success: true };
+  } catch {
+    return { success: false, error: '更新失败，请重试' };
+  }
+}
+
+// 删除子分类
+export function deleteSubCategory(id: number): {
+  success: true;
+  affectedRecords: number;
+} | { success: false; error: string } {
+  // 计数受影响记录
+  const countResult = db.exec('SELECT COUNT(*) as cnt FROM records WHERE sub_category_id = ?', [id]);
+  const affectedRecords = (countResult[0]?.values[0]?.[0] as number) || 0;
+
+  // 将已有记录的子分类置空
+  if (affectedRecords > 0) {
+    db.run('UPDATE records SET sub_category_id = NULL WHERE sub_category_id = ?', [id]);
+  }
+
+  db.run('DELETE FROM sub_categories WHERE id = ?', [id]);
+  persist();
+  return { success: true, affectedRecords };
 }
 
 // 添加记账记录
