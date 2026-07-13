@@ -1,234 +1,145 @@
 /**
- * 首页 — 账单列表
- * 展示所有记账记录，支持按月份、分类筛选
+ * 首页 — 两大板块中心
+ * 🎮 小游戏 + 🛠️ 生活工具
  */
-import React, { useEffect, useState, useCallback } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import { Row, Col, Typography, Divider } from 'antd';
 import {
-  Card,
-  DatePicker,
-  Select,
-  Button,
-  Popconfirm,
-  Empty,
-  Spin,
-  Row,
-  Col,
-  Tag,
-  Space,
-} from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import type { Dayjs } from 'dayjs';
-import dayjs from 'dayjs';
+  ThunderboltOutlined,
+  ToolOutlined,
+  RightOutlined,
+} from '@ant-design/icons';
 
-const { Option } = Select;
+const { Title, Text } = Typography;
+
+// ==================== 板块数据 ====================
+// 添加新游戏/工具只需在下面加一条
+
+interface HubItem {
+  key: string;
+  name: string;
+  icon: string;
+  desc: string;
+  route: string;
+  color: string;
+}
+
+const games: HubItem[] = [
+  {
+    key: 'snake',
+    name: '贪吃蛇',
+    icon: '🐍',
+    desc: '经典贪吃蛇游戏，横竖屏切换，排行榜',
+    route: '/game/snake',
+    color: '#52c41a',
+  },
+];
+
+const tools: HubItem[] = [
+  {
+    key: 'bills',
+    name: '记账',
+    icon: '📒',
+    desc: '记录日常开销，分类统计，数据导出备份',
+    route: '/bills',
+    color: '#1677ff',
+  },
+];
+
+// ==================== 组件 ====================
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const [records, setRecords] = useState<RecordItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<CategoryWithSubs[]>([]);
-
-  // 筛选条件
-  const [selectedMonth, setSelectedMonth] = useState<Dayjs>(dayjs());
-  const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
-  const [page, setPage] = useState(1);
-  const pageSize = 30;
-
-  // 加载分类
-  useEffect(() => {
-    api.getCategories().then(setCategories);
-  }, []);
-
-  // 加载数据
-  const loadRecords = useCallback(() => {
-    setLoading(true);
-    const year = selectedMonth.year();
-    const month = selectedMonth.month() + 1;
-
-    api
-      .getRecords({
-        year,
-        month,
-        category_id: selectedCategory || undefined,
-        page,
-        pageSize,
-      })
-      .then((res) => {
-        setRecords(res.records);
-        setTotal(res.total);
-      })
-      .finally(() => setLoading(false));
-  }, [selectedMonth, selectedCategory, page]);
-
-  useEffect(() => {
-    loadRecords();
-  }, [loadRecords]);
-
-  // 删除记录
-  const handleDelete = async (id: number) => {
-    await api.deleteRecord(id);
-    loadRecords();
-  };
-
-  // 切换月份
-  const handleMonthChange = (date: Dayjs | null) => {
-    if (date) {
-      setSelectedMonth(date);
-      setPage(1);
-    }
-  };
-
-  // 金额格式化
-  const formatAmount = (amount: number) => {
-    return amount.toFixed(2);
-  };
 
   return (
-    <div className="page-card">
-      <div className="page-title">账单记录</div>
-
-      {/* 醒目的红色警告 */}
-      <div style={{
-        background: '#fff2f0',
-        border: '1px solid #ff4d4f',
-        borderRadius: 8,
-        padding: '12px 16px',
-        marginBottom: 16,
-        textAlign: 'center',
-        fontSize: 16,
-        fontWeight: 700,
-        color: '#ff4d4f',
-      }}>
-        ⚠️ 谨慎网恋诈骗
+    <div className="page-card" style={{ maxWidth: 800, margin: '0 auto' }}>
+      {/* 顶部标题 */}
+      <div className="hub-header">
+        <Title level={3} style={{ marginBottom: 4 }}>
+          🏠 青孤项目
+        </Title>
+        <Text type="secondary" style={{ fontSize: 14 }}>
+          离线工具集 · 无网络也能用
+        </Text>
       </div>
 
-      {/* 小游戏入口 */}
-      <Card
-        hoverable
-        size="small"
-        style={{ marginBottom: 16, borderRadius: 8, borderLeft: '4px solid #722ed1' }}
-        onClick={() => navigate('/game')}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 28 }}>🎮</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>小游戏</div>
-            <div style={{ fontSize: 12, color: '#8c8c8c' }}>贪吃蛇等休闲小游戏，记账累了来玩玩</div>
-          </div>
-          <ThunderboltOutlined style={{ fontSize: 18, color: '#722ed1' }} />
+      {/* ======== 🎮 小游戏板块 ======== */}
+      <div className="hub-section hub-games">
+        <div className="hub-section-title">
+          <ThunderboltOutlined style={{ fontSize: 20 }} /> 小游戏
         </div>
-      </Card>
-
-      {/* 筛选栏 */}
-      <Card size="small" style={{ marginBottom: 16, background: '#fafafa' }}>
-        <Row gutter={[16, 12]} align="middle">
-          <Col>
-            <DatePicker
-              picker="month"
-              value={selectedMonth}
-              onChange={handleMonthChange}
-              allowClear={false}
-              format="YYYY年M月"
-            />
-          </Col>
-          <Col>
-            <Select
-              placeholder="全部分类"
-              allowClear
-              style={{ width: 140 }}
-              value={selectedCategory}
-              onChange={(val) => {
-                setSelectedCategory(val);
-                setPage(1);
-              }}
-            >
-              {categories.map((cat) => (
-                <Option key={cat.id} value={cat.id}>
-                  {cat.icon} {cat.name}
-                </Option>
-              ))}
-            </Select>
-          </Col>
-          <Col flex="auto" />
-          <Col>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/add')}>
-              记一笔
-            </Button>
-          </Col>
-        </Row>
-      </Card>
-
-      {/* 账单列表 */}
-      <Spin spinning={loading}>
-        {records.length === 0 ? (
-          <Empty description="暂无记账记录，点击右上角「记一笔」开始吧" />
-        ) : (
-          <div>
-            {records.map((record) => (
-              <div key={record.id} className="record-item">
-                <div className="record-icon">{record.category_icon}</div>
-                <div className="record-info">
-                  <div className="record-category">
-                    {record.category_name}
-                    {record.sub_category_name && (
-                      <Tag style={{ marginLeft: 8, fontSize: 11 }} color="processing">
-                        {record.sub_category_name}
-                      </Tag>
-                    )}
+        <Row gutter={[12, 12]}>
+          {games.map((g) => (
+            <Col xs={24} sm={12} key={g.key}>
+              <div
+                className="game-card"
+                onClick={() => navigate(g.route)}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="game-card-inner">
+                  <span className="game-card-icon">{g.icon}</span>
+                  <div className="game-card-body">
+                    <div className="game-card-name">{g.name}</div>
+                    <div className="game-card-desc">{g.desc}</div>
                   </div>
-                  {record.note && <div className="record-note">{record.note}</div>}
+                  <RightOutlined className="game-card-arrow" />
                 </div>
-                <div className="record-date">{record.record_date}</div>
-                <div className="amount" style={{ marginRight: 8, minWidth: 70, textAlign: 'right' }}>
-                  {formatAmount(record.amount)}
-                </div>
-                <Space size="small">
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<EditOutlined />}
-                    onClick={() => navigate(`/edit/${record.id}`)}
-                  />
-                  <Popconfirm
-                    title="确定删除这条记录吗？"
-                    onConfirm={() => handleDelete(record.id)}
-                    okText="确定"
-                    cancelText="取消"
-                  >
-                    <Button type="text" size="small" danger icon={<DeleteOutlined />} />
-                  </Popconfirm>
-                </Space>
               </div>
-            ))}
+            </Col>
+          ))}
+          {games.length === 0 && (
+            <Col span={24}>
+              <div style={{ textAlign: 'center', padding: 24, color: '#8c8c8c' }}>
+                更多游戏即将上线
+              </div>
+            </Col>
+          )}
+        </Row>
+      </div>
 
-            {/* 简单分页 */}
-            {total > pageSize && (
-              <div style={{ textAlign: 'center', marginTop: 16 }}>
-                <Space>
-                  <Button
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => p - 1)}
-                  >
-                    上一页
-                  </Button>
-                  <span style={{ color: '#8c8c8c' }}>
-                    第 {page} 页 / 共 {Math.ceil(total / pageSize)} 页（{total} 条）
-                  </span>
-                  <Button
-                    disabled={page >= Math.ceil(total / pageSize)}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    下一页
-                  </Button>
-                </Space>
+      <Divider style={{ margin: '24px 0' }} />
+
+      {/* ======== 🛠️ 生活工具板块 ======== */}
+      <div className="hub-section hub-tools">
+        <div className="hub-section-title">
+          <ToolOutlined style={{ fontSize: 20 }} /> 生活工具
+        </div>
+        <Row gutter={[12, 12]}>
+          {tools.map((t) => (
+            <Col xs={24} sm={12} key={t.key}>
+              <div
+                className="tool-card"
+                onClick={() => navigate(t.route)}
+                style={{ cursor: 'pointer', borderLeftColor: t.color }}
+              >
+                <div className="tool-card-inner">
+                  <span className="tool-card-icon">{t.icon}</span>
+                  <div className="tool-card-body">
+                    <div className="tool-card-name">{t.name}</div>
+                    <div className="tool-card-desc">{t.desc}</div>
+                  </div>
+                  <RightOutlined className="tool-card-arrow" />
+                </div>
               </div>
-            )}
-          </div>
-        )}
-      </Spin>
+            </Col>
+          ))}
+          {tools.length === 0 && (
+            <Col span={24}>
+              <div style={{ textAlign: 'center', padding: 24, color: '#8c8c8c' }}>
+                更多工具即将上线
+              </div>
+            </Col>
+          )}
+        </Row>
+      </div>
+
+      {/* 底部提示 */}
+      <div style={{ textAlign: 'center', marginTop: 32, paddingBottom: 16 }}>
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          所有数据和游戏均离线可用，无需网络
+        </Text>
+      </div>
     </div>
   );
 };

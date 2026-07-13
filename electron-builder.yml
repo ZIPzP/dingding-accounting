@@ -1,6 +1,6 @@
-appId: com.qinggu.accounting
-productName: 青孤记账
-copyright: Copyright © 2026 青孤记账
+appId: com.qinggu.project
+productName: 青孤项目
+copyright: Copyright © 2026 青孤项目
 directories:
   output: release
   buildResources: resources
@@ -31,7 +31,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: 青孤记账
+  shortcutName: 青孤项目
 
 mac:
   target:
@@ -43,4 +43,4 @@ mac:
   category: public.app-category.finance
 
 dmg:
-  title: 青孤记账 ${version}
+  title: 青孤项目 ${version}

@@ -1,7 +1,7 @@
 {
-  "name": "青孤记账",
-  "short_name": "青孤记账",
-  "description": "个人日常记账工具",
+  "name": "青孤项目",
+  "short_name": "青孤项目",
+  "description": "离线工具集 · 随时可用",
   "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",

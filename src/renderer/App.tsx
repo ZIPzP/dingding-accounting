@@ -9,12 +9,13 @@ import { Layout, Menu } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   HomeOutlined,
+  BookOutlined,
   PlusCircleOutlined,
   PieChartOutlined,
   SettingOutlined,
-  ThunderboltOutlined,
 } from '@ant-design/icons';
 import HomePage from './pages/HomePage';
+import BillList from './pages/BillList';
 import AddRecord from './pages/AddRecord';
 import Statistics from './pages/Statistics';
 import Settings from './pages/Settings';
@@ -24,11 +25,11 @@ import SnakeGamePage from './pages/SnakeGamePage';
 const { Sider, Content } = Layout;
 
 const menuItems: MenuProps['items'] = [
-  { key: '/', icon: <HomeOutlined />, label: '账单' },
+  { key: '/', icon: <HomeOutlined />, label: '首页' },
+  { key: '/bills', icon: <BookOutlined />, label: '记账' },
   { key: '/add', icon: <PlusCircleOutlined />, label: '记一笔' },
   { key: '/stats', icon: <PieChartOutlined />, label: '统计' },
   { key: '/settings', icon: <SettingOutlined />, label: '设置' },
-  { key: '/game', icon: <ThunderboltOutlined />, label: '小游戏' },
 ];
 
 const App: React.FC = () => {
@@ -55,10 +56,11 @@ const App: React.FC = () => {
       <Layout style={{ minHeight: '100vh', paddingBottom: 56 }}>
         <Content className="main-content mobile-content">
           <div className="mobile-header">
-            📒 青孤记账
+            🏠 青孤项目
           </div>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/bills" element={<BillList />} />
             <Route path="/add" element={<AddRecord />} />
             <Route path="/edit/:id" element={<AddRecord />} />
             <Route path="/stats" element={<Statistics />} />
@@ -100,7 +102,7 @@ const App: React.FC = () => {
         style={{ borderRight: '1px solid #f0f0f0' }}
       >
         <div className="logo">
-          {collapsed ? '📒' : '📒 青孤记账'}
+          {collapsed ? '📒' : '🏠 青孤项目'}
         </div>
         <Menu
           mode="inline"
@@ -113,6 +115,7 @@ const App: React.FC = () => {
         <Content className="main-content">
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/bills" element={<BillList />} />
             <Route path="/add" element={<AddRecord />} />
             <Route path="/edit/:id" element={<AddRecord />} />
             <Route path="/stats" element={<Statistics />} />

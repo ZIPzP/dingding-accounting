@@ -1,7 +1,7 @@
-// 青孤记账 — Service Worker
+// 青孤项目 — Service Worker
 // 提供离线缓存支持，让 PWA 可以离线访问
 
-const CACHE_NAME = 'qinggu-accounting-v1';
+const CACHE_NAME = 'qinggu-project-v1';
 
 // 需要预缓存的静态资源
 const PRECACHE_URLS = [

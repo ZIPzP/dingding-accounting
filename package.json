@@ -1,9 +1,9 @@
 {
-  "name": "qinggu-accounting",
+  "name": "qinggu-project",
   "version": "1.0.0",
-  "description": "青孤记账 - 个人记账工具",
+  "description": "青孤项目 - 离线工具集",
   "main": "dist/main/index.js",
-  "author": "青孤记账",
+  "author": "青孤项目",
   "license": "MIT",
   "scripts": {
     "dev": "concurrently -k -n main,renderer -c blue,green \"npm run dev:main\" \"npm run dev:renderer\"",

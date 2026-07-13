@@ -303,6 +303,140 @@ body {
   }
 }
 
+/* ===== 中心首页 ===== */
+
+.hub-header {
+  text-align: center;
+  padding: 16px 0 8px;
+}
+
+.hub-section {
+  margin-bottom: 8px;
+}
+
+.hub-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 🎮 小游戏板块 — 深色主题 */
+.hub-games .hub-section-title {
+  color: #722ed1;
+}
+
+.game-card {
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 1px solid rgba(114, 46, 209, 0.25);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.game-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(114, 46, 209, 0.25);
+}
+
+.game-card:active {
+  transform: translateY(-1px);
+}
+
+.game-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 18px;
+}
+
+.game-card-icon {
+  font-size: 40px;
+  flex-shrink: 0;
+}
+
+.game-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.game-card-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.game-card-desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.game-card-arrow {
+  flex-shrink: 0;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* 🛠️ 生活工具板块 — 浅色主题 */
+.hub-tools .hub-section-title {
+  color: #1677ff;
+}
+
+.tool-card {
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-left: 4px solid #1677ff;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.tool-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.tool-card:active {
+  transform: translateX(2px);
+}
+
+.tool-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 16px;
+}
+
+.tool-card-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.tool-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.tool-card-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+  margin-bottom: 4px;
+}
+
+.tool-card-desc {
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.tool-card-arrow {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: #bfbfbf;
+}
+
 /* ===== 响应式：平板端 ===== */
 
 @media (min-width: 769px) and (max-width: 1024px) {

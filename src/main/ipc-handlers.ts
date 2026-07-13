@@ -99,7 +99,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('export-csv', async (_event, csvContent: string) => {
     const result = await dialog.showSaveDialog({
       title: '导出账单数据',
-      defaultPath: `青孤记账_导出_${new Date().toISOString().slice(0, 10)}.csv`,
+      defaultPath: `青孤项目_导出_${new Date().toISOString().slice(0, 10)}.csv`,
       filters: [
         { name: 'CSV 文件', extensions: ['csv'] },
         { name: '所有文件', extensions: ['*'] },
@@ -117,7 +117,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('backup-database', async () => {
     const result = await dialog.showSaveDialog({
       title: '备份数据库',
-      defaultPath: `青孤记账_备份_${new Date().toISOString().slice(0, 10)}.db`,
+      defaultPath: `青孤项目_备份_${new Date().toISOString().slice(0, 10)}.db`,
       filters: [
         { name: '数据库文件', extensions: ['db'] },
         { name: '所有文件', extensions: ['*'] },
