@@ -19,15 +19,13 @@ interface GameInfo {
 }
 
 const games: GameInfo[] = [
-  {
-    key: 'snake',
-    name: '🐍 贪吃蛇',
-    icon: '🐍',
-    desc: '经典贪吃蛇游戏，支持触屏操控、排行榜、多彩皮肤和速度调节',
-    color: '#52c41a',
-    route: '/game/snake',
-  },
-  // 以后在这里添加更多游戏
+  { key: 'snake', name: '🐍 贪吃蛇', icon: '🐍', desc: '经典贪吃蛇，触屏操控、排行榜、多彩皮肤、横竖屏切换', color: '#52c41a', route: '/game/snake' },
+  { key: 'tetris', name: '🧱 俄罗斯方块', icon: '🧱', desc: '经典消除，七种方块，分数加倍，挑战高分', color: '#1890ff', route: '/game/tetris' },
+  { key: '2048', name: '🔢 2048', icon: '🔢', desc: '滑动合并数字，挑战 2048 极限', color: '#edc22e', route: '/game/2048' },
+  { key: 'minesweeper', name: '🧹 扫雷', icon: '💣', desc: '经典扫雷，初级/专家模式，考验推理能力', color: '#fa8c16', route: '/game/minesweeper' },
+  { key: 'breakout', name: '🏓 打砖块', icon: '🧱', desc: '弹球打砖块，清空所有砖块过关', color: '#eb2f96', route: '/game/breakout' },
+  { key: 'whackamole', name: '🎯 打地鼠', icon: '🔨', desc: '30 秒限时挑战，眼疾手快打地鼠', color: '#f5222d', route: '/game/whackamole' },
+  { key: 'tictactoe', name: '⭕ 井字棋', icon: '🎯', desc: '人机对战，三子连珠即获胜', color: '#722ed1', route: '/game/tictactoe' },
 ];
 
 const GameHub: React.FC = () => {

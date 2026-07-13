@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>打地鼠 - 青孤游戏</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+html, body {
+  width: 100%;
+  min-height: 100dvh;
+}
+body {
+  background: #0a0a14;
+  color: #dcdcdc;
+  font-family: "Microsoft YaHei","PingFang SC",Arial,sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+}
+.container {
+  width: min(500px, 100%);
+}
+.game-area {
+  background: #0f0f19;
+  border: 2px solid #2a2a40;
+  border-radius: 6px;
+  padding: clamp(16px, 4vw, 28px);
+  position: relative;
+}
+h1 {
+  text-align: center;
+  font-size: clamp(22px, 5.5vw, 30px);
+  color: #ffc832;
+  margin-bottom: 14px;
+  letter-spacing: 2px;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.header-item {
+  flex: 1;
+  background: #1e1e2d;
+  padding: clamp(6px, 2vw, 10px) clamp(10px, 3vw, 16px);
+  border-radius: 6px;
+  text-align: center;
+  font-size: clamp(14px, 3.5vw, 18px);
+  color: #8c8c8c;
+}
+.header-item .val {
+  color: #ffc832;
+  font-weight: bold;
+  font-size: clamp(18px, 4.5vw, 24px);
+  margin-left: 4px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(10px, 2.5vw, 18px);
+  margin-bottom: 16px;
+  padding: 4px;
+}
+.hole {
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 50% 80%, #1a1a30, #0d0d1a);
+  border-radius: 50%;
+  border: 3px solid #2a2a40;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: inset 0 6px 12px rgba(0,0,0,0.7);
+}
+.hole:active {
+  transform: scale(0.97);
+}
+.mole-wrapper {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 0;
+  height: 88%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(110%);
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+.mole-wrapper.active {
+  transform: translateY(2%);
+}
+.mole {
+  width: 84%;
+  height: 84%;
+  background: linear-gradient(180deg, #ad8228 0%, #8B6914 50%, #6d4f0a 100%);
+  border-radius: 50% 50% 45% 45%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(26px, 8vw, 44px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.6), inset 0 -3px 6px rgba(0,0,0,0.3);
+  border: 2px solid #5a3e08;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.1s;
+  line-height: 1;
+  padding-bottom: 6px;
+}
+.mole::before {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: 20%;
+  width: 22%;
+  height: 18%;
+  background: radial-gradient(ellipse, rgba(255,255,200,0.25) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: rotate(-25deg);
+  pointer-events: none;
+}
+.mole.hit {
+  background: #ff3333 !important;
+  border-color: #cc0000 !important;
+}
+.mole.hit::before {
+  display: none;
+}
+@keyframes moleHit {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.85); }
+  100% { transform: scale(1); }
+}
+.mole-wrapper.hit-anim .mole {
+  animation: moleHit 0.3s ease;
+}
+.btn {
+  display: block;
+  width: 100%;
+  padding: clamp(10px, 2.5vw, 14px);
+  font-size: clamp(16px, 4vw, 20px);
+  font-family: inherit;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s, opacity 0.2s;
+  letter-spacing: 1px;
+}
+.btn-green {
+  background: #3cb43c;
+  color: #fff;
+}
+.btn-green:hover {
+  background: #45c845;
+}
+.btn-green:active {
+  background: #2a8a2a;
+}
+.btn-gray {
+  background: #1e1e32;
+  color: #aab;
+}
+.btn-gray:hover {
+  background: #3c3c64;
+}
+.btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  border-radius: 6px;
+  z-index: 10;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.overlay.show {
+  display: flex;
+}
+.overlay h2 {
+  color: #ffc832;
+  font-size: clamp(28px, 7vw, 40px);
+  margin-bottom: 4px;
+}
+.overlay .sub {
+  color: #8c8c8c;
+  font-size: clamp(14px, 3.5vw, 18px);
+  margin-bottom: 12px;
+}
+.overlay .final-score {
+  font-size: clamp(40px, 10vw, 56px);
+  color: #ffc832;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+.overlay .final-label {
+  color: #8c8c8c;
+  font-size: clamp(14px, 3.5vw, 18px);
+  margin-bottom: 20px;
+}
+.overlay .btn {
+  max-width: 220px;
+}
+.score-popup {
+  position: fixed;
+  pointer-events: none;
+  z-index: 100;
+  font-size: clamp(20px, 5vw, 28px);
+  font-weight: bold;
+  color: #ffc832;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  animation: scoreFloat 0.7s ease-out forwards;
+}
+@keyframes scoreFloat {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-30px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(1);
+  }
+}
+/* Mobile improvements */
+@media (max-width: 400px) {
+  .game-area {
+    padding: 12px 10px;
+  }
+  .grid {
+    gap: 8px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="game-area" id="gameArea">
+  <h1>🔨 打地鼠</h1>
+  <div class="header">
+    <div class="header-item">🎯 得分 <span class="val" id="scoreDisplay">0</span></div>
+    <div class="header-item">⏱️ 时间 <span class="val" id="timerDisplay">30</span>s</div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <button class="btn btn-green" id="startBtn">开始游戏</button>
+  <div class="overlay" id="overlay">
+    <h2>⏰ 时间到！</h2>
+    <div class="sub">本局得分</div>
+    <div class="final-score" id="finalScore">0</div>
+    <div class="final-label">分</div>
+    <button class="btn btn-green" id="restartBtn">再来一局</button>
+  </div>
+</div>
+</div>
+<script>
+(function(){
+  const HOLE_COUNT = 9;
+  const GAME_DURATION = 30;
+
+  let score = 0;
+  let timeLeft = GAME_DURATION;
+  let gameState = 'idle'; // idle | playing | gameover
+  let moleActive = new Array(HOLE_COUNT).fill(false);
+  let moleTimers = new Array(HOLE_COUNT).fill(null);
+  let spawnTimer = null;
+  let countdownTimer = null;
+  let spawnCount = 0;
+
+  const grid = document.getElementById('grid');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const timerDisplay = document.getElementById('timerDisplay');
+  const startBtn = document.getElementById('startBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const overlay = document.getElementById('overlay');
+  const finalScoreSpan = document.getElementById('finalScore');
+
+  /* ---- create holes ---- */
+  for (let i = 0; i < HOLE_COUNT; i++) {
+    const hole = document.createElement('div');
+    hole.className = 'hole';
+    hole.dataset.idx = i;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mole-wrapper';
+
+    const mole = document.createElement('div');
+    mole.className = 'mole';
+    mole.textContent = '🐹';
+
+    wrapper.appendChild(mole);
+    hole.appendChild(wrapper);
+    grid.appendChild(hole);
+  }
+
+  /* ---- helpers ---- */
+  function getHole(idx) { return grid.children[idx]; }
+  function getWrapper(idx) { return getHole(idx).querySelector('.mole-wrapper'); }
+
+  /* ---- core mechanics ---- */
+  function handleWhack(idx) {
+    if (gameState !== 'playing') return;
+    if (!moleActive[idx]) return;
+
+    const wrapper = getWrapper(idx);
+    if (wrapper.classList.contains('hit')) return;
+
+    // Hit!
+    moleActive[idx] = false;
+    if (moleTimers[idx]) {
+      clearTimeout(moleTimers[idx]);
+      moleTimers[idx] = null;
+    }
+
+    wrapper.classList.add('hit', 'hit-anim');
+    score += 10;
+    updateScore();
+    showScorePopup(getHole(idx));
+
+    setTimeout(() => {
+      wrapper.classList.remove('hit', 'hit-anim', 'active');
+    }, 300);
+  }
+
+  function retractMole(idx) {
+    if (!moleActive[idx]) return;
+    moleActive[idx] = false;
+    const wrapper = getWrapper(idx);
+    wrapper.classList.remove('active', 'hit', 'hit-anim');
+    moleTimers[idx] = null;
+  }
+
+  function spawnMole() {
+    if (gameState !== 'playing') return;
+
+    // Gather free holes
+    const free = [];
+    for (let i = 0; i < HOLE_COUNT; i++) {
+      if (!moleActive[i]) free.push(i);
+    }
+    if (free.length === 0) return;
+
+    const idx = free[Math.floor(Math.random() * free.length)];
+    moleActive[idx] = true;
+    const wrapper = getWrapper(idx);
+    wrapper.classList.add('active');
+    spawnCount++;
+
+    // Auto-retract
+    const stay = 700 + Math.random() * 800; // 0.7 – 1.5 s
+    moleTimers[idx] = setTimeout(() => {
+      if (moleActive[idx]) retractMole(idx);
+    }, stay);
+  }
+
+  function scheduleSpawn() {
+    if (gameState !== 'playing') return;
+    const delay = 550 + Math.random() * 650; // 0.55 – 1.2 s
+    spawnTimer = setTimeout(() => {
+      spawnMole();
+      scheduleSpawn();
+    }, delay);
+  }
+
+  /* ---- UI ---- */
+  function updateScore() { scoreDisplay.textContent = score; }
+  function updateTimer() { timerDisplay.textContent = timeLeft; }
+
+  function showScorePopup(el) {
+    const rect = el.getBoundingClientRect();
+    const popup = document.createElement('div');
+    popup.className = 'score-popup';
+    popup.textContent = '+10';
+    popup.style.left = (rect.left + rect.width / 2 - 16) + 'px';
+    popup.style.top = (rect.top - 8) + 'px';
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 700);
+  }
+
+  /* ---- game flow ---- */
+  function startGame() {
+    // Reset all
+    if (countdownTimer) clearInterval(countdownTimer);
+    if (spawnTimer) clearTimeout(spawnTimer);
+    for (let i = 0; i < HOLE_COUNT; i++) {
+      if (moleTimers[i]) clearTimeout(moleTimers[i]);
+      moleActive[i] = false;
+      moleTimers[i] = null;
+      const w = getWrapper(i);
+      w.classList.remove('active', 'hit', 'hit-anim');
+    }
+
+    score = 0;
+    timeLeft = GAME_DURATION;
+    spawnCount = 0;
+    gameState = 'playing';
+
+    updateScore();
+    updateTimer();
+    overlay.classList.remove('show');
+    startBtn.textContent = '🔨 打地鼠中...';
+    startBtn.disabled = true;
+
+    // Spawn first mole right away, then schedule
+    spawnMole();
+    scheduleSpawn();
+
+    countdownTimer = setInterval(() => {
+      timeLeft--;
+      updateTimer();
+      if (timeLeft <= 0) endGame();
+    }, 1000);
+  }
+
+  function endGame() {
+    gameState = 'gameover';
+
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+    clearTimeout(spawnTimer);
+    spawnTimer = null;
+
+    for (let i = 0; i < HOLE_COUNT; i++) {
+      if (moleTimers[i]) clearTimeout(moleTimers[i]);
+      moleActive[i] = false;
+      moleTimers[i] = null;
+      const w = getWrapper(i);
+      w.classList.remove('active', 'hit', 'hit-anim');
+    }
+
+    finalScoreSpan.textContent = score;
+    overlay.classList.add('show');
+    startBtn.textContent = '开始游戏';
+    startBtn.disabled = false;
+  }
+
+  /* ---- events ---- */
+  grid.addEventListener('click', (e) => {
+    const hole = e.target.closest('.hole');
+    if (!hole) return;
+    const idx = parseInt(hole.dataset.idx, 10);
+    handleWhack(idx);
+  });
+
+  grid.addEventListener('touchstart', (e) => {
+    // Let click handle it, but prevent double-call
+  }, { passive: true });
+
+  startBtn.addEventListener('click', startGame);
+  restartBtn.addEventListener('click', startGame);
+})();
+</script>
+</body>
+</html>

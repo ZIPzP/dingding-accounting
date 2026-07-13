@@ -21,6 +21,12 @@ import Statistics from './pages/Statistics';
 import Settings from './pages/Settings';
 import GameHub from './pages/GameHub';
 import SnakeGamePage from './pages/SnakeGamePage';
+import TetrisGamePage from './pages/TetrisGamePage';
+import Game2048Page from './pages/Game2048Page';
+import MinesweeperPage from './pages/MinesweeperPage';
+import BreakoutPage from './pages/BreakoutPage';
+import WhackAMolePage from './pages/WhackAMolePage';
+import TicTacToePage from './pages/TicTacToePage';
 
 const { Sider, Content } = Layout;
 
@@ -67,6 +73,12 @@ const App: React.FC = () => {
             <Route path="/settings" element={<Settings />} />
             <Route path="/game" element={<GameHub />} />
             <Route path="/game/snake" element={<SnakeGamePage />} />
+            <Route path="/game/tetris" element={<TetrisGamePage />} />
+            <Route path="/game/2048" element={<Game2048Page />} />
+            <Route path="/game/minesweeper" element={<MinesweeperPage />} />
+            <Route path="/game/breakout" element={<BreakoutPage />} />
+            <Route path="/game/whackamole" element={<WhackAMolePage />} />
+            <Route path="/game/tictactoe" element={<TicTacToePage />} />
           </Routes>
         </Content>
 
@@ -122,6 +134,12 @@ const App: React.FC = () => {
             <Route path="/settings" element={<Settings />} />
             <Route path="/game" element={<GameHub />} />
             <Route path="/game/snake" element={<SnakeGamePage />} />
+            <Route path="/game/tetris" element={<TetrisGamePage />} />
+            <Route path="/game/2048" element={<Game2048Page />} />
+            <Route path="/game/minesweeper" element={<MinesweeperPage />} />
+            <Route path="/game/breakout" element={<BreakoutPage />} />
+            <Route path="/game/whackamole" element={<WhackAMolePage />} />
+            <Route path="/game/tictactoe" element={<TicTacToePage />} />
           </Routes>
         </Content>
       </Layout>

@@ -26,14 +26,13 @@ interface HubItem {
 }
 
 const games: HubItem[] = [
-  {
-    key: 'snake',
-    name: '贪吃蛇',
-    icon: '🐍',
-    desc: '经典贪吃蛇游戏，横竖屏切换，排行榜',
-    route: '/game/snake',
-    color: '#52c41a',
-  },
+  { key: 'snake', name: '贪吃蛇', icon: '🐍', desc: '经典贪吃蛇，横竖屏切换，排行榜', route: '/game/snake', color: '#52c41a' },
+  { key: 'tetris', name: '俄罗斯方块', icon: '🧱', desc: '经典消除，挑战高分', route: '/game/tetris', color: '#1890ff' },
+  { key: '2048', name: '2048', icon: '🔢', desc: '滑动合并，挑战极限', route: '/game/2048', color: '#edc22e' },
+  { key: 'minesweeper', name: '扫雷', icon: '💣', desc: '推理排雷，初级专家模式', route: '/game/minesweeper', color: '#fa8c16' },
+  { key: 'breakout', name: '打砖块', icon: '🧱', desc: '弹球打砖，清空过关', route: '/game/breakout', color: '#eb2f96' },
+  { key: 'whackamole', name: '打地鼠', icon: '🔨', desc: '30秒限时，眼疾手快', route: '/game/whackamole', color: '#f5222d' },
+  { key: 'tictactoe', name: '井字棋', icon: '🎯', desc: '人机对战，三子连珠', route: '/game/tictactoe', color: '#722ed1' },
 ];
 
 const tools: HubItem[] = [
