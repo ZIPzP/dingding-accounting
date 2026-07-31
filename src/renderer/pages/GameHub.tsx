@@ -47,19 +47,23 @@ const GameHub: React.FC = () => {
               onClick={() => navigate(game.route)}
               style={{
                 borderTop: `4px solid ${game.color}`,
-                borderRadius: 8,
+                borderRadius: 14,
                 height: '100%',
+                overflow: 'hidden',
               }}
+              styles={{ body: { padding: '28px 20px' } }}
             >
-              <div style={{ textAlign: 'center', marginBottom: 12 }}>
-                <span style={{ fontSize: 48 }}>{game.icon}</span>
+              <div style={{ textAlign: 'center', marginBottom: 14 }}>
+                <span style={{ fontSize: 48, display: 'inline-block', transition: 'transform 0.3s ease' }}>
+                  {game.icon}
+                </span>
               </div>
-              <div style={{ textAlign: 'center', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
+              <div style={{ textAlign: 'center', fontSize: 18, fontWeight: 700, marginBottom: 8, color: '#1a1d29' }}>
                 {game.name}
               </div>
               <Text
                 type="secondary"
-                style={{ fontSize: 13, display: 'block', textAlign: 'center' }}
+                style={{ fontSize: 13, display: 'block', textAlign: 'center', lineHeight: 1.5 }}
               >
                 {game.desc}
               </Text>

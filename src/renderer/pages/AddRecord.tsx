@@ -112,7 +112,7 @@ const AddRecord: React.FC = () => {
   }
 
   return (
-    <div className="page-card">
+      <div className="page-card">
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
         <Button
           type="text"
@@ -121,11 +121,11 @@ const AddRecord: React.FC = () => {
           style={{ marginRight: 12 }}
         />
         <span className="page-title" style={{ marginBottom: 0 }}>
-          {isEdit ? '编辑记录' : '记一笔'}
+          {isEdit ? '✏️ 编辑记录' : '✍️ 记一笔'}
         </span>
       </div>
 
-      <Card style={{ maxWidth: 520 }}>
+      <Card style={{ maxWidth: 520, borderRadius: 14 }}>
         <Form
           form={form}
           layout="vertical"

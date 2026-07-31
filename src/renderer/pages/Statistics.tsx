@@ -37,26 +37,32 @@ const Statistics: React.FC = () => {
         tooltip: {
           trigger: 'item' as const,
           formatter: '{b}: ¥{c} ({d}%)',
+          backgroundColor: 'rgba(30, 27, 58, 0.85)',
+          borderColor: 'rgba(124, 58, 237, 0.3)',
+          textStyle: { color: '#fff', fontSize: 13 },
         },
         legend: {
           orient: 'vertical' as const,
           right: 10,
           top: 'center',
+          textStyle: { color: '#6b7280' },
         },
+        color: ['#4f6df5', '#7c3aed', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#8b5cf6', '#f43f5e', '#6366f1'],
         series: [
           {
             type: 'pie',
-            radius: ['40%', '70%'],
+            radius: ['42%', '70%'],
             center: ['35%', '50%'],
             avoidLabelOverlap: false,
             itemStyle: {
-              borderRadius: 6,
+              borderRadius: 8,
               borderColor: '#fff',
-              borderWidth: 2,
+              borderWidth: 3,
             },
             label: { show: false },
             emphasis: {
-              label: { show: true, fontSize: 16, fontWeight: 'bold' },
+              label: { show: true, fontSize: 16, fontWeight: 'bold', color: '#1a1d29' },
+              itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.15)' },
             },
             data: monthlyStats.categoryStats
               .filter((s) => s.total > 0)
@@ -74,6 +80,9 @@ const Statistics: React.FC = () => {
     tooltip: {
       trigger: 'axis' as const,
       formatter: '{b}<br/>支出: ¥{c}',
+      backgroundColor: 'rgba(30, 27, 58, 0.85)',
+      borderColor: 'rgba(124, 58, 237, 0.3)',
+      textStyle: { color: '#fff', fontSize: 13 },
     },
     grid: {
       left: 50,
@@ -83,29 +92,33 @@ const Statistics: React.FC = () => {
     },
     xAxis: {
       type: 'category' as const,
-      data: trend.map((t) => t.label.slice(0, -1)), // 去掉"月"字
-      axisLabel: { rotate: 30 },
+      data: trend.map((t) => t.label.slice(0, -1)),
+      axisLabel: { rotate: 30, color: '#9ca3af' },
+      axisLine: { lineStyle: { color: '#eef0f5' } },
     },
     yAxis: {
       type: 'value' as const,
       axisLabel: {
         formatter: '¥{value}',
+        color: '#9ca3af',
       },
+      splitLine: { lineStyle: { color: '#f0f2f8', type: 'dashed' } },
     },
     series: [
       {
         type: 'line',
         data: trend.map((t) => t.total),
         smooth: true,
-        lineStyle: { color: '#1677ff', width: 2 },
-        itemStyle: { color: '#1677ff' },
+        lineStyle: { color: '#4f6df5', width: 3 },
+        itemStyle: { color: '#4f6df5', borderColor: '#fff', borderWidth: 2 },
+        symbolSize: 8,
         areaStyle: {
           color: {
             type: 'linear',
             x: 0, y: 0, x2: 0, y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(22, 119, 255, 0.2)' },
-              { offset: 1, color: 'rgba(22, 119, 255, 0.02)' },
+              { offset: 0, color: 'rgba(79, 109, 245, 0.25)' },
+              { offset: 1, color: 'rgba(79, 109, 245, 0.02)' },
             ],
           },
         },
@@ -116,7 +129,7 @@ const Statistics: React.FC = () => {
   return (
     <div className="page-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <span className="page-title" style={{ marginBottom: 0 }}>统计分析</span>
+        <span className="page-title" style={{ marginBottom: 0 }}>📊 统计分析</span>
         <DatePicker
           picker="month"
           value={selectedMonth}
@@ -138,7 +151,7 @@ const Statistics: React.FC = () => {
                     value={monthlyStats.total}
                     precision={2}
                     prefix="¥"
-                    valueStyle={{ color: '#ff4d4f', fontSize: 28 }}
+                    valueStyle={{ color: '#f5455b', fontSize: 28, fontWeight: 700 }}
                   />
                 </Card>
               </Col>
@@ -148,7 +161,7 @@ const Statistics: React.FC = () => {
                     title="记账笔数"
                     value={monthlyStats.count}
                     suffix="笔"
-                    valueStyle={{ fontSize: 28 }}
+                    valueStyle={{ fontSize: 28, fontWeight: 700, color: '#4f6df5' }}
                   />
                 </Card>
               </Col>
@@ -159,7 +172,7 @@ const Statistics: React.FC = () => {
                     value={monthlyStats.dailyAvg}
                     precision={2}
                     prefix="¥"
-                    valueStyle={{ color: '#faad14', fontSize: 28 }}
+                    valueStyle={{ color: '#faad14', fontSize: 28, fontWeight: 700 }}
                   />
                 </Card>
               </Col>

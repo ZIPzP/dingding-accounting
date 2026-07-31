@@ -55,7 +55,7 @@ const HomePage: React.FC = () => {
     <div className="page-card" style={{ maxWidth: 800, margin: '0 auto' }}>
       {/* 顶部标题 */}
       <div className="hub-header">
-        <Title level={3} style={{ marginBottom: 4 }}>
+        <Title level={3} style={{ marginBottom: 4, fontWeight: 700 }}>
           🏠 青孤项目
         </Title>
         <Text type="secondary" style={{ fontSize: 14 }}>
@@ -135,8 +135,8 @@ const HomePage: React.FC = () => {
 
       {/* 底部提示 */}
       <div style={{ textAlign: 'center', marginTop: 32, paddingBottom: 16 }}>
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          所有数据和游戏均离线可用，无需网络
+        <Text type="secondary" style={{ fontSize: 12, opacity: 0.7 }}>
+          ✨ 所有数据和游戏均离线可用，无需网络
         </Text>
       </div>
     </div>

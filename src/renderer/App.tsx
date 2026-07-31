@@ -59,7 +59,7 @@ const App: React.FC = () => {
   // 手机端布局
   if (mobile) {
     return (
-      <Layout style={{ minHeight: '100vh', paddingBottom: 56 }}>
+      <Layout style={{ minHeight: '100vh', paddingBottom: 60 }}>
         <Content className="main-content mobile-content">
           <div className="mobile-header">
             🏠 青孤项目
@@ -111,7 +111,7 @@ const App: React.FC = () => {
         collapsed={collapsed}
         onCollapse={setCollapsed}
         theme="light"
-        style={{ borderRight: '1px solid #f0f0f0' }}
+        style={{ borderRight: '1px solid var(--qg-border)' }}
       >
         <div className="logo">
           {collapsed ? '📒' : '🏠 青孤项目'}

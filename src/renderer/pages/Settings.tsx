@@ -109,7 +109,7 @@ const Settings: React.FC = () => {
 
   return (
     <div className="page-card">
-      <div className="page-title">设置</div>
+      <div className="page-title">⚙️ 设置</div>
 
       {/* 分类管理 */}
       <Card title="📂 分类管理" style={{ marginBottom: 24 }}>

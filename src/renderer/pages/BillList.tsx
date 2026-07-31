@@ -91,7 +91,7 @@ const BillList: React.FC = () => {
       <div className="page-title">📒 记账</div>
 
       {/* 筛选栏 */}
-      <Card size="small" style={{ marginBottom: 16, background: '#fafafa' }}>
+      <Card size="small" style={{ marginBottom: 16, background: 'linear-gradient(135deg, #fafbff, #f5f7ff)', border: '1px solid #eef0f5' }}>
         <Row gutter={[16, 12]} align="middle">
           <Col>
             <DatePicker

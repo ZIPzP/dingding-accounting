@@ -4,7 +4,23 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent; /* 去掉移动端点击高亮 */
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --qg-primary: #4f6df5;
+  --qg-primary-light: #6b85f7;
+  --qg-primary-dark: #3b56d4;
+  --qg-bg: #f0f2f8;
+  --qg-card-bg: #ffffff;
+  --qg-text: #1a1d29;
+  --qg-text-secondary: #6b7280;
+  --qg-text-tertiary: #9ca3af;
+  --qg-border: #eef0f5;
+  --qg-shadow: 0 2px 12px rgba(79, 109, 245, 0.06);
+  --qg-shadow-hover: 0 8px 30px rgba(79, 109, 245, 0.12);
+  --qg-radius: 14px;
+  --qg-radius-sm: 10px;
 }
 
 body {
@@ -13,9 +29,25 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #f5f5f5;
-  /* 防止 iOS 橡皮筋效果导致的问题 */
+  background: linear-gradient(135deg, #f0f2f8 0%, #e8ebf5 50%, #f0f2f8 100%);
+  background-attachment: fixed;
   overscroll-behavior: none;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(79, 109, 245, 0.2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(79, 109, 245, 0.35);
 }
 
 /* ===== 桌面端：侧边栏 Logo ===== */
@@ -26,18 +58,19 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  font-weight: 600;
-  color: #1677ff;
-  border-bottom: 1px solid #f0f0f0;
+  font-weight: 700;
+  color: var(--qg-primary);
+  border-bottom: 1px solid var(--qg-border);
   white-space: nowrap;
   overflow: hidden;
+  letter-spacing: 0.5px;
 }
 
 /* ===== 主内容区 ===== */
 
 .main-content {
-  padding: 24px;
-  background: #f5f5f5;
+  padding: 28px;
+  background: transparent;
   overflow-y: auto;
   height: 100vh;
 }
@@ -48,17 +81,18 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 48px;
+  height: 52px;
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 700;
   color: #fff;
-  background: #1677ff;
-  margin: -12px -12px 12px -12px;
+  background: linear-gradient(135deg, var(--qg-primary) 0%, var(--qg-primary-light) 100%);
+  margin: -12px -12px 16px -12px;
   position: sticky;
   top: 0;
   z-index: 10;
-  /* iOS 刘海屏适配 */
   padding-top: env(safe-area-inset-top, 0px);
+  box-shadow: 0 2px 16px rgba(79, 109, 245, 0.2);
+  letter-spacing: 0.5px;
 }
 
 /* ===== 手机端：底部导航栏 ===== */
@@ -68,17 +102,17 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 56px;
-  background: #fff;
-  border-top: 1px solid #e8e8e8;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(238, 240, 245, 0.6);
   display: flex;
   align-items: center;
   justify-content: space-around;
   z-index: 100;
-  /* iOS 底部安全区适配 */
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  /* 底部阴影 */
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .mobile-tab-item {
@@ -89,83 +123,119 @@ body {
   flex: 1;
   height: 100%;
   cursor: pointer;
-  color: #8c8c8c;
-  transition: color 0.2s;
-  /* 触屏最小点击区域 */
+  color: var(--qg-text-tertiary);
+  transition: color 0.25s ease, transform 0.15s ease;
   min-width: 44px;
   min-height: 44px;
   -webkit-tap-highlight-color: transparent;
+  position: relative;
 }
 
 .mobile-tab-item.active {
-  color: #1677ff;
+  color: var(--qg-primary);
+}
+
+.mobile-tab-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--qg-primary);
+  transition: width 0.25s ease;
+}
+
+.mobile-tab-item:active {
+  transform: scale(0.92);
 }
 
 .mobile-tab-icon {
-  font-size: 20px;
+  font-size: 21px;
   line-height: 1;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
+  transition: transform 0.25s ease;
+}
+
+.mobile-tab-item.active .mobile-tab-icon {
+  transform: translateY(-1px);
 }
 
 .mobile-tab-label {
   font-size: 10px;
   line-height: 1;
+  font-weight: 500;
 }
 
 /* ===== 手机端内容区 ===== */
 
 .mobile-content {
   padding: 12px;
-  padding-bottom: 68px; /* 给底部导航栏留空间 */
+  padding-bottom: 72px;
   height: 100vh;
 }
 
 /* ===== 页面通用卡片 ===== */
 
 .page-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 24px;
+  background: var(--qg-card-bg);
+  border-radius: var(--qg-radius);
+  padding: 28px;
   min-height: 100%;
+  box-shadow: var(--qg-shadow);
+  border: 1px solid rgba(238, 240, 245, 0.5);
 }
 
 .page-title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   margin-bottom: 24px;
-  color: #1a1a1a;
+  color: var(--qg-text);
+  letter-spacing: 0.3px;
 }
 
 /* ===== 金额样式 ===== */
 
 .amount {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 16px;
-  color: #ff4d4f;
-  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  color: #f5455b;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  letter-spacing: -0.3px;
 }
 
 .amount::before {
-  content: '¥';
-  font-size: 14px;
+  content: '\FFE5';
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 1px;
 }
 
 /* ===== 统计卡片 ===== */
 
 .stat-card {
   text-align: center;
-  padding: 16px;
+  padding: 20px 16px;
+  border-radius: var(--qg-radius) !important;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--qg-shadow-hover) !important;
 }
 
 .stat-card .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: #1677ff;
+  color: var(--qg-primary);
 }
 
 .stat-card .stat-label {
   font-size: 14px;
-  color: #8c8c8c;
+  color: var(--qg-text-secondary);
   margin-top: 4px;
 }
 
@@ -174,11 +244,17 @@ body {
 .record-item {
   display: flex;
   align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
-  /* 触屏优化：整行可点击 */
+  padding: 18px 0;
+  border-bottom: 1px solid var(--qg-border);
   cursor: pointer;
   user-select: none;
+  transition: background 0.2s ease, padding-left 0.2s ease;
+  border-radius: 6px;
+}
+
+.record-item:hover {
+  background: linear-gradient(90deg, rgba(79, 109, 245, 0.03), transparent);
+  padding-left: 8px;
 }
 
 .record-item:last-child {
@@ -186,16 +262,17 @@ body {
 }
 
 .record-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: #f0f5ff;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #eef1ff, #e6eaff);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 22px;
   margin-right: 14px;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(79, 109, 245, 0.08);
 }
 
 .record-info {
@@ -205,28 +282,30 @@ body {
 
 .record-info .record-category {
   font-size: 15px;
-  font-weight: 500;
-  color: #1a1a1a;
+  font-weight: 600;
+  color: var(--qg-text);
 }
 
 .record-info .record-sub {
   font-size: 13px;
-  color: #8c8c8c;
+  color: var(--qg-text-secondary);
 }
 
 .record-info .record-note {
   font-size: 12px;
-  color: #bfbfbf;
+  color: var(--qg-text-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-top: 2px;
 }
 
 .record-date {
   font-size: 13px;
-  color: #8c8c8c;
+  color: var(--qg-text-tertiary);
   margin-right: 16px;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ===== 响应式：手机端 ===== */
@@ -237,13 +316,13 @@ body {
   }
 
   .page-card {
-    padding: 16px;
-    border-radius: 0;
+    padding: 18px;
+    border-radius: var(--qg-radius-sm);
   }
 
   .page-title {
-    font-size: 18px;
-    margin-bottom: 16px;
+    font-size: 19px;
+    margin-bottom: 18px;
   }
 
   .record-date {
@@ -255,33 +334,29 @@ body {
   }
 
   .record-icon {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     font-size: 20px;
-    border-radius: 10px;
+    border-radius: 12px;
   }
 
-  /* 统计卡片移动端适配 */
   .stat-card {
-    padding: 12px 8px;
+    padding: 14px 10px;
   }
 
   .stat-card .stat-value {
     font-size: 22px;
   }
 
-  /* 表单移动端全宽 */
   .ant-form-item {
     margin-bottom: 16px;
   }
 
-  /* 按钮触屏优化 */
   .ant-btn {
     min-height: 44px;
     touch-action: manipulation;
   }
 
-  /* 输入框触屏优化 */
   .ant-input,
   .ant-input-number,
   .ant-picker,
@@ -291,12 +366,10 @@ body {
     touch-action: manipulation;
   }
 
-  /* 日期选择器触屏优化 */
   .ant-picker {
     width: 100% !important;
   }
 
-  /* 弹窗触屏优化 */
   .ant-modal {
     max-width: calc(100vw - 32px) !important;
     margin: 8px;
@@ -307,38 +380,50 @@ body {
 
 .hub-header {
   text-align: center;
-  padding: 16px 0 8px;
+  padding: 20px 0 12px;
 }
 
 .hub-section {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .hub-section-title {
   font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 14px;
+  font-weight: 700;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* 🎮 小游戏板块 — 深色主题 */
+/* === 小游戏板块 === */
 .hub-games .hub-section-title {
-  color: #722ed1;
+  color: #7c3aed;
 }
 
 .game-card {
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-  border: 1px solid rgba(114, 46, 209, 0.25);
-  transition: transform 0.2s, box-shadow 0.2s;
+  background: linear-gradient(135deg, #1e1b3a, #1a1a2e, #16213e);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  position: relative;
+}
+
+.game-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.4), transparent);
 }
 
 .game-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(114, 46, 209, 0.25);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(124, 58, 237, 0.2);
+  border-color: rgba(124, 58, 237, 0.4);
 }
 
 .game-card:active {
@@ -349,12 +434,13 @@ body {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 20px 18px;
+  padding: 22px 20px;
 }
 
 .game-card-icon {
-  font-size: 40px;
+  font-size: 42px;
   flex-shrink: 0;
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.1));
 }
 
 .game-card-body {
@@ -367,35 +453,43 @@ body {
   font-weight: 700;
   color: #fff;
   margin-bottom: 4px;
+  letter-spacing: 0.3px;
 }
 
 .game-card-desc {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.4;
 }
 
 .game-card-arrow {
   flex-shrink: 0;
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.25);
+  transition: transform 0.25s ease, color 0.25s ease;
 }
 
-/* 🛠️ 生活工具板块 — 浅色主题 */
+.game-card:hover .game-card-arrow {
+  transform: translateX(4px);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* === 生活工具板块 === */
 .hub-tools .hub-section-title {
-  color: #1677ff;
+  color: var(--qg-primary);
 }
 
 .tool-card {
-  border-radius: 8px;
-  background: #fff;
-  border: 1px solid #f0f0f0;
-  border-left: 4px solid #1677ff;
-  transition: transform 0.2s, box-shadow 0.2s;
+  border-radius: 12px;
+  background: var(--qg-card-bg);
+  border: 1px solid var(--qg-border);
+  border-left: 4px solid var(--qg-primary);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .tool-card:hover {
   transform: translateX(4px);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(79, 109, 245, 0.1);
 }
 
 .tool-card:active {
@@ -406,11 +500,11 @@ body {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 18px 16px;
+  padding: 20px 18px;
 }
 
 .tool-card-icon {
-  font-size: 36px;
+  font-size: 38px;
   flex-shrink: 0;
 }
 
@@ -421,30 +515,127 @@ body {
 
 .tool-card-name {
   font-size: 16px;
-  font-weight: 600;
-  color: #262626;
+  font-weight: 700;
+  color: var(--qg-text);
   margin-bottom: 4px;
 }
 
 .tool-card-desc {
   font-size: 12px;
-  color: #8c8c8c;
+  color: var(--qg-text-secondary);
+  line-height: 1.4;
 }
 
 .tool-card-arrow {
   flex-shrink: 0;
   font-size: 14px;
-  color: #bfbfbf;
+  color: var(--qg-text-tertiary);
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.tool-card:hover .tool-card-arrow {
+  transform: translateX(3px);
+  color: var(--qg-primary);
+}
+
+/* ===== Ant Design 组件微调 ===== */
+
+/* 卡片 */
+.ant-card {
+  border-radius: var(--qg-radius) !important;
+  border-color: var(--qg-border) !important;
+  box-shadow: var(--qg-shadow);
+}
+
+.ant-card-hoverable:hover {
+  box-shadow: var(--qg-shadow-hover) !important;
+  border-color: rgba(79, 109, 245, 0.2) !important;
+}
+
+/* 按钮 */
+.ant-btn-primary {
+  background: var(--qg-primary) !important;
+  border-color: var(--qg-primary) !important;
+  box-shadow: 0 2px 8px rgba(79, 109, 245, 0.25);
+  transition: all 0.25s ease !important;
+}
+
+.ant-btn-primary:hover {
+  background: var(--qg-primary-light) !important;
+  border-color: var(--qg-primary-light) !important;
+  box-shadow: 0 4px 14px rgba(79, 109, 245, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+.ant-btn-primary:active {
+  transform: translateY(0) !important;
+}
+
+/* 输入框 */
+.ant-input,
+.ant-input-number,
+.ant-picker,
+.ant-select-selector,
+.ant-cascader {
+  border-radius: var(--qg-radius-sm) !important;
+}
+
+/* 菜单项 */
+.ant-menu-item {
+  border-radius: 8px !important;
+  margin: 4px 8px !important;
+  width: calc(100% - 16px) !important;
+  transition: all 0.2s ease !important;
+}
+
+.ant-menu-item-selected {
+  background: linear-gradient(135deg, rgba(79, 109, 245, 0.08), rgba(79, 109, 245, 0.04)) !important;
+  color: var(--qg-primary) !important;
+  font-weight: 600;
+}
+
+.ant-menu-item:not(.ant-menu-item-selected):hover {
+  background: rgba(79, 109, 245, 0.04) !important;
+  color: var(--qg-primary) !important;
+}
+
+/* Sider 折叠按钮 */
+.ant-layout-sider-trigger {
+  background: rgba(79, 109, 245, 0.06) !important;
+  color: var(--qg-text-secondary) !important;
+  border-top: 1px solid var(--qg-border);
+}
+
+/* Tag */
+.ant-tag {
+  border-radius: 6px !important;
+  font-weight: 500;
+}
+
+/* Spin */
+.ant-spin-dot-item {
+  background-color: var(--qg-primary) !important;
+}
+
+/* Divider */
+.ant-divider {
+  border-color: var(--qg-border) !important;
+}
+
+/* Descriptions */
+.ant-descriptions-item-label {
+  color: var(--qg-text-secondary) !important;
+  font-weight: 600 !important;
 }
 
 /* ===== 响应式：平板端 ===== */
 
 @media (min-width: 769px) and (max-width: 1024px) {
   .main-content {
-    padding: 16px;
+    padding: 20px;
   }
 
   .page-card {
-    padding: 20px;
+    padding: 24px;
   }
 }
