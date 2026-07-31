@@ -8,11 +8,13 @@
 }
 
 :root {
+  /* 默认变量 —— 会被 JavaScript 动态覆盖 */
   --qg-primary: #4f6df5;
   --qg-primary-light: #6b85f7;
   --qg-primary-dark: #3b56d4;
   --qg-bg: #f0f2f8;
   --qg-card-bg: #ffffff;
+  --qg-card-bg-transparent: rgba(255, 255, 255, 0.88);
   --qg-text: #1a1d29;
   --qg-text-secondary: #6b7280;
   --qg-text-tertiary: #9ca3af;
@@ -21,6 +23,11 @@
   --qg-shadow-hover: 0 8px 30px rgba(79, 109, 245, 0.12);
   --qg-radius: 14px;
   --qg-radius-sm: 10px;
+  --qg-bg-image: none;
+  --qg-bg-overlay: transparent;
+  --qg-game-bg: #f8f9fc;
+  --qg-game-surface: #ffffff;
+  --qg-game-border: #e5e7eb;
 }
 
 body {
@@ -29,9 +36,42 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #f0f2f8 0%, #e8ebf5 50%, #f0f2f8 100%);
+  background: var(--qg-bg);
   background-attachment: fixed;
   overscroll-behavior: none;
+}
+
+/* 有背景图时的遮罩 */
+body.has-bg-image {
+  background: var(--qg-bg);
+}
+
+body.has-bg-image::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--qg-bg-overlay);
+  z-index: -1;
+  pointer-events: none;
+}
+
+body.has-bg-image::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: var(--qg-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  z-index: -2;
+  pointer-events: none;
 }
 
 /* 滚动条美化 */
@@ -103,7 +143,7 @@ body {
   left: 0;
   right: 0;
   height: 60px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--qg-card-bg-transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid rgba(238, 240, 245, 0.6);
@@ -376,6 +416,18 @@ body {
   }
 }
 
+/* ===== 响应式：平板端 ===== */
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .main-content {
+    padding: 20px;
+  }
+
+  .page-card {
+    padding: 24px;
+  }
+}
+
 /* ===== 中心首页 ===== */
 
 .hub-header {
@@ -398,14 +450,14 @@ body {
 
 /* === 小游戏板块 === */
 .hub-games .hub-section-title {
-  color: #7c3aed;
+  color: var(--qg-primary);
 }
 
 .game-card {
   border-radius: 14px;
   overflow: hidden;
-  background: linear-gradient(135deg, #1e1b3a, #1a1a2e, #16213e);
-  border: 1px solid rgba(124, 58, 237, 0.2);
+  background: linear-gradient(135deg, var(--qg-primary-dark), var(--qg-primary), var(--qg-primary-light));
+  border: 1px solid rgba(255, 255, 255, 0.1);
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   position: relative;
 }
@@ -417,13 +469,13 @@ body {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
 }
 
 .game-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 30px rgba(124, 58, 237, 0.2);
-  border-color: rgba(124, 58, 237, 0.4);
+  box-shadow: 0 10px 30px rgba(79, 109, 245, 0.2);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .game-card:active {
@@ -458,20 +510,20 @@ body {
 
 .game-card-desc {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.4;
 }
 
 .game-card-arrow {
   flex-shrink: 0;
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.4);
   transition: transform 0.25s ease, color 0.25s ease;
 }
 
 .game-card:hover .game-card-arrow {
   transform: translateX(4px);
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* === 生活工具板块 === */
@@ -536,6 +588,63 @@ body {
 .tool-card:hover .tool-card-arrow {
   transform: translateX(3px);
   color: var(--qg-primary);
+}
+
+/* ===== 主题选择器 ===== */
+
+.theme-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  min-width: 72px;
+}
+
+.theme-option:hover {
+  background: rgba(0, 0, 0, 0.03);
+  transform: scale(1.05);
+}
+
+.theme-option.active {
+  border-color: var(--qg-primary);
+  background: rgba(79, 109, 245, 0.06);
+  box-shadow: 0 2px 8px rgba(79, 109, 245, 0.1);
+}
+
+.theme-option-preview {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  overflow: hidden;
+}
+
+.theme-option.active .theme-option-preview {
+  transform: scale(1.05);
+}
+
+.theme-option-name {
+  font-size: 11px;
+  color: var(--qg-text-secondary);
+  text-align: center;
+  font-weight: 500;
+}
+
+.theme-option.active .theme-option-name {
+  color: var(--qg-primary);
+  font-weight: 700;
 }
 
 /* ===== Ant Design 组件微调 ===== */
@@ -626,16 +735,4 @@ body {
 .ant-descriptions-item-label {
   color: var(--qg-text-secondary) !important;
   font-weight: 600 !important;
-}
-
-/* ===== 响应式：平板端 ===== */
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .main-content {
-    padding: 20px;
-  }
-
-  .page-card {
-    padding: 24px;
-  }
 }

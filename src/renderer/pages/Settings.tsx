@@ -1,6 +1,6 @@
 /**
  * 设置页面
- * 数据导出、备份恢复、关于信息
+ * 数据导出、备份恢复、关于信息、主题切换
  */
 import React, { useState } from 'react';
 import { Card, Button, Space, message, Modal, Typography, Descriptions, Divider } from 'antd';
@@ -13,6 +13,7 @@ import {
 } from '@ant-design/icons';
 import { api } from '../services/api';
 import CategoryManager from '../components/CategoryManager/CategoryManager';
+import { useTheme } from '../contexts/ThemeContext';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -20,15 +21,14 @@ const Settings: React.FC = () => {
   const [exporting, setExporting] = useState(false);
   const [backingUp, setBackingUp] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const { currentTheme, setTheme, allThemes } = useTheme();
 
   // 导出 CSV
   const handleExportCSV = async () => {
     setExporting(true);
     try {
-      // 获取所有记录
       const { records } = await api.getRecords({ pageSize: 99999 });
 
-      // 构建 CSV 内容
       const headers = ['日期', '一级分类', '二级分类', '金额（元）', '备注'];
       const rows = records.map((r) => [
         r.record_date,
@@ -38,7 +38,6 @@ const Settings: React.FC = () => {
         r.note || '',
       ]);
 
-      // CSV 转义（处理含逗号或引号的字段）
       const escapeCSV = (val: string) => {
         if (val.includes(',') || val.includes('"') || val.includes('\n')) {
           return `"${val.replace(/"/g, '""')}"`;
@@ -110,6 +109,38 @@ const Settings: React.FC = () => {
   return (
     <div className="page-card">
       <div className="page-title">⚙️ 设置</div>
+
+      {/* 主题设置 */}
+      <Card title="🎨 主题设置" style={{ marginBottom: 24 }}>
+        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+          选择你喜欢的主题风格，切换后会立即生效
+        </Text>
+        <div className="theme-selector">
+          {allThemes.map((theme) => (
+            <div
+              key={theme.id}
+              className={`theme-option ${currentTheme.id === theme.id ? 'active' : ''}`}
+              onClick={() => {
+                setTheme(theme);
+                message.success(`已切换到「${theme.name}」主题`);
+              }}
+            >
+              <div
+                className="theme-option-preview"
+                style={{
+                  background: theme.bgImage
+                    ? `linear-gradient(135deg, ${theme.primary}, ${theme.primaryLight})`
+                    : theme.primary,
+                  backgroundImage: theme.bgImage ? `url("${theme.bgImage}")` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              />
+              <span className="theme-option-name">{theme.name}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* 分类管理 */}
       <Card title="📂 分类管理" style={{ marginBottom: 24 }}>

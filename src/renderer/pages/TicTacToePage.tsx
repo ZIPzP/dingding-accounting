@@ -1,7 +1,8 @@
 import React from 'react';
+import GameFrame from '../components/GameFrame';
+
 const TicTacToePage: React.FC = () => (
-  <div style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
-    <iframe src="./games/tictactoe.html" style={{ width: '100%', height: '100%', border: 'none', display: 'block' }} title="井字棋" allow="autoplay" />
-  </div>
+  <GameFrame src="./games/tictactoe.html" title="井字棋" />
 );
+
 export default TicTacToePage;

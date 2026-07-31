@@ -14,6 +14,7 @@ import {
   PieChartOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
+import { ThemeProvider } from './contexts/ThemeContext';
 import HomePage from './pages/HomePage';
 import BillList from './pages/BillList';
 import AddRecord from './pages/AddRecord';
@@ -38,7 +39,7 @@ const menuItems: MenuProps['items'] = [
   { key: '/settings', icon: <SettingOutlined />, label: '设置' },
 ];
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
@@ -144,6 +145,14 @@ const App: React.FC = () => {
         </Content>
       </Layout>
     </Layout>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 };
 
