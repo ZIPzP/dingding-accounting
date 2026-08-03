@@ -3,6 +3,7 @@
  * 自动将当前主题颜色传递给 iframe 内游戏
  */
 import React, { useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface GameFrameProps {
@@ -13,6 +14,7 @@ interface GameFrameProps {
 const GameFrame: React.FC<GameFrameProps> = ({ src, title }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { currentTheme } = useTheme();
+  const navigate = useNavigate();
 
   // 发送主题颜色到 iframe
   const sendTheme = () => {
@@ -62,22 +64,24 @@ const GameFrame: React.FC<GameFrameProps> = ({ src, title }) => {
     setTimeout(sendTheme, 300);
   };
 
-  // 监听 iframe 请求主题的消息
+  // 监听 iframe 消息
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data && e.data.type === 'request-theme') {
         sendTheme();
+      } else if (e.data && e.data.type === 'game-back') {
+        navigate(-1);
       }
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [currentTheme]);
+  }, [currentTheme, navigate]);
 
   return (
     <div style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
       <iframe
         ref={iframeRef}
-        src={src}
+        src={currentTheme.id === 'dark' ? `${src}${src.includes('?') ? '&' : '?'}theme=dark` : src}
         style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
         title={title}
         allow="autoplay"

@@ -3,8 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>打地鼠 - 青孤游戏</title>
+<title>青孤项目 · 打地鼠</title>
 <style>
+/* ====== 青孤项目 · 游戏统一视觉系统 ====== */
+:root {
+  --radius-sm: 8px; --radius: 14px; --radius-lg: 20px;
+  --radius-full: 9999px;
+  --font: "Microsoft YaHei","PingFang SC","Helvetica Neue",Arial,sans-serif;
+  --duration: 0.2s;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
 * {
   margin: 0;
   padding: 0;
@@ -18,31 +26,61 @@ html, body {
   min-height: 100dvh;
 }
 body {
-  background: #0a0a14;
-  color: #dcdcdc;
-  font-family: "Microsoft YaHei","PingFang SC",Arial,sans-serif;
+  background: var(--g-bg,#fff5f8);
+  color: var(--g-text,#3d1a2a);
+  font-family: var(--font);
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 16px;
 }
 .container {
-  width: min(500px, 100%);
+  width: min(900px, 100%);
 }
 .game-area {
-  background: #0f0f19;
-  border: 2px solid #2a2a40;
-  border-radius: 6px;
+  background: var(--g-surface,#fff);
+  border: 1px solid var(--g-border-light,#fae8ef);
+  border-radius: var(--radius);
+  box-shadow: var(--g-shadow,0 2px 12px rgba(236,107,158,0.08));
   padding: clamp(16px, 4vw, 28px);
   position: relative;
 }
-h1 {
-  text-align: center;
-  font-size: clamp(22px, 5.5vw, 30px);
-  color: #ffc832;
+
+/* ====== 标题栏 ====== */
+.game-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 14px;
-  letter-spacing: 2px;
 }
+.game-header .icon {
+  width: 28px; height: 28px; flex-shrink: 0;
+  color: var(--g-primary,#ec6b9e);
+}
+.game-header .title-text {
+  font-size: clamp(17px, 2.5vw, 24px);
+  font-weight: 700;
+  color: var(--g-text,#3d1a2a);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.game-header .title-sub {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--g-text-tertiary,#bfa0aa);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.game-header .title-sub:active { color: var(--g-primary,#ec6b9e); }
+
+.back-btn {
+  background: none; border: none; cursor: pointer; padding: 4px; margin-right: 2px;
+  color: var(--g-text-secondary, #bfa0aa); display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; transition: all 0.2s; flex-shrink: 0;
+}
+.back-btn:hover { color: var(--g-primary, #34d399); background: var(--g-surface, rgba(52,211,153,0.08)); }
+
+/* ====== 信息栏 ====== */
 .header {
   display: flex;
   justify-content: space-between;
@@ -51,35 +89,39 @@ h1 {
 }
 .header-item {
   flex: 1;
-  background: #1e1e2d;
+  background: var(--g-bg-secondary,#ffeaf2);
   padding: clamp(6px, 2vw, 10px) clamp(10px, 3vw, 16px);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   text-align: center;
   font-size: clamp(14px, 3.5vw, 18px);
-  color: #8c8c8c;
+  color: var(--g-text-secondary,#8b5a6b);
 }
 .header-item .val {
-  color: #ffc832;
+  color: var(--g-primary,#ec6b9e);
   font-weight: bold;
   font-size: clamp(18px, 4.5vw, 24px);
   margin-left: 4px;
 }
+
+/* ====== 地鼠网格 ====== */
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: clamp(10px, 2.5vw, 18px);
+  gap: clamp(10px, 2vw, 24px);
   margin-bottom: 16px;
   padding: 4px;
+  width: min(540px, 85vw);
+  max-width: 540px;
 }
 .hole {
   aspect-ratio: 1;
-  background: radial-gradient(circle at 50% 80%, #1a1a30, #0d0d1a);
+  background: radial-gradient(circle at 50% 80%, #5a3e2a, #2d1f15);
   border-radius: 50%;
-  border: 3px solid #2a2a40;
+  border: 3px solid var(--g-border,#f0c8d8);
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  box-shadow: inset 0 6px 12px rgba(0,0,0,0.7);
+  box-shadow: inset 0 6px 12px rgba(61,26,42,0.55);
 }
 .hole:active {
   transform: scale(0.97);
@@ -100,6 +142,7 @@ h1 {
 .mole-wrapper.active {
   transform: translateY(2%);
 }
+/* ====== 地鼠（棕色渐变 — 保持原样）====== */
 .mole {
   width: 84%;
   height: 84%;
@@ -130,8 +173,8 @@ h1 {
   pointer-events: none;
 }
 .mole.hit {
-  background: #ff3333 !important;
-  border-color: #cc0000 !important;
+  background: var(--g-error,#f87171) !important;
+  border-color: #dc2626 !important;
 }
 .mole.hit::before {
   display: none;
@@ -144,89 +187,97 @@ h1 {
 .mole-wrapper.hit-anim .mole {
   animation: moleHit 0.3s ease;
 }
+
+/* ====== 按钮 ====== */
 .btn {
   display: block;
   width: 100%;
-  padding: clamp(10px, 2.5vw, 14px);
-  font-size: clamp(16px, 4vw, 20px);
+  padding: clamp(10px, 2vw, 16px) clamp(24px, 5vw, 48px);
+  font-size: clamp(14px, 2vw, 18px);
   font-family: inherit;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-full);
   cursor: pointer;
   font-weight: bold;
-  transition: background 0.2s, opacity 0.2s;
+  transition: background var(--duration) var(--ease), opacity 0.2s, transform 0.15s;
   letter-spacing: 1px;
 }
 .btn-green {
-  background: #3cb43c;
+  background: var(--g-primary,#ec6b9e);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(236,107,158,0.25);
 }
 .btn-green:hover {
-  background: #45c845;
+  background: var(--g-primary-dark,#d14d82);
 }
 .btn-green:active {
-  background: #2a8a2a;
+  background: var(--g-primary-dark,#d14d82);
+  transform: scale(0.97);
 }
 .btn-gray {
-  background: #1e1e32;
-  color: #aab;
+  background: var(--g-bg-secondary,#ffeaf2);
+  color: var(--g-text,#3d1a2a);
 }
 .btn-gray:hover {
-  background: #3c3c64;
+  background: var(--g-border-light,#fae8ef);
 }
 .btn:disabled {
   cursor: default;
   opacity: 0.5;
 }
+
+/* ====== 遮罩层 ====== */
 .overlay {
   display: none;
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.65);
-  border-radius: 6px;
+  background: var(--g-overlay,rgba(255,245,250,0.92));
+  border-radius: var(--radius);
   z-index: 10;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 .overlay.show {
   display: flex;
 }
 .overlay h2 {
-  color: #ffc832;
+  color: var(--g-primary,#ec6b9e);
   font-size: clamp(28px, 7vw, 40px);
   margin-bottom: 4px;
 }
 .overlay .sub {
-  color: #8c8c8c;
+  color: var(--g-text-secondary,#8b5a6b);
   font-size: clamp(14px, 3.5vw, 18px);
   margin-bottom: 12px;
 }
 .overlay .final-score {
   font-size: clamp(40px, 10vw, 56px);
-  color: #ffc832;
+  color: var(--g-primary,#ec6b9e);
   font-weight: bold;
   margin-bottom: 6px;
 }
 .overlay .final-label {
-  color: #8c8c8c;
+  color: var(--g-text-secondary,#8b5a6b);
   font-size: clamp(14px, 3.5vw, 18px);
   margin-bottom: 20px;
 }
 .overlay .btn {
   max-width: 220px;
 }
+
+/* ====== 分数弹出动画 ====== */
 .score-popup {
   position: fixed;
   pointer-events: none;
   z-index: 100;
   font-size: clamp(20px, 5vw, 28px);
   font-weight: bold;
-  color: #ffc832;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  color: var(--g-primary,#ec6b9e);
+  text-shadow: 0 2px 8px rgba(61,26,42,0.4);
   animation: scoreFloat 0.7s ease-out forwards;
 }
 @keyframes scoreFloat {
@@ -243,6 +294,7 @@ h1 {
     transform: translateY(-60px) scale(1);
   }
 }
+
 /* Mobile improvements */
 @media (max-width: 400px) {
   .game-area {
@@ -252,21 +304,70 @@ h1 {
     gap: 8px;
   }
 }
+
+.ach-toast {
+  position: fixed; top: 20px; right: 20px; z-index: 9999;
+  background: var(--g-surface, #fff); border: 1px solid var(--g-primary, #34d399);
+  border-radius: 10px; padding: 12px 18px; display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12); transform: translateX(120%); opacity: 0;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: 280px; font-size: 13px; color: var(--g-text, #1e1e2e);
+}
+.ach-toast.show { transform: translateX(0); opacity: 1; }
+.ach-toast .ach-icon { font-size: 28px; flex-shrink: 0; }
+.ach-toast strong { color: var(--g-primary, #34d399); }
+
+.mode-bar { display: flex; gap: 6px; justify-content: center; margin: 8px 0; }
+.mode-btn {
+  padding: 4px 14px; border-radius: 14px; border: 1px solid var(--g-border, #f0dce3);
+  background: var(--g-bg, #fff5f8); color: var(--g-text-secondary, #bfa0aa);
+  font-size: 12px; cursor: pointer; transition: all 0.2s;
+}
+.mode-btn.active { background: var(--g-primary, #34d399); color: #fff; border-color: var(--g-primary, #34d399); }
+/* 响应式断点 */
+@media (min-width: 900px) {
+  .container { padding: 24px; }
+  .game-header { margin-bottom: 16px; }
+  .btn { max-width: 500px; margin: 0 auto; }
+}
+@media (max-width: 600px) {
+  .container { width: 100%; padding: 12px; }
+}
 </style>
 <script src="./theme-bridge.js"></script>
 </head>
 <body>
 <div class="container">
 <div class="game-area" id="gameArea">
-  <h1>🔨 打地鼠</h1>
+  <!-- 标题栏 -->
+  <div class="game-header">
+    <button class="back-btn" onclick="goBack()" title="返回游戏大厅">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="11" height="5" rx="1"/>
+      <line x1="14" y1="6.5" x2="21" y2="14"/>
+    </svg>
+    <span class="title-text">青孤项目 · 打地鼠</span>
+    <span class="title-sub" onclick="if(typeof toggleGameTheme==='function')toggleGameTheme()">主题切换</span>
+  </div>
+  <div class="mode-bar">
+    <button class="mode-btn" data-diff="easy" onclick="setDifficulty('easy')">简单</button>
+    <button class="mode-btn active" data-diff="normal" onclick="setDifficulty('normal')">普通</button>
+    <button class="mode-btn" data-diff="hard" onclick="setDifficulty('hard')">困难</button>
+  </div>
   <div class="header">
     <div class="header-item">🎯 得分 <span class="val" id="scoreDisplay">0</span></div>
+    <div class="header-item">🏅 最高 <span class="val" id="bestDisplay">0</span></div>
     <div class="header-item">⏱️ 时间 <span class="val" id="timerDisplay">30</span>s</div>
   </div>
   <div class="grid" id="grid"></div>
   <button class="btn btn-green" id="startBtn">开始游戏</button>
   <div class="overlay" id="overlay">
     <h2>⏰ 时间到！</h2>
+    <div class="new-record" id="newRecord" style="display:none; color: var(--g-primary,#34d399); font-size: clamp(16px,4vw,22px); font-weight: bold; margin-bottom: 4px;">🎉 新纪录!</div>
     <div class="sub">本局得分</div>
     <div class="final-score" id="finalScore">0</div>
     <div class="final-label">分</div>
@@ -276,8 +377,93 @@ h1 {
 </div>
 <script>
 (function(){
+  // === 返回按钮 ===
+  function goBack() {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'game-back' }, '*');
+    } else {
+      window.history.back();
+    }
+  }
+
+  // === 成就系统 ===
+  var ACH_KEY = 'qg_ach_whackamole';
+  var ACHIEVEMENTS = [
+    { id: 'a1', name: '初出茅庐', desc: '单局得分 ≥ 5', icon: '🔨', check: function(s) { return s >= 5; } },
+    { id: 'a2', name: '地鼠猎人', desc: '单局得分 ≥ 20', icon: '🎯', check: function(s) { return s >= 20; } },
+    { id: 'a3', name: '地鼠终结者', desc: '单局得分 ≥ 40', icon: '🏆', check: function(s) { return s >= 40; } },
+  ];
+  var unlockedAch = [];
+
+  function loadAch() {
+    try {
+      var raw = localStorage.getItem(ACH_KEY);
+      unlockedAch = raw ? JSON.parse(raw) : [];
+    } catch(e) { unlockedAch = []; }
+  }
+
+  function saveAch() {
+    try { localStorage.setItem(ACH_KEY, JSON.stringify(unlockedAch)); } catch(e) {}
+  }
+
+  function checkAch(args) {
+    var level = args.level || 0;
+    var score = args.score || 0;
+    ACHIEVEMENTS.forEach(function(ach) {
+      if (unlockedAch.indexOf(ach.id) >= 0) return;
+      var earned = ach.check(typeof level !== 'undefined' ? level : score);
+      if (earned) {
+        unlockedAch.push(ach.id);
+        saveAch();
+        showAchToast(ach);
+      }
+    });
+  }
+
+  function showAchToast(ach) {
+    var toast = document.createElement('div');
+    toast.className = 'ach-toast';
+    toast.innerHTML = '<span class="ach-icon">' + ach.icon + '</span><div><strong>成就解锁!</strong><br>' + ach.name + ' — ' + ach.desc + '</div>';
+    document.body.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 400); }, 2800);
+  }
+
+  // === 最高分系统 ===
+  var HS_KEY = 'qg_hs_whackamole';
+
+  function loadHighScore() {
+    try {
+      var raw = localStorage.getItem(HS_KEY);
+      if (raw) { var d = JSON.parse(raw); return d.score || 0; }
+    } catch(e) {}
+    return 0;
+  }
+
+  function saveHighScore(score) {
+    try { localStorage.setItem(HS_KEY, JSON.stringify({ score: score, date: new Date().toISOString() })); } catch(e) {}
+  }
+
+  // === 难度选择 ===
+  var DIFFICULTIES = {
+    easy: { duration: 40, minDelay: 800, maxDelay: 1600, minStay: 800, maxStay: 1800 },
+    normal: { duration: 30, minDelay: 550, maxDelay: 1200, minStay: 700, maxStay: 1500 },
+    hard: { duration: 20, minDelay: 350, maxDelay: 800, minStay: 500, maxStay: 1000 }
+  };
+  var currentDifficulty = 'normal';
+  var GAME_DURATION = 30;
+
+  function setDifficulty(d) {
+    currentDifficulty = d;
+    GAME_DURATION = DIFFICULTIES[d].duration;
+    var btns = document.querySelectorAll('.mode-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('active', btns[i].dataset.diff === d);
+    }
+    document.getElementById('timerDisplay').textContent = GAME_DURATION;
+  }
+
   const HOLE_COUNT = 9;
-  const GAME_DURATION = 30;
 
   let score = 0;
   let timeLeft = GAME_DURATION;
@@ -295,6 +481,7 @@ h1 {
   const restartBtn = document.getElementById('restartBtn');
   const overlay = document.getElementById('overlay');
   const finalScoreSpan = document.getElementById('finalScore');
+  var bestDisplay = document.getElementById('bestDisplay');
 
   /* ---- create holes ---- */
   for (let i = 0; i < HOLE_COUNT; i++) {
@@ -368,7 +555,8 @@ h1 {
     spawnCount++;
 
     // Auto-retract
-    const stay = 700 + Math.random() * 800; // 0.7 – 1.5 s
+    var diffParams = DIFFICULTIES[currentDifficulty];
+    const stay = diffParams.minStay + Math.random() * (diffParams.maxStay - diffParams.minStay);
     moleTimers[idx] = setTimeout(() => {
       if (moleActive[idx]) retractMole(idx);
     }, stay);
@@ -376,7 +564,8 @@ h1 {
 
   function scheduleSpawn() {
     if (gameState !== 'playing') return;
-    const delay = 550 + Math.random() * 650; // 0.55 – 1.2 s
+    var diffParams = DIFFICULTIES[currentDifficulty];
+    const delay = diffParams.minDelay + Math.random() * (diffParams.maxDelay - diffParams.minDelay);
     spawnTimer = setTimeout(() => {
       spawnMole();
       scheduleSpawn();
@@ -419,6 +608,7 @@ h1 {
     updateScore();
     updateTimer();
     overlay.classList.remove('show');
+    document.getElementById('newRecord').style.display = 'none';
     startBtn.textContent = '🔨 打地鼠中...';
     startBtn.disabled = true;
 
@@ -450,6 +640,15 @@ h1 {
     }
 
     finalScoreSpan.textContent = score;
+    checkAch({ score: score });
+    var highScore = loadHighScore();
+    if (score > highScore) {
+      highScore = score; saveHighScore(score);
+      document.getElementById('newRecord').style.display = 'block';
+    } else {
+      document.getElementById('newRecord').style.display = 'none';
+    }
+    bestDisplay.textContent = highScore;
     overlay.classList.add('show');
     startBtn.textContent = '开始游戏';
     startBtn.disabled = false;
@@ -469,6 +668,8 @@ h1 {
 
   startBtn.addEventListener('click', startGame);
   restartBtn.addEventListener('click', startGame);
+  loadAch();
+  bestDisplay.textContent = loadHighScore();
 })();
 </script>
 </body>
