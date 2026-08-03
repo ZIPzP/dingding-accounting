@@ -16,7 +16,7 @@ import {
   message,
   Spin,
 } from 'antd';
-import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { IconSave, IconLeft } from '../components/Icons';
 import dayjs from 'dayjs';
 
 const { TextArea } = Input;
@@ -116,12 +116,12 @@ const AddRecord: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
         <Button
           type="text"
-          icon={<ArrowLeftOutlined />}
+          icon={<IconLeft size={18} />}
           onClick={() => navigate('/')}
           style={{ marginRight: 12 }}
         />
         <span className="page-title" style={{ marginBottom: 0 }}>
-          {isEdit ? '✏️ 编辑记录' : '✍️ 记一笔'}
+          {isEdit ? '编辑记录' : '记一笔'}
         </span>
       </div>
 
@@ -192,7 +192,7 @@ const AddRecord: React.FC = () => {
             <Button
               type="primary"
               htmlType="submit"
-              icon={<SaveOutlined />}
+              icon={<IconSave size={16} />}
               loading={loading}
               size="large"
               block

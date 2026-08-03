@@ -18,7 +18,7 @@ import {
   Tag,
   Space,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { IconPlusCircle, IconEdit, IconDelete, IconSearch } from '../components/Icons';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 
@@ -88,7 +88,9 @@ const BillList: React.FC = () => {
 
   return (
     <div className="page-card">
-      <div className="page-title">📒 记账</div>
+      <div className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <IconSearch size={20} /> 记账
+      </div>
 
       {/* 筛选栏 */}
       <Card size="small" style={{ marginBottom: 16, background: 'linear-gradient(135deg, #fafbff, #f5f7ff)', border: '1px solid #eef0f5' }}>
@@ -122,7 +124,7 @@ const BillList: React.FC = () => {
           </Col>
           <Col flex="auto" />
           <Col>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/add')}>
+            <Button type="primary" icon={<IconPlusCircle size={16} />} onClick={() => navigate('/add')}>
               记一笔
             </Button>
           </Col>
@@ -157,7 +159,7 @@ const BillList: React.FC = () => {
                   <Button
                     type="text"
                     size="small"
-                    icon={<EditOutlined />}
+                    icon={<IconEdit size={16} />}
                     onClick={() => navigate(`/edit/${record.id}`)}
                   />
                   <Popconfirm
@@ -166,7 +168,7 @@ const BillList: React.FC = () => {
                     okText="确定"
                     cancelText="取消"
                   >
-                    <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+                    <Button type="text" size="small" danger icon={<IconDelete size={16} />} />
                   </Popconfirm>
                 </Space>
               </div>

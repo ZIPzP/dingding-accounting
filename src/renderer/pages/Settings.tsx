@@ -5,12 +5,9 @@
 import React, { useState } from 'react';
 import { Card, Button, Space, message, Modal, Typography, Descriptions, Divider } from 'antd';
 import {
-  ExportOutlined,
-  SaveOutlined,
-  UploadOutlined,
-  InfoCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
+import { IconDownload, IconSave, IconUpload, IconInfo } from '../components/Icons';
 import { api } from '../services/api';
 import CategoryManager from '../components/CategoryManager/CategoryManager';
 import { useTheme } from '../contexts/ThemeContext';
@@ -108,10 +105,12 @@ const Settings: React.FC = () => {
 
   return (
     <div className="page-card">
-      <div className="page-title">⚙️ 设置</div>
+      <div className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <IconInfo size={20} /> 设置
+      </div>
 
       {/* 主题设置 */}
-      <Card title="🎨 主题设置" style={{ marginBottom: 24 }}>
+      <Card title="主题设置" style={{ marginBottom: 24 }}>
         <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
           选择你喜欢的主题风格，切换后会立即生效
         </Text>
@@ -165,7 +164,7 @@ const Settings: React.FC = () => {
               <Text type="secondary">将所有账单数据导出为 CSV 文件，可用 Excel 打开</Text>
             </div>
             <Button
-              icon={<ExportOutlined />}
+              icon={<IconDownload size={16} />}
               onClick={handleExportCSV}
               loading={exporting}
             >
@@ -190,7 +189,7 @@ const Settings: React.FC = () => {
               <Text type="secondary">将数据库文件备份到指定位置，建议定期备份</Text>
             </div>
             <Button
-              icon={<SaveOutlined />}
+              icon={<IconSave size={16} />}
               onClick={handleBackup}
               loading={backingUp}
             >
@@ -215,7 +214,7 @@ const Settings: React.FC = () => {
               <Text type="secondary">从备份文件恢复数据（将覆盖当前所有记录）</Text>
             </div>
             <Button
-              icon={<UploadOutlined />}
+              icon={<IconUpload size={16} />}
               onClick={handleRestore}
               loading={restoring}
               danger

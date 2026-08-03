@@ -1,20 +1,24 @@
 /**
- * 应用根组件
- * 桌面端：左侧可折叠菜单
+ * 青孤项目 — 应用根组件
+ * 桌面端：左侧可折叠菜单（选中态左侧指示条）
  * 手机端：底部标签栏（触屏优化）
+ * 全局：页面淡入动画
  */
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, Spin } from 'antd';
 import type { MenuProps } from 'antd';
-import {
-  HomeOutlined,
-  BookOutlined,
-  PlusCircleOutlined,
-  PieChartOutlined,
-  SettingOutlined,
-} from '@ant-design/icons';
 import { ThemeProvider } from './contexts/ThemeContext';
+import {
+  IconLogo,
+  IconHome,
+  IconBook,
+  IconPlusCircle,
+  IconChart,
+  IconGamepad,
+  IconSettings,
+} from './components/Icons';
+
 import HomePage from './pages/HomePage';
 import BillList from './pages/BillList';
 import AddRecord from './pages/AddRecord';
@@ -31,12 +35,35 @@ import TicTacToePage from './pages/TicTacToePage';
 
 const { Sider, Content } = Layout;
 
+/* 页面加载骨架屏 */
+const PageLoader: React.FC = () => (
+  <div className="page-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+    <Spin size="large" />
+  </div>
+);
+
+/* 页面包装器：添加淡入动画 */
+const AnimatedPage: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="page-enter">{children}</div>
+);
+
+/* 导航菜单项 */
 const menuItems: MenuProps['items'] = [
-  { key: '/', icon: <HomeOutlined />, label: '首页' },
-  { key: '/bills', icon: <BookOutlined />, label: '记账' },
-  { key: '/add', icon: <PlusCircleOutlined />, label: '记一笔' },
-  { key: '/stats', icon: <PieChartOutlined />, label: '统计' },
-  { key: '/settings', icon: <SettingOutlined />, label: '设置' },
+  { key: '/',       icon: <IconHome size={20} />,       label: '首页' },
+  { key: '/bills',  icon: <IconBook size={20} />,       label: '记账' },
+  { key: '/game',   icon: <IconGamepad size={20} />,    label: '游戏' },
+  { key: '/add',    icon: <IconPlusCircle size={20} />,  label: '记一笔' },
+  { key: '/stats',  icon: <IconChart size={20} />,      label: '统计' },
+  { key: '/settings', icon: <IconSettings size={20} />, label: '设置' },
+];
+
+/* 手机端底部导航项 */
+const mobileTabs = [
+  { key: '/',       Icon: IconHome,       label: '首页' },
+  { key: '/bills',  Icon: IconBook,       label: '记账' },
+  { key: '/game',   Icon: IconGamepad,    label: '游戏' },
+  { key: '/stats',  Icon: IconChart,      label: '统计' },
+  { key: '/settings', Icon: IconSettings,  label: '设置' },
 ];
 
 const AppContent: React.FC = () => {
@@ -46,47 +73,45 @@ const AppContent: React.FC = () => {
   const isMobile = window.innerWidth < 768;
   const [mobile, setMobile] = useState(isMobile);
 
-  // 监听窗口大小变化
   React.useEffect(() => {
-    const handleResize = () => {
-      setMobile(window.innerWidth < 768);
-    };
+    const handleResize = () => setMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const currentKey = '/' + location.pathname.split('/')[1];
 
-  // 手机端布局
+  /* ======== 手机端布局 ======== */
   if (mobile) {
     return (
-      <Layout style={{ minHeight: '100vh', paddingBottom: 60 }}>
+      <Layout style={{ minHeight: '100vh', paddingBottom: 62 }}>
         <Content className="main-content mobile-content">
           <div className="mobile-header">
-            🏠 青孤项目
+            <IconLogo size={22} /> 青孤项目
           </div>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/bills" element={<BillList />} />
-            <Route path="/add" element={<AddRecord />} />
-            <Route path="/edit/:id" element={<AddRecord />} />
-            <Route path="/stats" element={<Statistics />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/game" element={<GameHub />} />
-            <Route path="/game/snake" element={<SnakeGamePage />} />
-            <Route path="/game/tetris" element={<TetrisGamePage />} />
-            <Route path="/game/2048" element={<Game2048Page />} />
-            <Route path="/game/minesweeper" element={<MinesweeperPage />} />
-            <Route path="/game/breakout" element={<BreakoutPage />} />
-            <Route path="/game/whackamole" element={<WhackAMolePage />} />
-            <Route path="/game/tictactoe" element={<TicTacToePage />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<AnimatedPage><HomePage /></AnimatedPage>} />
+              <Route path="/bills" element={<AnimatedPage><BillList /></AnimatedPage>} />
+              <Route path="/add" element={<AnimatedPage><AddRecord /></AnimatedPage>} />
+              <Route path="/edit/:id" element={<AnimatedPage><AddRecord /></AnimatedPage>} />
+              <Route path="/stats" element={<AnimatedPage><Statistics /></AnimatedPage>} />
+              <Route path="/settings" element={<AnimatedPage><Settings /></AnimatedPage>} />
+              <Route path="/game" element={<AnimatedPage><GameHub /></AnimatedPage>} />
+              <Route path="/game/snake" element={<AnimatedPage><SnakeGamePage /></AnimatedPage>} />
+              <Route path="/game/tetris" element={<AnimatedPage><TetrisGamePage /></AnimatedPage>} />
+              <Route path="/game/2048" element={<AnimatedPage><Game2048Page /></AnimatedPage>} />
+              <Route path="/game/minesweeper" element={<AnimatedPage><MinesweeperPage /></AnimatedPage>} />
+              <Route path="/game/breakout" element={<AnimatedPage><BreakoutPage /></AnimatedPage>} />
+              <Route path="/game/whackamole" element={<AnimatedPage><WhackAMolePage /></AnimatedPage>} />
+              <Route path="/game/tictactoe" element={<AnimatedPage><TicTacToePage /></AnimatedPage>} />
+            </Routes>
+          </Suspense>
         </Content>
 
         {/* 底部导航栏 */}
         <div className="mobile-tab-bar">
-          {menuItems.map((item) => {
-            const key = String(item?.key || '');
+          {mobileTabs.map(({ key, Icon, label }) => {
             const isActive = currentKey === key;
             return (
               <div
@@ -94,8 +119,10 @@ const AppContent: React.FC = () => {
                 className={`mobile-tab-item ${isActive ? 'active' : ''}`}
                 onClick={() => navigate(key)}
               >
-                <span className="mobile-tab-icon">{item?.icon}</span>
-                <span className="mobile-tab-label">{item?.label}</span>
+                <div className="mobile-tab-icon">
+                  <Icon size={22} />
+                </div>
+                <span className="mobile-tab-label">{label}</span>
               </div>
             );
           })}
@@ -104,7 +131,7 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // 桌面端布局
+  /* ======== 桌面端布局 ======== */
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider
@@ -112,10 +139,14 @@ const AppContent: React.FC = () => {
         collapsed={collapsed}
         onCollapse={setCollapsed}
         theme="light"
-        style={{ borderRight: '1px solid var(--qg-border)' }}
+        width={220}
+        style={{
+          borderRight: '1px solid var(--qg-border)',
+        }}
       >
         <div className="logo">
-          {collapsed ? '📒' : '🏠 青孤项目'}
+          <IconLogo size={24} />
+          {!collapsed && <span>青孤项目</span>}
         </div>
         <Menu
           mode="inline"
@@ -126,22 +157,24 @@ const AppContent: React.FC = () => {
       </Sider>
       <Layout>
         <Content className="main-content">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/bills" element={<BillList />} />
-            <Route path="/add" element={<AddRecord />} />
-            <Route path="/edit/:id" element={<AddRecord />} />
-            <Route path="/stats" element={<Statistics />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/game" element={<GameHub />} />
-            <Route path="/game/snake" element={<SnakeGamePage />} />
-            <Route path="/game/tetris" element={<TetrisGamePage />} />
-            <Route path="/game/2048" element={<Game2048Page />} />
-            <Route path="/game/minesweeper" element={<MinesweeperPage />} />
-            <Route path="/game/breakout" element={<BreakoutPage />} />
-            <Route path="/game/whackamole" element={<WhackAMolePage />} />
-            <Route path="/game/tictactoe" element={<TicTacToePage />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<AnimatedPage><HomePage /></AnimatedPage>} />
+              <Route path="/bills" element={<AnimatedPage><BillList /></AnimatedPage>} />
+              <Route path="/add" element={<AnimatedPage><AddRecord /></AnimatedPage>} />
+              <Route path="/edit/:id" element={<AnimatedPage><AddRecord /></AnimatedPage>} />
+              <Route path="/stats" element={<AnimatedPage><Statistics /></AnimatedPage>} />
+              <Route path="/settings" element={<AnimatedPage><Settings /></AnimatedPage>} />
+              <Route path="/game" element={<AnimatedPage><GameHub /></AnimatedPage>} />
+              <Route path="/game/snake" element={<AnimatedPage><SnakeGamePage /></AnimatedPage>} />
+              <Route path="/game/tetris" element={<AnimatedPage><TetrisGamePage /></AnimatedPage>} />
+              <Route path="/game/2048" element={<AnimatedPage><Game2048Page /></AnimatedPage>} />
+              <Route path="/game/minesweeper" element={<AnimatedPage><MinesweeperPage /></AnimatedPage>} />
+              <Route path="/game/breakout" element={<AnimatedPage><BreakoutPage /></AnimatedPage>} />
+              <Route path="/game/whackamole" element={<AnimatedPage><WhackAMolePage /></AnimatedPage>} />
+              <Route path="/game/tictactoe" element={<AnimatedPage><TicTacToePage /></AnimatedPage>} />
+            </Routes>
+          </Suspense>
         </Content>
       </Layout>
     </Layout>

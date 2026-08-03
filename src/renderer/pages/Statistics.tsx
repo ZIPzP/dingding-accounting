@@ -4,7 +4,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Card, Row, Col, DatePicker, Statistic, Spin, Empty } from 'antd';
-import { WalletOutlined, CalendarOutlined, ShoppingOutlined } from '@ant-design/icons';
+import { IconChart, IconWallet, IconCalendar, IconShopping } from '../components/Icons';
 import ReactECharts from 'echarts-for-react';
 import dayjs from 'dayjs';
 import { api } from '../services/api';
@@ -129,7 +129,9 @@ const Statistics: React.FC = () => {
   return (
     <div className="page-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <span className="page-title" style={{ marginBottom: 0 }}>📊 统计分析</span>
+        <span className="page-title" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <IconChart size={22} /> 统计分析
+        </span>
         <DatePicker
           picker="month"
           value={selectedMonth}
@@ -151,7 +153,7 @@ const Statistics: React.FC = () => {
                     value={monthlyStats.total}
                     precision={2}
                     prefix="¥"
-                    valueStyle={{ color: '#f5455b', fontSize: 28, fontWeight: 700 }}
+                    valueStyle={{ color: 'var(--qg-error)', fontSize: 28, fontWeight: 700 }}
                   />
                 </Card>
               </Col>
@@ -161,7 +163,7 @@ const Statistics: React.FC = () => {
                     title="记账笔数"
                     value={monthlyStats.count}
                     suffix="笔"
-                    valueStyle={{ fontSize: 28, fontWeight: 700, color: '#4f6df5' }}
+                    valueStyle={{ color: 'var(--qg-primary)', fontSize: 28, fontWeight: 700 }}
                   />
                 </Card>
               </Col>
@@ -172,7 +174,7 @@ const Statistics: React.FC = () => {
                     value={monthlyStats.dailyAvg}
                     precision={2}
                     prefix="¥"
-                    valueStyle={{ color: '#faad14', fontSize: 28, fontWeight: 700 }}
+                    valueStyle={{ color: 'var(--qg-warning)', fontSize: 28, fontWeight: 700 }}
                   />
                 </Card>
               </Col>
