@@ -888,7 +888,7 @@ function resize(){
 
   const scaleW=availW/(W+4);
   const scaleH=availH/(H+4);
-  const scale=Math.min(1, scaleW, scaleH);
+  const scale=Math.min(2, scaleW, scaleH);
   wrapper.style.transform=forceLandscape
     ? `rotate(90deg) scale(${scale})`
     : `scale(${scale})`;

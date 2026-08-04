@@ -144,6 +144,7 @@ body.has-bg-image::after {
 /* ---- 4. 页面过渡动画 ---- */
 .page-enter {
   animation: pageIn var(--qg-duration-normal) var(--qg-ease-out) both;
+  height: 100%;
 }
 @keyframes pageIn {
   from {

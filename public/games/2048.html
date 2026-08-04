@@ -24,7 +24,7 @@ body {
 /* 信息栏 */
 .info-bar {
   display:flex; justify-content:space-between; align-items:center;
-  width:100%; max-width:500px; padding:0 6px;
+  width:100%; max-width:clamp(200px,70vw,600px); padding:0 6px;
   color:#dcdcdc; font-size:clamp(14px,3vw,18px); flex-shrink:0;
 }
 .info-bar .title { font-size:clamp(20px,5vw,32px); font-weight:bold; color:#ffc832; }
@@ -47,7 +47,7 @@ body {
   grid-template-columns:1fr 1fr 1fr 1fr;
   grid-template-rows:1fr 1fr 1fr 1fr;
   gap:clamp(6px,1.5vw,10px);
-  width:clamp(200px,80vw,460px);
+  width:clamp(200px,70vw,600px);
   aspect-ratio:1;
 }
 .grid-bg .bg-cell {
@@ -606,10 +606,10 @@ document.getElementById('btnWinRestart').addEventListener('click', initGame);
 // ═══════════════════════════════════════════════════
 function resize() {
   const gb = document.getElementById('gridBg');
-  // 不需要额外缩放，使用 CSS clamp 自适应
-  let av = Math.min(window.innerWidth-20, window.innerHeight-120, 500);
+  // 自适应大屏，base 700px
+  let av = Math.min(window.innerWidth-40, window.innerHeight-160, 700);
   av = Math.max(av, 180);
-  const s = av / 500;
+  const s = av / 700;
   wrapper.style.transform = `scale(${Math.min(1,s)})`;
 }
 window.addEventListener('resize', resize);

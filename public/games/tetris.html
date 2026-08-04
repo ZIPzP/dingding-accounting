@@ -869,7 +869,7 @@ function resize() {
   const padH = 10, padV = 6;
   const scaleW = (vw - padH * 2) / needW;
   const scaleH = (vh - padV * 2) / needH;
-  const scale = Math.min(1, scaleW, scaleH);
+  const scale = Math.min(2, scaleW, scaleH);
   wrapper.style.transform = `scale(${scale})`;
 }
 
