@@ -47,6 +47,42 @@ export interface ThemeConfig {
 }
 
 /* ==============================
+   🤖 科技青（默认）— 现代科技风深色主题
+   深空底 + 青色点缀，源自 2026-08 网页重设计稿
+   ============================== */
+export const techCyanTheme: ThemeConfig = {
+  id: 'tech-cyan',
+  name: '科技青',
+  primary: '#06b6d4',
+  primaryLight: '#22d3ee',
+  primaryDark: '#0891b2',
+  primaryHover: '#22d3ee',
+  primaryActive: '#0891b2',
+  accent: '#34d399',
+  accentLight: '#6ee7b7',
+  success: '#34d399',
+  warning: '#fbbf24',
+  error: '#f87171',
+  bg: '#060810',
+  bgSecondary: '#0b0f1c',
+  cardBg: '#0d1220',
+  cardBgTransparent: 'rgba(13, 18, 32, 0.85)',
+  text: '#e2e8f0',
+  textSecondary: '#94a3b8',
+  textTertiary: '#64748b',
+  textDisabled: '#334155',
+  border: '#1e293b',
+  borderLight: '#16213a',
+  shadow: '0 2px 12px rgba(0, 0, 0, 0.35)',
+  shadowHover: '0 10px 32px rgba(6, 182, 212, 0.18)',
+  shadowLg: '0 20px 50px rgba(0, 0, 0, 0.5)',
+  disabledBg: '#101624',
+  gameBg: '#060810',
+  gameSurface: '#0d1220',
+  gameBorder: '#1e293b',
+};
+
+/* ==============================
    🌸 默认主题：阿尼亚粉 + 薄荷绿点缀
    ============================== */
 export const defaultAnimeTheme: ThemeConfig = {
@@ -262,6 +298,7 @@ export const darkTheme: ThemeConfig = {
    主题列表
    ============================== */
 export const allThemes: ThemeConfig[] = [
+  techCyanTheme,
   defaultAnimeTheme,
   blueTheme,
   greenTheme,
@@ -337,7 +374,40 @@ export function applyTheme(theme: ThemeConfig): void {
     document.body.classList.remove('has-bg-image');
   }
 
+  /* ---- 落地页玻璃拟态（自动按明暗适配） ---- */
+  const isDark = isDarkTheme(theme);
+  if (isDark) {
+    set('--qg-glass-bg', 'rgba(255, 255, 255, 0.04)');
+    set('--qg-glass-bg-hover', 'rgba(255, 255, 255, 0.07)');
+    set('--qg-glass-border', 'rgba(255, 255, 255, 0.08)');
+    set('--qg-glass-highlight', 'rgba(255, 255, 255, 0.06)');
+    set('--qg-hero-glow', 'rgba(6, 182, 212, 0.16)');
+    set('--qg-dot-color', 'rgba(255, 255, 255, 0.05)');
+    set('--qg-on-glass', 'rgba(255, 255, 255, 0.92)');
+    set('--qg-on-glass-sub', 'rgba(255, 255, 255, 0.6)');
+  } else {
+    set('--qg-glass-bg', 'rgba(255, 255, 255, 0.72)');
+    set('--qg-glass-bg-hover', 'rgba(255, 255, 255, 0.85)');
+    set('--qg-glass-border', 'rgba(255, 255, 255, 0.9)');
+    set('--qg-glass-highlight', 'rgba(255, 255, 255, 0.6)');
+    set('--qg-hero-glow', 'color-mix(in srgb, var(--qg-primary) 14%, transparent)');
+    set('--qg-dot-color', 'rgba(0, 0, 0, 0.06)');
+    set('--qg-on-glass', 'var(--qg-text)');
+    set('--qg-on-glass-sub', 'var(--qg-text-secondary)');
+  }
+
   try { localStorage.setItem('qinggu-theme', theme.id); } catch { /* noop */ }
+}
+
+/** 判断主题是否为深色（用于玻璃拟态等适配） */
+function isDarkTheme(theme: ThemeConfig): boolean {
+  const hex = theme.bg.replace('#', '');
+  if (hex.length < 6) return false;
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  // 相对亮度（加权），低于阈值视为深色
+  return (0.299 * r + 0.587 * g + 0.114 * b) < 128;
 }
 
 export function loadSavedTheme(): ThemeConfig {
@@ -345,5 +415,5 @@ export function loadSavedTheme(): ThemeConfig {
     const saved = localStorage.getItem('qinggu-theme');
     if (saved) return getThemeById(saved);
   } catch { /* noop */ }
-  return defaultAnimeTheme;
+  return techCyanTheme;
 }

@@ -5,6 +5,16 @@ node_modules/
 dist/
 release/
 
+# 工作记忆
+.workbuddy/
+
+# 临时目录
+.tmp-ghpages/
+
+# Python 缓存
+__pycache__/
+*.pyc
+
 # Vite 缓存
 .vite/
 

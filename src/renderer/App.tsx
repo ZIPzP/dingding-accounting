@@ -85,7 +85,7 @@ const AppContent: React.FC = () => {
   if (mobile) {
     return (
       <Layout style={{ minHeight: '100vh', paddingBottom: 62 }}>
-        <Content className="main-content mobile-content">
+        <Content className={`main-content mobile-content ${currentKey === '/' ? 'landing-content' : ''}`}>
           <div className="mobile-header">
             <IconLogo size={22} /> 青孤项目
           </div>
@@ -156,7 +156,7 @@ const AppContent: React.FC = () => {
         />
       </Sider>
       <Layout>
-        <Content className="main-content">
+        <Content className={`main-content ${currentKey === '/' ? 'landing-content' : ''}`}>
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<AnimatedPage><HomePage /></AnimatedPage>} />

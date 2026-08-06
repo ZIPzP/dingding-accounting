@@ -87,6 +87,16 @@
   --qg-game-bg: #f8f9fc;
   --qg-game-surface: #ffffff;
   --qg-game-border: #e5e7eb;
+
+  /* ---- 落地页玻璃拟态（applyTheme 动态覆盖） ---- */
+  --qg-glass-bg: rgba(255, 255, 255, 0.72);
+  --qg-glass-bg-hover: rgba(255, 255, 255, 0.85);
+  --qg-glass-border: rgba(255, 255, 255, 0.9);
+  --qg-glass-highlight: rgba(255, 255, 255, 0.6);
+  --qg-hero-glow: rgba(6, 182, 212, 0.16);
+  --qg-dot-color: rgba(0, 0, 0, 0.06);
+  --qg-on-glass: var(--qg-text);
+  --qg-on-glass-sub: var(--qg-text-secondary);
 }
 
 /* ---- 3. 排版体系 ---- */
@@ -246,6 +256,11 @@ body.has-bg-image::after {
   height: 100vh;
 }
 
+/* 落地页全宽容器：首页时去除内容区内边距 */
+.main-content.landing-content {
+  padding: 0;
+}
+
 /* ---- 7. 手机端 ---- */
 /* 顶部标题栏 */
 .mobile-header {
@@ -337,6 +352,10 @@ body.has-bg-image::after {
   padding: 12px;
   padding-bottom: 72px;
   height: 100vh;
+}
+.mobile-content.landing-content {
+  padding: 0;
+  padding-bottom: 72px;
 }
 
 /* ---- 8. 页面卡片 ---- */
@@ -746,6 +765,149 @@ body.has-bg-image::after {
   font-weight: 600 !important;
 }
 
+/* ---- 16.5 Ant Design 深色主题适配（跟随 CSS 变量） ---- */
+.ant-layout {
+  background: var(--qg-bg);
+}
+.ant-layout-sider {
+  background: var(--qg-card-bg) !important;
+}
+.ant-menu {
+  background: transparent !important;
+  color: var(--qg-text) !important;
+}
+.ant-menu-item {
+  color: var(--qg-text-secondary) !important;
+}
+.ant-menu-item:hover {
+  color: var(--qg-primary) !important;
+}
+.ant-layout-sider-trigger {
+  background: var(--qg-bg-secondary) !important;
+}
+.ant-card {
+  background: var(--qg-card-bg) !important;
+  color: var(--qg-text) !important;
+}
+.ant-card-head {
+  color: var(--qg-text) !important;
+  border-bottom-color: var(--qg-border-light) !important;
+}
+.ant-card-head-title {
+  color: var(--qg-text) !important;
+}
+.ant-card-extra {
+  color: var(--qg-text-secondary) !important;
+}
+.ant-modal-content,
+.ant-modal-header {
+  background: var(--qg-card-bg) !important;
+}
+.ant-modal-title {
+  color: var(--qg-text) !important;
+}
+.ant-modal-close {
+  color: var(--qg-text-secondary) !important;
+}
+.ant-modal-close:hover {
+  color: var(--qg-text) !important;
+}
+.ant-input,
+.ant-input-number,
+.ant-input-number-input,
+.ant-picker,
+.ant-picker-input > input,
+.ant-select-selector,
+.ant-cascader-input,
+.ant-input-affix-wrapper {
+  background: var(--qg-card-bg) !important;
+  color: var(--qg-text) !important;
+  border-color: var(--qg-border) !important;
+}
+.ant-input::placeholder,
+.ant-picker-input > input::placeholder,
+.ant-input-number-input::placeholder {
+  color: var(--qg-text-tertiary) !important;
+}
+.ant-input:hover,
+.ant-input-number:hover,
+.ant-picker:hover,
+.ant-select-selector:hover,
+.ant-input-affix-wrapper:hover {
+  border-color: var(--qg-primary) !important;
+}
+.ant-input:focus,
+.ant-input-focused,
+.ant-picker-focused,
+.ant-select-focused .ant-select-selector,
+.ant-input-affix-wrapper-focused {
+  border-color: var(--qg-primary) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--qg-primary) 12%, transparent) !important;
+}
+.ant-select-dropdown,
+.ant-picker-dropdown,
+.ant-cascader-dropdown {
+  background: var(--qg-card-bg) !important;
+}
+.ant-select-item,
+.ant-picker-cell,
+.ant-picker-header,
+.ant-picker-content th,
+.ant-picker-footer,
+.ant-picker-today-btn {
+  color: var(--qg-text) !important;
+}
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: color-mix(in srgb, var(--qg-primary) 12%, transparent) !important;
+  color: var(--qg-primary) !important;
+}
+.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background: var(--qg-bg-secondary) !important;
+}
+.ant-table {
+  background: transparent !important;
+  color: var(--qg-text) !important;
+}
+.ant-table-thead > tr > th {
+  background: var(--qg-bg-secondary) !important;
+  color: var(--qg-text) !important;
+  border-bottom-color: var(--qg-border) !important;
+}
+.ant-table-tbody > tr > td {
+  border-bottom-color: var(--qg-border-light) !important;
+}
+.ant-table-tbody > tr:hover > td {
+  background: var(--qg-bg-secondary) !important;
+}
+.ant-empty-description {
+  color: var(--qg-text-tertiary) !important;
+}
+.ant-descriptions-item-content {
+  color: var(--qg-text) !important;
+}
+.ant-typography {
+  color: var(--qg-text);
+}
+.ant-message-notice-content {
+  background: var(--qg-card-bg) !important;
+  color: var(--qg-text) !important;
+  border: 1px solid var(--qg-border-light);
+}
+.ant-form-item-label > label {
+  color: var(--qg-text-secondary) !important;
+}
+.ant-segmented {
+  background: var(--qg-bg-secondary) !important;
+}
+.ant-segmented-item {
+  color: var(--qg-text-secondary) !important;
+}
+.ant-segmented-item-selected {
+  background: var(--qg-card-bg) !important;
+  color: var(--qg-primary) !important;
+  box-shadow: var(--qg-shadow-sm);
+}
+
 /* ---- 17. 响应式 ---- */
 @media (max-width: 768px) {
   .main-content { padding: 12px; }
@@ -782,5 +944,510 @@ body.has-bg-image::after {
   .game-card-grid,
   .tool-card-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================================
+   ---- 18. 落地页（首页 · 现代科技风） ----
+   ============================================================ */
+.landing {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px 40px;
+  color: var(--qg-text);
+}
+
+/* ---------- Hero ---------- */
+.landing-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--qg-radius-xl);
+  padding: 88px 48px 72px;
+  text-align: center;
+  border: 1px solid var(--qg-glass-border);
+  background: var(--qg-glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+.landing-hero-glow {
+  position: absolute;
+  top: -160px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 720px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--qg-hero-glow), transparent);
+  pointer-events: none;
+}
+.landing-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--qg-dot-color) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+.landing-hero-inner {
+  position: relative;
+  z-index: 1;
+}
+.landing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--qg-primary);
+  border: 1px solid color-mix(in srgb, var(--qg-primary) 35%, transparent);
+  background: color-mix(in srgb, var(--qg-primary) 10%, transparent);
+  margin-bottom: 24px;
+}
+.landing-title {
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+  color: var(--qg-on-glass);
+}
+.landing-subtitle {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  color: var(--qg-primary);
+  margin-bottom: 20px;
+}
+.landing-desc {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--qg-on-glass-sub);
+  max-width: 480px;
+  margin: 0 auto 36px;
+}
+.landing-ctas {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.landing-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 13px 28px;
+  border-radius: 999px;
+  transition: transform var(--qg-duration-fast) var(--qg-ease-out),
+              box-shadow var(--qg-duration-fast) var(--qg-ease-out),
+              background var(--qg-duration-fast) var(--qg-ease-out);
+}
+.landing-btn-primary {
+  background: var(--qg-primary);
+  color: #fff;
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--qg-primary) 35%, transparent);
+}
+.landing-btn-primary:hover {
+  transform: translateY(-2px);
+  background: var(--qg-primary-hover);
+  box-shadow: 0 8px 26px color-mix(in srgb, var(--qg-primary) 45%, transparent);
+}
+.landing-btn-ghost {
+  background: transparent;
+  color: var(--qg-on-glass);
+  border: 1px solid var(--qg-glass-border);
+}
+.landing-btn-ghost:hover {
+  border-color: var(--qg-primary);
+  color: var(--qg-primary);
+}
+
+/* ---------- 数据条 ---------- */
+.landing-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+.landing-stat {
+  text-align: center;
+  padding: 28px 16px;
+  border-radius: var(--qg-radius-lg);
+  border: 1px solid var(--qg-glass-border);
+  background: var(--qg-glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+.landing-stat-value {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--qg-primary);
+  font-variant-numeric: tabular-nums;
+}
+.landing-stat-label {
+  font-size: 13px;
+  color: var(--qg-on-glass-sub);
+  margin-top: 6px;
+}
+
+/* ---------- 区域标题 ---------- */
+.landing-section {
+  margin-bottom: 48px;
+}
+.landing-section-head {
+  margin-bottom: 24px;
+}
+.landing-section-title {
+  font-size: 30px;
+  font-weight: 800;
+  margin: 0 0 6px;
+  color: var(--qg-on-glass);
+  letter-spacing: -0.3px;
+}
+.landing-section-sub {
+  font-size: 15px;
+  color: var(--qg-on-glass-sub);
+  margin: 0;
+}
+
+/* ---------- 游戏 Bento 网格 ---------- */
+.landing-games {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.landing-card {
+  position: relative;
+  border-radius: var(--qg-radius-lg);
+  border: 1px solid var(--qg-glass-border);
+  background: var(--qg-glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  cursor: pointer;
+  padding: 22px;
+  transition: transform var(--qg-duration-normal) var(--qg-spring),
+              border-color var(--qg-duration-fast) ease,
+              background var(--qg-duration-fast) ease;
+  overflow: hidden;
+}
+.landing-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--qg-duration-fast) ease;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--gc) 14%, transparent),
+    transparent 55%);
+  pointer-events: none;
+}
+.landing-card:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--gc) 45%, transparent);
+  background: var(--qg-glass-bg-hover);
+}
+.landing-card:hover::before {
+  opacity: 1;
+}
+.landing-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.landing-card-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--gc) 14%, transparent);
+  flex-shrink: 0;
+}
+.landing-card-tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: var(--qg-on-glass-sub);
+  border: 1px solid var(--qg-glass-border);
+  white-space: nowrap;
+}
+.landing-card-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--qg-on-glass);
+  margin-bottom: 4px;
+}
+.landing-card-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--qg-on-glass-sub);
+}
+.landing-card-arrow {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  color: var(--qg-on-glass-sub);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all var(--qg-duration-fast) var(--qg-ease-out);
+}
+.landing-card:hover .landing-card-arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--qg-primary);
+}
+
+/* 大卡（贪吃蛇 / 俄罗斯方块）：占 2 格 */
+.landing-card-lg {
+  grid-column: span 2;
+  min-height: 168px;
+}
+/* 小卡 */
+.landing-card-sm {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 108px;
+}
+.landing-card-sm-body {
+  flex: 1;
+  min-width: 0;
+}
+.landing-card-sm .landing-card-name {
+  font-size: 16px;
+}
+/* 宽卡（井字棋）：占 4 格 */
+.landing-card-wide {
+  grid-column: span 4;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 84px;
+}
+.landing-card-wide .landing-card-tag {
+  margin-left: auto;
+  margin-right: 28px;
+}
+
+/* ---------- 记账区域 ---------- */
+.landing-accounting {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+}
+.landing-acc-card {
+  border-radius: var(--qg-radius-lg);
+  padding: 40px 36px;
+  border: 1px solid color-mix(in srgb, var(--qg-primary) 22%, transparent);
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--qg-primary) 9%, transparent),
+    var(--qg-glass-bg));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  cursor: pointer;
+  transition: transform var(--qg-duration-normal) var(--qg-spring),
+              border-color var(--qg-duration-fast) ease;
+}
+.landing-acc-card:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--qg-primary) 40%, transparent);
+}
+.landing-acc-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--qg-primary);
+  color: #fff;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--qg-primary) 40%, transparent);
+}
+.landing-acc-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--qg-on-glass);
+  margin-bottom: 10px;
+  letter-spacing: -0.3px;
+}
+.landing-acc-desc {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--qg-on-glass-sub);
+  margin: 0 0 28px;
+}
+.landing-acc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.landing-acc-feature {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: var(--qg-radius-lg);
+  border: 1px solid var(--qg-glass-border);
+  background: var(--qg-glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  cursor: pointer;
+  transition: transform var(--qg-duration-fast) var(--qg-ease-out),
+              border-color var(--qg-duration-fast) ease;
+  position: relative;
+}
+.landing-acc-feature:hover {
+  transform: translateX(4px);
+  border-color: color-mix(in srgb, var(--qg-primary) 35%, transparent);
+}
+.landing-acc-feature-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--qg-primary) 14%, transparent);
+  color: var(--qg-primary);
+  flex-shrink: 0;
+}
+.landing-acc-feature-body {
+  flex: 1;
+  min-width: 0;
+}
+.landing-acc-feature-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--qg-on-glass);
+  margin-bottom: 2px;
+}
+.landing-acc-feature-desc {
+  font-size: 12px;
+  color: var(--qg-on-glass-sub);
+}
+
+/* ---------- 特性条 ---------- */
+.landing-features {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 8px 0 40px;
+}
+.landing-feature {
+  text-align: center;
+  padding: 24px 16px;
+  border-radius: var(--qg-radius-lg);
+  border: 1px solid var(--qg-glass-border);
+  background: var(--qg-glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+.landing-feature-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--qg-on-glass);
+  margin-bottom: 4px;
+}
+.landing-feature-desc {
+  font-size: 12px;
+  color: var(--qg-on-glass-sub);
+}
+
+/* ---------- 页脚 ---------- */
+.landing-footer {
+  border-top: 1px solid var(--qg-glass-border);
+  padding-top: 28px;
+}
+.landing-footer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.landing-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--qg-on-glass);
+}
+.landing-footer-links {
+  display: flex;
+  gap: 24px;
+}
+.landing-footer-links span {
+  font-size: 13px;
+  color: var(--qg-on-glass-sub);
+  cursor: pointer;
+  transition: color var(--qg-duration-fast) ease;
+}
+.landing-footer-links span:hover {
+  color: var(--qg-primary);
+}
+.landing-footer-copy {
+  font-size: 13px;
+  color: var(--qg-on-glass-sub);
+  opacity: 0.7;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 1024px) {
+  .landing-games {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .landing-card-lg,
+  .landing-card-wide {
+    grid-column: span 2;
+  }
+  .landing-accounting {
+    grid-template-columns: 1fr;
+  }
+  .landing-features,
+  .landing-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .landing {
+    padding: 0 12px 24px;
+  }
+  .landing-hero {
+    padding: 56px 20px 48px;
+    border-radius: var(--qg-radius-lg);
+  }
+  .landing-title {
+    font-size: 34px;
+  }
+  .landing-subtitle {
+    font-size: 20px;
+  }
+  .landing-games {
+    grid-template-columns: 1fr;
+  }
+  .landing-card-lg,
+  .landing-card-wide {
+    grid-column: span 1;
+  }
+  .landing-acc-card {
+    padding: 28px 22px;
+  }
+  .landing-features,
+  .landing-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .landing-stat-value {
+    font-size: 26px;
   }
 }
