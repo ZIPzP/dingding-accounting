@@ -73,18 +73,6 @@ canvas {
 .sp-next-row {
   display:flex; align-items:center; gap:6px; justify-content:center;
 }
-.sp-pause-btn {
-  width:36px; height:36px; border-radius:8px;
-  border:2px solid #2a2a40; background:#1e1e32; color:#c8c864;
-  font-size:16px; cursor:pointer;
-  display:flex; align-items:center; justify-content:center;
-  -webkit-tap-highlight-color:transparent;
-  touch-action:manipulation;
-  transition:background 0.15s;
-}
-.sp-pause-btn:active, .sp-pause-btn.pressed {
-  background:#3c3c1e; color:#fff;
-}
 .side-hint {
   color:#8c8c8c; font-size:10px; text-align:center;
   line-height:1.5;
@@ -110,9 +98,6 @@ canvas {
   }
   .next-grid {
     width:56px; height:56px;
-  }
-  .sp-pause-btn {
-    width:56px; height:56px; border-radius:12px; font-size:22px;
   }
   .side-hint {
     font-size:9px;
@@ -168,27 +153,6 @@ canvas {
   .touch-controls { gap:12px; }
 }
 
-.dpad {
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  grid-template-rows:1fr 1fr 1fr;
-  gap:4px;
-}
-.dpad .btn-dir {
-  width:clamp(48px,12vw,68px); height:clamp(48px,12vw,68px);
-  border-radius:12px; border:none;
-  background:#1e1e32; color:#aab;
-  font-size:clamp(22px,5vw,30px);
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; transition:background 0.1s;
-  -webkit-tap-highlight-color:transparent;
-  touch-action:manipulation;
-}
-.dpad .btn-dir:active, .dpad .btn-dir.pressed {
-  background:#3c3c64; color:#fff;
-}
-.dpad .empty { visibility:hidden; }
-
 .action-btns {
   display:flex; gap:6px; flex-wrap:wrap; justify-content:center;
 }
@@ -215,21 +179,11 @@ canvas {
     gap:6px;
     max-width:360px;
   }
-  .dpad .btn-dir {
-    width:clamp(44px,10vw,52px); height:clamp(44px,10vw,52px);
-    font-size:clamp(20px,4.5vw,26px);
-  }
   .action-btns .btn-act {
     padding:10px 12px;
     font-size:clamp(12px,2.6vw,14px);
     min-height:40px;
   }
-}
-
-/* 桌面隐藏 */
-@media (hover:hover) and (pointer:fine) {
-  .touch-controls { opacity:0.35; transition:opacity 0.3s; }
-  .touch-controls:hover { opacity:1; }
 }
 
 /* 小块颜色预览 */
@@ -294,41 +248,26 @@ canvas {
             <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
             <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
           </div>
-          <button class="sp-pause-btn" id="spPauseBtn" title="暂停 / 继续">⏸</button>
         </div>
       </div>
       <div class="sp-group">
         <div class="label">🎮 操作</div>
         <div class="side-hint">
           <span class="hint-dev">📱 手机</span>
-          上下左右滑动操控<br>
-          屏幕按钮：旋转 / 硬降<br>
-          暂停在下一块旁<br>
+          滑动屏幕控制：← → 移动，上滑旋转，下滑硬降<br>
           <span class="hint-dev">💻 电脑</span>
-          ←→↑↓ 方向键移动旋转<br>
-          空格 硬降 · P 暂停
+          WASD / 方向键 移动旋转<br>
+          空格 硬降 · P 暂停 · R 重开
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 触屏控件 -->
+  <!-- 触屏控件：仅保留暂停 / 重开（电脑用键盘，手机用滑动） -->
   <div class="touch-controls" id="touchControls">
-    <div class="dpad" id="dpad">
-      <div class="empty"></div>
-      <button class="btn-dir" data-dir="up"    id="btnUp">▲</button>
-      <div class="empty"></div>
-      <button class="btn-dir" data-dir="left"  id="btnLeft">◀</button>
-      <div class="empty"></div>
-      <button class="btn-dir" data-dir="right" id="btnRight">▶</button>
-      <div class="empty"></div>
-      <button class="btn-dir" data-dir="down"  id="btnDown">▼</button>
-      <div class="empty"></div>
-    </div>
     <div class="action-btns">
-      <button class="btn-act btn-primary" id="btnHardDrop">⬇ 硬降</button>
-      <button class="btn-act" id="btnRotate">🔄 旋转</button>
       <button class="btn-act btn-pause" id="btnPause">⏸ 暂停</button>
+      <button class="btn-act btn-danger" id="btnRestartLive">🔄 重开</button>
     </div>
   </div>
 </div>
@@ -827,13 +766,14 @@ document.addEventListener('keydown', e => {
   if (state === 'gameover' || state === 'paused') return;
 
   // 游戏操作
-  switch (k) {
-    case 'ArrowLeft':  moveLeft(); e.preventDefault(); break;
-    case 'ArrowRight': moveRight(); e.preventDefault(); break;
-    case 'ArrowDown':
+  const key = k.length === 1 ? k.toLowerCase() : k;
+  switch (key) {
+    case 'ArrowLeft':  case 'a': moveLeft(); e.preventDefault(); break;
+    case 'ArrowRight': case 'd': moveRight(); e.preventDefault(); break;
+    case 'ArrowDown':  case 's':
       if (!moveDown()) { lockDrop(); }
       e.preventDefault(); break;
-    case 'ArrowUp': rotatePiece(); e.preventDefault(); break;
+    case 'ArrowUp':    case 'w': rotatePiece(); e.preventDefault(); break;
     case ' ': case 'Space':
       hardDrop(); e.preventDefault(); break;
   }
@@ -857,12 +797,6 @@ function setupBtn(id, action) {
   btn.addEventListener('click', e => e.preventDefault());
 }
 
-setupBtn('btnLeft', moveLeft);
-setupBtn('btnRight', moveRight);
-setupBtn('btnDown', () => { if (!moveDown()) lockDrop(); });
-setupBtn('btnUp', rotatePiece);
-setupBtn('btnHardDrop', hardDrop);
-setupBtn('btnRotate', rotatePiece);
 setupBtn('btnPause', () => {
   if (state === 'idle' || state === 'gameover') return;
   if (state === 'playing') {
@@ -875,18 +809,7 @@ setupBtn('btnPause', () => {
     dropCounter = 0;
   }
 });
-setupBtn('spPauseBtn', () => {
-  if (state === 'idle' || state === 'gameover') return;
-  if (state === 'playing') {
-    state = 'paused';
-    pauseOverlay.classList.remove('hidden');
-  } else if (state === 'paused') {
-    state = 'playing';
-    pauseOverlay.classList.add('hidden');
-    lastTime = performance.now();
-    dropCounter = 0;
-  }
-});
+setupBtn('btnRestartLive', startGame);
 
 // 开始/重开按钮
 document.getElementById('btnStartGame').addEventListener('click', startGame);
