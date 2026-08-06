@@ -55,6 +55,10 @@ canvas {
 }
 .side-panel .label {
   color:#8c8c8c; font-size:11px; text-align:center;
+  margin-bottom:2px;
+}
+.sp-group {
+  display:flex; flex-direction:column; gap:4px;
 }
 .next-grid {
   background:#0f0f19; border:2px solid #2a2a40; border-radius:6px;
@@ -68,10 +72,39 @@ canvas {
 }
 .side-hint {
   color:#8c8c8c; font-size:10px; text-align:center;
-  line-height:1.4;
+  line-height:1.5;
+}
+.side-hint .hint-dev {
+  color:#ffc832; font-weight:bold;
 }
 .side-hint kbd {
   color:#ffc832; font-size:12px;
+}
+/* 竖屏：侧面板横排，降低整体高度 */
+@media (orientation: portrait) {
+  .side-panel {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap:14px;
+    min-width:0;
+    width:100%;
+  }
+  .sp-group {
+    align-items: center;
+  }
+  .next-grid {
+    width:56px; height:56px;
+  }
+  .side-hint {
+    font-size:9px;
+    text-align:left;
+    line-height:1.5;
+  }
+  .side-hint .hint-dev {
+    display:inline;
+    margin-right:2px;
+  }
 }
 
 /* 遮罩层 */
@@ -158,6 +191,23 @@ canvas {
 .btn-pause { background:#3c3c1e; color:#c8c864; }
 .btn-pause:active { background:#5a5a2e; }
 
+/* 竖屏：触屏控件紧凑排列，降低整体高度 */
+@media (orientation: portrait) {
+  .touch-controls {
+    gap:6px;
+    max-width:360px;
+  }
+  .dpad .btn-dir {
+    width:clamp(44px,10vw,52px); height:clamp(44px,10vw,52px);
+    font-size:clamp(20px,4.5vw,26px);
+  }
+  .action-btns .btn-act {
+    padding:10px 12px;
+    font-size:clamp(12px,2.6vw,14px);
+    min-height:40px;
+  }
+}
+
 /* 桌面隐藏 */
 @media (hover:hover) and (pointer:fine) {
   .touch-controls { opacity:0.35; transition:opacity 0.3s; }
@@ -216,20 +266,26 @@ canvas {
     </div>
 
     <!-- 侧面板 -->
-    <div class="side-panel">
-      <div class="label">⬇ 下一个</div>
-      <div class="next-grid" id="nextGrid">
-        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+    <div class="side-panel" id="sidePanel">
+      <div class="sp-group">
+        <div class="label">⬇ 下一个</div>
+        <div class="next-grid" id="nextGrid">
+          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        </div>
       </div>
-      <div class="label">🎮 操作</div>
-      <div class="side-hint">
-        ← → 移动<br>
-        ↑ 旋转<br>
-        ↓ 软降<br>
-        空格 硬降
+      <div class="sp-group">
+        <div class="label">🎮 操作</div>
+        <div class="side-hint">
+          <span class="hint-dev">📱 手机</span>
+          上下左右滑动操控<br>
+          屏幕按钮：旋转 / 硬降 / 重开<br>
+          <span class="hint-dev">💻 电脑</span>
+          ←→↑↓ 方向键移动旋转<br>
+          空格 硬降 · P 暂停
+        </div>
       </div>
     </div>
   </div>
@@ -850,9 +906,9 @@ function resize() {
 
   // 估算各元素尺寸
   const infoH = 34;
-  const ctrlH = 110; // touch controls 大致高度
+  const ctrlH = isLandscape ? 90 : 150; // touch controls 大致高度
   const panelW = 110; // 侧面板宽度
-  const panelH = 180; // 侧面板高度(wrap 模式)
+  const panelH = isLandscape ? 190 : 80; // 竖屏侧面板横排后高度约 80
   const gap = 8;
 
   let needW, needH;
@@ -861,9 +917,9 @@ function resize() {
     needW = BOARD_W + panelW + gap + 30;
     needH = BOARD_H + infoH + 20;
   } else {
-    // 竖排：控件在下方，侧面板在画布下方(wrap)
+    // 竖排：侧面板横排在画布下方，控件在下方
     needW = Math.max(BOARD_W, 280) + 20;
-    needH = BOARD_H + infoH + ctrlH + (isLandscape ? 0 : panelH + gap) + 24;
+    needH = BOARD_H + infoH + panelH + gap + ctrlH + 16;
   }
 
   const padH = 10, padV = 6;
