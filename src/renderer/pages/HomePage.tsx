@@ -34,12 +34,12 @@ const games: GameItem[] = [
 const stats = [
   { value: '7', label: '经典小游戏' },
   { value: '1', label: '生活工具' },
-  { value: '0', label: '网络依赖' },
-  { value: '100%', label: '离线可用' },
+  { value: '0', label: '烦恼' },
+  { value: '100%', label: '解闷' },
 ];
 
 const features = [
-  { title: '完全离线', desc: '无需联网，随时可用' },
+  { title: '随时解闷', desc: '无聊时刻，打开就能玩' },
   { title: '数据安全', desc: '本地存储，绝不上传' },
   { title: '零依赖', desc: '不依赖任何外部服务' },
   { title: '开源免费', desc: '代码开源，永久免费' },
@@ -63,13 +63,13 @@ const HomePage: React.FC = () => {
         <div className="landing-hero-inner">
           <div className="landing-badge">
             <IconZap size={13} />
-            OFFLINE FIRST
+            BOREDOM BUSTER
           </div>
-          <h1 className="landing-title">离线工具集</h1>
-          <div className="landing-subtitle">无网络 · 也能用</div>
+          <h1 className="landing-title">无聊救星</h1>
+          <div className="landing-subtitle">没啥说的，就一个破网页</div>
           <p className="landing-desc">
-            7 款经典小游戏 + 智能记账，全部本地运行。
-            数据不出设备，游戏随时开玩。
+            7 款经典小游戏 + 智能记账，把无聊时光变成快乐时光。
+            数据本地存储，玩得放心。
           </p>
           <div className="landing-ctas">
             <button className="landing-btn landing-btn-primary" onClick={() => navigate('/game')}>
@@ -228,7 +228,7 @@ const HomePage: React.FC = () => {
         <div className="landing-footer-top">
           <div className="landing-footer-brand">
             <IconLogo size={20} />
-            青孤 · 离线工具集
+            青孤 · 无聊救星
           </div>
           <div className="landing-footer-links">
             <span onClick={() => navigate('/settings')}>设置</span>
@@ -236,7 +236,7 @@ const HomePage: React.FC = () => {
             <span onClick={() => navigate('/stats')}>统计</span>
           </div>
         </div>
-        <div className="landing-footer-copy">2026 青孤项目 · 所有数据本地存储，无需网络</div>
+        <div className="landing-footer-copy">2026 青孤项目 · 无聊时刻，有青孤相伴</div>
       </footer>
     </div>
   );

@@ -237,7 +237,7 @@ const Settings: React.FC = () => {
         </Descriptions>
         <Divider />
         <Paragraph type="secondary" style={{ fontSize: 13 }}>
-          青孤项目是一款本地运行的离线工具集，所有数据均保存在您的电脑上，
+          青孤项目是一款陪你打发无聊的离线工具集，所有数据均保存在您的电脑上，
           不会上传至任何服务器。请定期备份数据以防丢失。
         </Paragraph>
       </Card>
