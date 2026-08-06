@@ -606,11 +606,12 @@ document.getElementById('btnWinRestart').addEventListener('click', initGame);
 // ═══════════════════════════════════════════════════
 function resize() {
   const gb = document.getElementById('gridBg');
-  // 自适应大屏，base 700px
-  let av = Math.min(window.innerWidth-40, window.innerHeight-160, 700);
+  // 计算可用尺寸：不缩放 transform，直接设置棋盘真实宽度，
+  // 保证 tile 定位（基于 getBoundingClientRect）与实际渲染尺寸一致
+  let av = Math.min(window.innerWidth - 40, window.innerHeight - 160, 700);
   av = Math.max(av, 180);
-  const s = av / 700;
-  wrapper.style.transform = `scale(${Math.min(1,s)})`;
+  gb.style.width = av + 'px';
+  gb.style.height = av + 'px';
 }
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', ()=>setTimeout(resize,300));
