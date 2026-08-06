@@ -70,6 +70,21 @@ canvas {
 .next-grid .cell {
   border-radius:3px;
 }
+.sp-next-row {
+  display:flex; align-items:center; gap:6px; justify-content:center;
+}
+.sp-pause-btn {
+  width:36px; height:36px; border-radius:8px;
+  border:2px solid #2a2a40; background:#1e1e32; color:#c8c864;
+  font-size:16px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  transition:background 0.15s;
+}
+.sp-pause-btn:active, .sp-pause-btn.pressed {
+  background:#3c3c1e; color:#fff;
+}
 .side-hint {
   color:#8c8c8c; font-size:10px; text-align:center;
   line-height:1.5;
@@ -86,7 +101,7 @@ canvas {
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    gap:14px;
+    gap:12px;
     min-width:0;
     width:100%;
   }
@@ -95,6 +110,9 @@ canvas {
   }
   .next-grid {
     width:56px; height:56px;
+  }
+  .sp-pause-btn {
+    width:56px; height:56px; border-radius:12px; font-size:22px;
   }
   .side-hint {
     font-size:9px;
@@ -269,11 +287,14 @@ canvas {
     <div class="side-panel" id="sidePanel">
       <div class="sp-group">
         <div class="label">⬇ 下一个</div>
-        <div class="next-grid" id="nextGrid">
-          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        <div class="sp-next-row">
+          <div class="next-grid" id="nextGrid">
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          </div>
+          <button class="sp-pause-btn" id="spPauseBtn" title="暂停 / 继续">⏸</button>
         </div>
       </div>
       <div class="sp-group">
@@ -281,7 +302,8 @@ canvas {
         <div class="side-hint">
           <span class="hint-dev">📱 手机</span>
           上下左右滑动操控<br>
-          屏幕按钮：旋转 / 硬降 / 重开<br>
+          屏幕按钮：旋转 / 硬降<br>
+          暂停在下一块旁<br>
           <span class="hint-dev">💻 电脑</span>
           ←→↑↓ 方向键移动旋转<br>
           空格 硬降 · P 暂停
@@ -307,7 +329,6 @@ canvas {
       <button class="btn-act btn-primary" id="btnHardDrop">⬇ 硬降</button>
       <button class="btn-act" id="btnRotate">🔄 旋转</button>
       <button class="btn-act btn-pause" id="btnPause">⏸ 暂停</button>
-      <button class="btn-act btn-danger" id="btnReset">🔄 重开</button>
     </div>
   </div>
 </div>
@@ -854,7 +875,18 @@ setupBtn('btnPause', () => {
     dropCounter = 0;
   }
 });
-setupBtn('btnReset', startGame);
+setupBtn('spPauseBtn', () => {
+  if (state === 'idle' || state === 'gameover') return;
+  if (state === 'playing') {
+    state = 'paused';
+    pauseOverlay.classList.remove('hidden');
+  } else if (state === 'paused') {
+    state = 'playing';
+    pauseOverlay.classList.add('hidden');
+    lastTime = performance.now();
+    dropCounter = 0;
+  }
+});
 
 // 开始/重开按钮
 document.getElementById('btnStartGame').addEventListener('click', startGame);
