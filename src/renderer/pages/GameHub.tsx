@@ -65,7 +65,8 @@ const GameHub: React.FC = () => {
                   textAlign: 'center', marginBottom: 14,
                   width: 56, height: 56, margin: '0 auto 14px',
                   borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: `color-mix(in srgb, ${game.color} 12%, white)`,
+                  color: game.color,
+                  background: `color-mix(in srgb, ${game.color} 14%, transparent)`,
                 }}>
                   <GameIcon size={32} />
                 </div>
