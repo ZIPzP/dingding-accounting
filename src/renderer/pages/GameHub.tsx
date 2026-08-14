@@ -8,7 +8,7 @@ import { Card, Row, Col, Typography } from 'antd';
 import {
   IconZap, IconGamepad,
   IconSnake, IconTetris, Icon2048,
-  IconMine, IconBreakout, IconWhackAMole, IconTicTacToe,
+  IconMine, IconBreakout, IconWhackAMole, IconTicTacToe, IconTower,
 } from '../components/Icons';
 
 const { Text } = Typography;
@@ -23,6 +23,7 @@ interface GameInfo {
 }
 
 const games: GameInfo[] = [
+  { key: 'stack', name: '叠叠高', icon: IconTower, desc: '全新 3D 叠塔，完美对齐触发连击', color: '#06b6d4', route: '/game/stack' },
   { key: 'snake', name: '贪吃蛇', icon: IconSnake, desc: '经典贪吃蛇，触屏操控、排行榜、多彩皮肤', color: '#52c41a', route: '/game/snake' },
   { key: 'tetris', name: '俄罗斯方块', icon: IconTetris, desc: '经典消除，七种方块，挑战高分', color: '#1890ff', route: '/game/tetris' },
   { key: '2048', name: '2048', icon: Icon2048, desc: '滑动合并数字，挑战 2048 极限', color: '#edc22e', route: '/game/2048' },

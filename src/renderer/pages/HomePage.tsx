@@ -11,7 +11,7 @@ import {
   IconMine, IconBreakout, IconWhackAMole, IconTicTacToe,
   IconBook, IconRight, IconZap, IconLogo,
   IconPlusCircle, IconHourglass, IconTimer, IconNote, IconTools,
-  IconWave, IconTarget, IconCheckCircle, IconReport,
+  IconWave, IconTarget, IconCheckCircle, IconReport, IconTower,
 } from '../components/Icons';
 import { api } from '../services/api';
 import { getBudget, budgetProgress, budgetStatus } from '../services/budget';
@@ -27,13 +27,14 @@ interface GameItem {
 }
 
 const games: GameItem[] = [
+  { key: 'stack', name: '叠叠高', icon: IconTower, desc: '全新 3D 叠塔，完美对齐连击', route: '/game/stack', color: '#06b6d4', tag: '全新 3D' },
   { key: 'snake', name: '贪吃蛇', icon: IconSnake, desc: '经典贪吃蛇，排行榜 + 多彩皮肤', route: '/game/snake', color: '#34d399', tag: '怀旧经典' },
   { key: 'tetris', name: '俄罗斯方块', icon: IconTetris, desc: '七种方块，挑战高分', route: '/game/tetris', color: '#38bdf8', tag: '消除益智' },
+  { key: 'tictactoe', name: '井字棋', icon: IconTicTacToe, desc: '人机对战，三子连珠', route: '/game/tictactoe', color: '#a78bfa', tag: '策略对战' },
   { key: '2048', name: '2048', icon: Icon2048, desc: '滑动合并数字', route: '/game/2048', color: '#fbbf24', tag: '数字策略' },
   { key: 'minesweeper', name: '扫雷', icon: IconMine, desc: '推理排雷，初/中/高级', route: '/game/minesweeper', color: '#fb923c', tag: '逻辑推理' },
   { key: 'breakout', name: '打砖块', icon: IconBreakout, desc: '弹球清砖，关卡推进', route: '/game/breakout', color: '#f472b6', tag: '动作反应' },
   { key: 'whackamole', name: '打地鼠', icon: IconWhackAMole, desc: '30 秒限时，眼疾手快', route: '/game/whackamole', color: '#f87171', tag: '限时挑战' },
-  { key: 'tictactoe', name: '井字棋', icon: IconTicTacToe, desc: '人机对战，三子连珠', route: '/game/tictactoe', color: '#a78bfa', tag: '策略对战' },
 ];
 
 const toolCards = [
@@ -238,7 +239,7 @@ function useParallax(): React.RefObject<HTMLDivElement> {
 
 /** 跑马灯内容 */
 const marqueeItems = [
-  '🎮 贪吃蛇', '🧱 俄罗斯方块', '🔢 2048', '💣 扫雷', '🧱 打砖块', '🐹 打地鼠', '⭕ 井字棋',
+  '🧊 叠叠高 3D', '🎮 贪吃蛇', '🧱 俄罗斯方块', '🔢 2048', '💣 扫雷', '🧱 打砖块', '🐹 打地鼠', '⭕ 井字棋',
   '💬 智能记账', '⏳ 倒数日', '🍅 番茄钟', '🌧️ 白噪音', '📝 备忘录', '🎯 心愿单', '✅ 习惯打卡', '📊 年度报告',
 ];
 
@@ -485,7 +486,7 @@ const HomePage: React.FC = () => {
           </h1>
           <div className="landing-subtitle">你的离线时光伙伴</div>
           <p className="landing-desc">
-            7 款经典小游戏 + 收支记账 + 生活工具，
+            8 款经典小游戏 + 收支记账 + 生活工具，
             把无聊时光变成快乐时光。数据全部保存在本地，断网也能玩，用着更安心。
           </p>
           <div className="landing-ctas">
@@ -608,40 +609,26 @@ const HomePage: React.FC = () => {
         </div>
 
         <div className="landing-games">
-          {(() => {
-            const g0 = games[0];
-            const G0 = g0.icon;
-            const g1 = games[1];
-            const G1 = g1.icon;
+          {/* 4 大卡：叠叠高 / 贪吃蛇 / 俄罗斯方块 / 井字棋 */}
+          {games.slice(0, 4).map((g) => {
+            const GI = g.icon;
             return (
-              <>
-                <div className="landing-card landing-card-lg" style={{ '--gc': g0.color } as React.CSSProperties} onClick={() => navigate(g0.route)} data-spotlight data-tilt>
-                  <div className="landing-card-top">
-                    <span className="landing-card-icon" style={{ color: g0.color }}>
-                      <G0 size={26} />
-                    </span>
-                    <span className="landing-card-tag">{g0.tag}</span>
-                  </div>
-                  <div className="landing-card-name">{g0.name}</div>
-                  <div className="landing-card-desc">{g0.desc}</div>
-                  <IconRight size={16} className="landing-card-arrow" />
+              <div key={g.key} className="landing-card landing-card-lg" style={{ '--gc': g.color } as React.CSSProperties} onClick={() => navigate(g.route)} data-spotlight data-tilt>
+                <div className="landing-card-top">
+                  <span className="landing-card-icon" style={{ color: g.color }}>
+                    <GI size={26} />
+                  </span>
+                  <span className="landing-card-tag">{g.tag}</span>
                 </div>
-                <div className="landing-card landing-card-lg" style={{ '--gc': g1.color } as React.CSSProperties} onClick={() => navigate(g1.route)} data-spotlight data-tilt>
-                  <div className="landing-card-top">
-                    <span className="landing-card-icon" style={{ color: g1.color }}>
-                      <G1 size={26} />
-                    </span>
-                    <span className="landing-card-tag">{g1.tag}</span>
-                  </div>
-                  <div className="landing-card-name">{g1.name}</div>
-                  <div className="landing-card-desc">{g1.desc}</div>
-                  <IconRight size={16} className="landing-card-arrow" />
-                </div>
-              </>
+                <div className="landing-card-name">{g.name}</div>
+                <div className="landing-card-desc">{g.desc}</div>
+                <IconRight size={16} className="landing-card-arrow" />
+              </div>
             );
-          })()}
+          })}
 
-          {games.slice(2, 6).map((g) => {
+          {/* 4 小卡：2048 / 扫雷 / 打砖块 / 打地鼠 */}
+          {games.slice(4).map((g) => {
             const GI = g.icon;
             return (
               <div key={g.key} className="landing-card landing-card-sm" style={{ '--gc': g.color } as React.CSSProperties} onClick={() => navigate(g.route)} data-spotlight data-tilt>
@@ -656,24 +643,6 @@ const HomePage: React.FC = () => {
               </div>
             );
           })}
-
-          {(() => {
-            const g6 = games[6];
-            const G6 = g6.icon;
-            return (
-              <div className="landing-card landing-card-wide" style={{ '--gc': g6.color } as React.CSSProperties} onClick={() => navigate(g6.route)} data-spotlight data-tilt>
-                <span className="landing-card-icon" style={{ color: g6.color }}>
-                  <G6 size={24} />
-                </span>
-                <div className="landing-card-sm-body">
-                  <div className="landing-card-name">{g6.name}</div>
-                  <div className="landing-card-desc">{g6.desc}</div>
-                </div>
-                <span className="landing-card-tag">{g6.tag}</span>
-                <IconRight size={14} className="landing-card-arrow" />
-              </div>
-            );
-          })()}
         </div>
       </section>
 

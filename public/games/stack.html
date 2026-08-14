@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>叠叠高 · 青孤项目</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #060810; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+  #game { position: fixed; inset: 0; display: block; touch-action: none; }
+  .hud { position: fixed; z-index: 5; user-select: none; pointer-events: none; }
+  .hud-top { top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
+  .hud button { pointer-events: auto; border: none; cursor: pointer; background: rgba(255,255,255,0.08); color: #cbd5e1; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 999px; padding: 8px 16px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.12); transition: all .18s ease; }
+  .hud button:hover { background: rgba(255,255,255,0.16); color: #fff; }
+  .hud button:active { transform: scale(0.94); }
+  .score-wrap { text-align: center; }
+  .score-num { font-size: 34px; font-weight: 800; color: #fff; letter-spacing: 1px; text-shadow: 0 0 24px rgba(34,211,238,0.5); font-variant-numeric: tabular-nums; line-height: 1; }
+  .score-label { font-size: 11px; color: #64748b; letter-spacing: 3px; margin-top: 3px; }
+  .best-num { font-size: 13px; color: #94a3b8; font-variant-numeric: tabular-nums; }
+  .best-label { font-size: 10px; color: #475569; letter-spacing: 2px; }
+  .combo-tip { position: fixed; left: 50%; top: 30%; transform: translate(-50%, -50%) scale(0); z-index: 6; font-size: 22px; font-weight: 800; color: #22d3ee; text-shadow: 0 0 20px rgba(34,211,238,0.8); pointer-events: none; }
+  .combo-tip.show { animation: comboPop .7s cubic-bezier(.34,1.56,.64,1) both; }
+  @keyframes comboPop { 0% { transform: translate(-50%,-50%) scale(0); opacity: 0; } 30% { transform: translate(-50%,-50%) scale(1.15); opacity: 1; } 100% { transform: translate(-50%,-60%) scale(1); opacity: 0; } }
+  .overlay { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: rgba(4,6,12,0.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); animation: fadeIn .3s ease both; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .overlay-title { font-size: 30px; font-weight: 800; color: #fff; letter-spacing: 2px; }
+  .overlay-sub { font-size: 13px; color: #94a3b8; letter-spacing: 1px; }
+  .overlay-score { font-size: 56px; font-weight: 800; color: #22d3ee; text-shadow: 0 0 30px rgba(34,211,238,0.55); line-height: 1; margin: 6px 0; font-variant-numeric: tabular-nums; }
+  .overlay-best { font-size: 13px; color: #94a3b8; }
+  .overlay-btn { pointer-events: auto; border: none; cursor: pointer; margin-top: 18px; padding: 14px 44px; border-radius: 999px; font-size: 16px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #06b6d4, #3b82f6); box-shadow: 0 8px 26px rgba(6,182,212,0.4); transition: all .2s ease; letter-spacing: 2px; }
+  .overlay-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 34px rgba(6,182,212,0.5); }
+  .overlay-btn:active { transform: scale(0.96); }
+  .overlay-btn.ghost { background: rgba(255,255,255,0.1); box-shadow: none; border: 1px solid rgba(255,255,255,0.18); color: #cbd5e1; font-size: 14px; padding: 11px 30px; letter-spacing: 1px; margin-top: 0; }
+  .hint { position: fixed; bottom: 20px; left: 0; right: 0; text-align: center; font-size: 12px; color: #475569; letter-spacing: 2px; z-index: 5; pointer-events: none; padding-bottom: env(safe-area-inset-bottom, 0px); }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div class="hud hud-top">
+  <button id="btnBack" aria-label="返回">← 返回</button>
+  <div class="score-wrap">
+    <div class="score-num" id="scoreNum">0</div>
+    <div class="score-label">SCORE</div>
+  </div>
+  <div style="text-align:right">
+    <div class="best-num" id="bestNum">0</div>
+    <div class="best-label">最佳</div>
+  </div>
+</div>
+
+<div class="combo-tip" id="comboTip">完美!</div>
+<div class="hint">点击屏幕 或 按空格 放下方块</div>
+
+<div class="overlay" id="startOverlay">
+  <div class="overlay-title">🧊 叠叠高</div>
+  <div class="overlay-sub">3D 叠塔挑战 · 完美对齐有加成</div>
+  <div class="overlay-best" id="startBest">最佳纪录:0</div>
+  <button class="overlay-btn" id="btnStart">开始游戏</button>
+</div>
+
+<div class="overlay" id="overOverlay" style="display:none">
+  <div class="overlay-title">游戏结束</div>
+  <div class="overlay-sub">塔倒了,但你可以更高</div>
+  <div class="overlay-score" id="overScore">0</div>
+  <div class="overlay-best" id="overBest">最佳纪录:0</div>
+  <button class="overlay-btn" id="btnRestart">再来一局</button>
+  <button class="overlay-btn ghost" id="btnBack2">返回</button>
+</div>
+
+<script src="./qg-engine.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var canvas = document.getElementById('game');
+  var ctx = canvas.getContext('2d');
+  var scoreEl = document.getElementById('scoreNum');
+  var bestEl = document.getElementById('bestNum');
+  var startOverlay = document.getElementById('startOverlay');
+  var overOverlay = document.getElementById('overOverlay');
+  var comboTip = document.getElementById('comboTip');
+
+  var W = 0, H = 0, DPR = 1;
+
+  /* ---------------- 3D 投影参数 ---------------- */
+  var ROTY = 0.46;
+  var COS = Math.cos(ROTY), SIN = Math.sin(ROTY);
+  var FOV = 700;
+  var camY = 0;
+
+  /* 塔的数据 */
+  var tower = [];     // {x, w, h, color}
+  var moving = null;  // {x, w, y, dir, speed, color}
+  var blockW = 0, blockH = 0, blockD = 0;
+  var score = 0, best = 0, combo = 0;
+  var state = 'idle'; // idle | playing | over
+  var particles = [];
+  var shakeT = 0;
+  var lastT = 0;
+
+  function project(x, y, z) {
+    var rx = x * COS + z * SIN;
+    var rz = -x * SIN + z * COS;
+    var p = FOV / (FOV + rz);
+    return {
+      x: W / 2 + rx * p,
+      y: H * 0.82 - (y - camY) * p,
+      p: p
+    };
+  }
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    blockW = Math.min(W * 0.62, 360);
+    blockH = blockW * 0.42;
+    blockD = blockW * 0.72;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  /* ---------------- 颜色 ---------------- */
+  function colorOf(i) {
+    var hue = (190 + i * 42) % 360;
+    return 'hsl(' + hue + ', 85%, 55%)';
+  }
+  function shade(hslStr, light) {
+    var m = hslStr.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+    if (!m) return hslStr;
+    return 'hsl(' + m[1] + ', ' + m[2] + '%, ' + Math.max(18, Math.min(88, parseInt(m[3]) + light)) + '%)';
+  }
+
+  /* ---------------- 绘制 ---------------- */
+  function drawBlock(b, alpha) {
+    var cx = b.x, w = b.w, y = b.y, h = b.h, d = b.d, color = b.color;
+    var c000 = project(cx - w / 2, y, -d / 2);
+    var c100 = project(cx + w / 2, y, -d / 2);
+    var c110 = project(cx + w / 2, y, d / 2);
+    var c010 = project(cx - w / 2, y, d / 2);
+    var c001 = project(cx - w / 2, y + h, -d / 2);
+    var c101 = project(cx + w / 2, y + h, -d / 2);
+    var c111 = project(cx + w / 2, y + h, d / 2);
+    var c011 = project(cx - w / 2, y + h, d / 2);
+
+    ctx.globalAlpha = alpha === undefined ? 1 : alpha;
+    ctx.lineWidth = 1.2;
+
+    // 右面 (+x)
+    face([c100, c110, c111, c101], shade(color, -14));
+    // 前面 (+z)
+    face([c010, c110, c111, c011], shade(color, 0));
+    // 顶面
+    face([c001, c101, c111, c011], shade(color, 22));
+    ctx.globalAlpha = 1;
+  }
+
+  function face(pts, fill) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (var i = 1; i < 4; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  function drawStars() {
+    // 静态星空（用固定伪随机）
+    for (var i = 0; i < 70; i++) {
+      var sx = ((i * 137.5) % W + W) % W;
+      var sy = ((i * 97.3) % (H * 0.6));
+      var r = 0.5 + ((i * 7) % 10) / 12;
+      ctx.globalAlpha = 0.25 + ((i * 13) % 10) / 30;
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath();
+      ctx.arc(sx, sy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawGround() {
+    var g = project(0, 0, 0);
+    var grad = ctx.createLinearGradient(0, g.y, 0, H);
+    grad.addColorStop(0, 'rgba(34,211,238,0.10)');
+    grad.addColorStop(1, 'rgba(6,182,212,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, g.y, W, H - g.y);
+  }
+
+  function draw() {
+    // 背景
+    var bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#060810');
+    bg.addColorStop(0.55, '#0b1226');
+    bg.addColorStop(1, '#101c3a');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+    drawStars();
+    drawGround();
+
+    // 屏幕震动
+    ctx.save();
+    if (shakeT > 0) {
+      var m = shakeT * 14;
+      ctx.translate((Math.random() - 0.5) * m, (Math.random() - 0.5) * m);
+    }
+
+    // 塔（自下而上）
+    for (var i = 0; i < tower.length; i++) drawBlock(tower[i]);
+    // 移动块
+    if (moving) {
+      drawBlock(moving);
+      // 落点投影
+      var top = tower[tower.length - 1];
+      if (top) {
+        var sh = project(moving.x, moving.y - 0.02, 0);
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = '#22d3ee';
+        ctx.beginPath();
+        ctx.ellipse(sh.x, sh.y, moving.w * 0.2, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // 粒子
+    for (var p = 0; p < particles.length; p++) {
+      var pt = particles[p];
+      pt.x += pt.vx;
+      pt.y += pt.vy;
+      pt.vy += 0.18;
+      pt.life -= 0.02;
+      ctx.globalAlpha = Math.max(0, pt.life);
+      ctx.fillStyle = pt.color;
+      var pr = project(pt.x, pt.y, pt.z);
+      ctx.fillRect(pr.x, pr.y, pt.size * pr.p, pt.size * pr.p);
+    }
+    ctx.globalAlpha = 1;
+    particles = particles.filter(function (pt) { return pt.life > 0; });
+
+    ctx.restore();
+  }
+
+  /* ---------------- 游戏逻辑 ---------------- */
+  function newMoving() {
+    var top = tower[tower.length - 1];
+    var color = colorOf(tower.length);
+    moving = {
+      x: -(blockW / 2),
+      w: top ? top.w : blockW,
+      y: tower.length * blockH,
+      h: blockH,
+      d: blockD,
+      dir: 1,
+      speed: Math.min(420 + tower.length * 26, 900),
+      color: color
+    };
+  }
+
+  function startGame() {
+    tower = [{
+      x: 0, w: blockW, y: 0, h: blockH, d: blockD, color: colorOf(0)
+    }];
+    score = 0;
+    combo = 0;
+    camY = 0;
+    particles = [];
+    state = 'playing';
+    scoreEl.textContent = '0';
+    startOverlay.style.display = 'none';
+    overOverlay.style.display = 'none';
+    newMoving();
+    qg.sfx.click();
+  }
+
+  function drop() {
+    if (state !== 'playing' || !moving) return;
+    var top = tower[tower.length - 1];
+    var w1 = top.w / 2, w2 = moving.w / 2;
+    var x1 = top.x, x2 = moving.x;
+    var overlap = Math.min(x1 + w1, x2 + w2) - Math.max(x1 - w1, x2 - w2);
+
+    if (overlap <= 0.01) {
+      gameOver();
+      return;
+    }
+
+    var newW = overlap;
+    var newX = Math.max(x1 - w1, x2 - w2) + overlap / 2;
+    var offset = Math.abs(newX - x1);
+
+    var isPerfect = newW >= moving.w - 1 && offset < moving.w * 0.02 && tower.length > 0;
+
+    tower.push({
+      x: newX, w: newW, y: tower.length * blockH, h: blockH, d: blockD,
+      color: moving.color
+    });
+
+    score++;
+    scoreEl.textContent = String(score);
+
+    if (isPerfect) {
+      combo++;
+      qg.sfx.perfect();
+      qg.vibrate(30);
+      showCombo(combo);
+      burstParticles(newX, tower[tower.length - 1].y, moving.color);
+      if (combo >= 2) {
+        score += 1;
+        scoreEl.textContent = String(score);
+      }
+    } else {
+      combo = 0;
+      qg.sfx.drop();
+      qg.vibrate(12);
+    }
+
+    // 摄像机抬升：让塔顶保持在屏幕中上部
+    var targetCam = Math.max(0, tower.length * blockH - H * 0.55);
+    camY += (targetCam - camY) * 0.25;
+
+    if (newW < 6) {
+      gameOver();
+      return;
+    }
+    newMoving();
+  }
+
+  function showCombo(n) {
+    comboTip.textContent = n >= 2 ? '完美!连击 x' + n : '完美!';
+    comboTip.classList.remove('show');
+    void comboTip.offsetWidth;
+    comboTip.classList.add('show');
+  }
+
+  function burstParticles(x, y, color) {
+    for (var i = 0; i < 16; i++) {
+      var a = Math.random() * Math.PI * 2;
+      var sp = 1.5 + Math.random() * 3;
+      particles.push({
+        x: x, y: y + blockH, z: 0,
+        vx: Math.cos(a) * sp,
+        vy: Math.random() * 4 + 2,
+        vz: 0,
+        size: 2 + Math.random() * 3,
+        life: 1,
+        color: shade(color, 26)
+      });
+    }
+  }
+
+  function gameOver() {
+    state = 'over';
+    qg.sfx.over();
+    qg.vibrate([60, 40, 90]);
+    shakeT = 1;
+    if (score > best) {
+      best = score;
+      qg.best('stack', best);
+    }
+    bestEl.textContent = String(best);
+    document.getElementById('overScore').textContent = String(score);
+    document.getElementById('overBest').textContent = '最佳纪录:' + best;
+    setTimeout(function () {
+      overOverlay.style.display = 'flex';
+    }, 420);
+  }
+
+  /* ---------------- 主循环 ---------------- */
+  function loop(t) {
+    var dt = lastT ? Math.min((t - lastT) / 1000, 0.05) : 0.016;
+    lastT = t;
+
+    if (state === 'playing' && moving) {
+      var half = blockW / 2;
+      moving.x += moving.dir * moving.speed * dt;
+      if (moving.x + moving.w / 2 > half) {
+        moving.x = half - moving.w / 2;
+        moving.dir = -1;
+        qg.sfx.move();
+      } else if (moving.x - moving.w / 2 < -half) {
+        moving.x = -half + moving.w / 2;
+        moving.dir = 1;
+        qg.sfx.move();
+      }
+    }
+
+    if (shakeT > 0) shakeT = Math.max(0, shakeT - dt * 2.4);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------------- 输入 ---------------- */
+  function onTap(e) {
+    if (e.target && (e.target.id === 'btnStart' || e.target.id === 'btnRestart')) return;
+    if (state === 'playing') drop();
+  }
+  canvas.addEventListener('pointerdown', onTap);
+  window.addEventListener('keydown', function (e) {
+    if (e.code === 'Space' || e.code === 'Enter') {
+      e.preventDefault();
+      if (state === 'playing') drop();
+    }
+  });
+
+  function goBack() {
+    try { window.parent.postMessage({ type: 'game-back' }, '*'); } catch (e) {}
+  }
+  document.getElementById('btnBack').addEventListener('click', goBack);
+  document.getElementById('btnBack2').addEventListener('click', goBack);
+  document.getElementById('btnStart').addEventListener('click', startGame);
+  document.getElementById('btnRestart').addEventListener('click', function () {
+    qg.sfx.click();
+    startGame();
+  });
+
+  /* ---------------- 初始化 ---------------- */
+  best = qg.best('stack');
+  bestEl.textContent = String(best);
+  document.getElementById('startBest').textContent = '最佳纪录:' + best;
+  state = 'idle';
+  tower = [{ x: 0, w: blockW, y: 0, h: blockH, d: blockD, color: colorOf(0) }];
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

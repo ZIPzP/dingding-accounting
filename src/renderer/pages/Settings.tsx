@@ -378,7 +378,7 @@ const Settings: React.FC = () => {
         </Descriptions>
         <Divider />
         <Paragraph type="secondary" style={{ fontSize: 13 }}>
-          青孤项目是一款陪你打发无聊的离线工具集：7 款经典小游戏、智能收支记账、
+          青孤项目是一款陪你打发无聊的离线工具集：8 款经典小游戏、智能收支记账、
           倒数日、番茄钟、白噪音、备忘录、心愿单、习惯打卡与年度报告。
           所有数据均保存在您的电脑上，不会上传至任何服务器。请定期备份数据以防丢失。
         </Paragraph>
