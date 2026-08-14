@@ -396,6 +396,12 @@ export function applyTheme(theme: ThemeConfig): void {
     set('--qg-on-glass-sub', 'var(--qg-text-secondary)');
   }
 
+  /* 同步浏览器状态栏颜色（PWA / 手机浏览器） */
+  try {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme.bg);
+  } catch { /* noop */ }
+
   try { localStorage.setItem('qinggu-theme', theme.id); } catch { /* noop */ }
 }
 

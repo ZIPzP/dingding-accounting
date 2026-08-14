@@ -102,7 +102,7 @@ export const api = {
     // 浏览器：下载数据库文件
     return getWebDB().then(async (db) => {
       const data = db.exportDatabase();
-      const blob = new Blob([data], { type: 'application/octet-stream' });
+      const blob = new Blob([data as unknown as BlobPart], { type: 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

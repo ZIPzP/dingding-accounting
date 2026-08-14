@@ -190,6 +190,118 @@ body.has-bg-image::after {
 .skeleton-card { height: 80px; width: 100%; margin-bottom: 12px; border-radius: var(--qg-radius); }
 
 /* ---- 5. 桌面端侧边栏 ---- */
+/* 顶部工具栏 */
+.desktop-topbar {
+  height: 60px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--qg-border);
+  background: var(--qg-card-bg-transparent);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  z-index: 20;
+}
+.desktop-topbar-left {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+.desktop-topbar-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--qg-text);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.desktop-topbar-desc {
+  font-size: 13px;
+  color: var(--qg-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.desktop-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+}
+.desktop-topbar-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--qg-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* 桌面端主内容区让出顶栏高度 */
+.desktop-shell .main-content {
+  height: calc(100vh - 60px);
+}
+
+/* ---- 404 页面 ---- */
+.notfound {
+  min-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.notfound-glow {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 560px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--qg-hero-glow), transparent);
+  pointer-events: none;
+}
+.notfound-code {
+  font-size: 104px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 4px;
+  background: linear-gradient(135deg, var(--qg-primary-light), var(--qg-primary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.notfound-emoji { font-size: 46px; margin-top: 10px; }
+.notfound-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--qg-text);
+  margin: 16px 0 10px;
+}
+.notfound-desc {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--qg-text-secondary);
+  margin-bottom: 30px;
+}
+.notfound-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.mobile-content .notfound {
+  min-height: calc(100vh - 140px);
+}
+
 .logo {
   height: 64px;
   display: flex;
@@ -1449,5 +1561,19 @@ body.has-bg-image::after {
   }
   .landing-stat-value {
     font-size: 26px;
+  }
+}
+
+/* ============================================================
+   ---- 19. 无障碍：跟随系统"减弱动态效果"设置 ----
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

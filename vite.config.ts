@@ -9,6 +9,17 @@ export default defineConfig({
   build: {
     outDir: 'dist/renderer',
     emptyOutDir: true,
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        // 手动分包：把稳定的第三方库独立成缓存友好的 chunk
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-antd': ['antd', '@ant-design/icons', 'dayjs'],
+          'vendor-charts': ['echarts', 'echarts-for-react'],
+        },
+      },
+    },
   },
   resolve: {
     alias: {

@@ -1,15 +1,16 @@
 /**
- * 首页 — 现代科技风落地页（2026-08 网页重设计）
- * Hero + 数据条 + 游戏 Bento 网格 + 记账卡 + 特性条 + 页脚
- * 全部视觉由 CSS 变量驱动，随主题切换自动适配
+ * 首页 — 现代科技风落地页
+ * Hero + 真实数据条（本月支出/笔数/累计账单）+ 游戏 Bento 网格 + 记账卡 + 特性条 + 页脚
+ * 数据来自本地数据库，全部视觉由 CSS 变量驱动，随主题切换自动适配
  */
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   IconSnake, IconTetris, Icon2048,
   IconMine, IconBreakout, IconWhackAMole, IconTicTacToe,
   IconBook, IconRight, IconZap, IconLogo,
 } from '../components/Icons';
+import { api } from '../services/api';
 
 interface GameItem {
   key: string;
@@ -31,13 +32,6 @@ const games: GameItem[] = [
   { key: 'tictactoe', name: '井字棋', icon: IconTicTacToe, desc: '人机对战，三子连珠', route: '/game/tictactoe', color: '#a78bfa', tag: '策略对战' },
 ];
 
-const stats = [
-  { value: '7', label: '经典小游戏' },
-  { value: '1', label: '生活工具' },
-  { value: '0', label: '烦恼' },
-  { value: '100%', label: '解闷' },
-];
-
 const features = [
   { title: '随时解闷', desc: '无聊时刻，打开就能玩' },
   { title: '数据安全', desc: '本地存储，绝不上传' },
@@ -51,8 +45,98 @@ const accountingFeatures = [
   { title: '本地备份', desc: '数据随时备份恢复' },
 ];
 
+/** 尊重系统的"减弱动态效果"设置 */
+function prefersReducedMotion(): boolean {
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
+
+/** 数字滚动动画 Hook */
+function useCountUp(target: number | null, duration = 900): number {
+  const [value, setValue] = useState(0);
+  const frameRef = useRef(0);
+
+  useEffect(() => {
+    cancelAnimationFrame(frameRef.current);
+    if (target === null || target <= 0 || prefersReducedMotion()) {
+      setValue(target ?? 0);
+      return;
+    }
+    const start = performance.now();
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+      setValue(target * eased);
+      if (p < 1) frameRef.current = requestAnimationFrame(tick);
+    };
+    frameRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [target, duration]);
+
+  return value;
+}
+
+/** 金额格式化：¥1,234.56 */
+function formatMoney(v: number): string {
+  return v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+interface LiveStats {
+  monthTotal: number;
+  monthCount: number;
+  totalRecords: number;
+}
+
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const [liveStats, setLiveStats] = useState<LiveStats | null>(null);
+
+  /* 从本地数据库读取真实数据 */
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const now = new Date();
+        const [monthly, list] = await Promise.all([
+          api.getMonthlyStats(now.getFullYear(), now.getMonth() + 1),
+          api.getRecords({ page: 1, pageSize: 1 }),
+        ]);
+        if (alive) {
+          setLiveStats({
+            monthTotal: monthly.total,
+            monthCount: monthly.count,
+            totalRecords: list.total,
+          });
+        }
+      } catch {
+        /* 数据库未就绪时保持占位显示 */
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const monthTotalAnim = useCountUp(liveStats?.monthTotal ?? null);
+  const monthCountAnim = useCountUp(liveStats?.monthCount ?? null);
+  const totalRecordsAnim = useCountUp(liveStats?.totalRecords ?? null);
+
+  const stats = [
+    {
+      label: '本月支出',
+      value: liveStats ? `¥${formatMoney(monthTotalAnim)}` : '—',
+    },
+    {
+      label: '本月笔数',
+      value: liveStats ? `${Math.round(monthCountAnim)} 笔` : '—',
+    },
+    {
+      label: '累计账单',
+      value: liveStats ? `${Math.round(totalRecordsAnim)} 笔` : '—',
+    },
+    { label: '经典小游戏', value: '7 款' },
+  ];
 
   return (
     <div className="landing">
@@ -66,10 +150,10 @@ const HomePage: React.FC = () => {
             BOREDOM BUSTER
           </div>
           <h1 className="landing-title">无聊救星</h1>
-          <div className="landing-subtitle">没啥说的，就一个破网页</div>
+          <div className="landing-subtitle">你的离线时光伙伴</div>
           <p className="landing-desc">
             7 款经典小游戏 + 智能记账，把无聊时光变成快乐时光。
-            数据本地存储，玩得放心。
+            数据全部保存在本地，断网也能玩，用着更安心。
           </p>
           <div className="landing-ctas">
             <button className="landing-btn landing-btn-primary" onClick={() => navigate('/game')}>
@@ -83,7 +167,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* ======== 数据条 ======== */}
+      {/* ======== 数据条（来自本地账本的真实数据） ======== */}
       <section className="landing-stats">
         {stats.map((s) => (
           <div className="landing-stat" key={s.label}>
