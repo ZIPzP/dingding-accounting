@@ -61,6 +61,7 @@ const FoxPage = lazy(() => import('./pages/FoxPage'));
 const TimeCapsulePage = lazy(() => import('./pages/TimeCapsulePage'));
 const MusicStudioPage = lazy(() => import('./pages/MusicStudioPage'));
 const StackGamePage = lazy(() => import('./pages/StackGamePage'));
+const RunnerGamePage = lazy(() => import('./pages/RunnerGamePage'));
 const SnakeGamePage = lazy(() => import('./pages/SnakeGamePage'));
 const TetrisGamePage = lazy(() => import('./pages/TetrisGamePage'));
 const Game2048Page = lazy(() => import('./pages/Game2048Page'));
@@ -154,7 +155,8 @@ const routeMetaMap: Record<string, RouteMeta> = {
   '/tools/capsule': { title: '时间胶囊', desc: '写信给未来的自己' },
   '/tools/music': { title: '音乐工坊', desc: '8-bit 编曲器,点格子作曲' },
   '/settings': { title: '设置', desc: '主题、预算与数据管理' },
-  '/game': { title: '游戏中心', desc: '8 款经典小游戏' },
+  '/game': { title: '游戏中心', desc: '9 款经典小游戏' },
+  '/game/runner': { title: '星际跑酷', desc: 'WebGL 真 3D · 无尽跑酷' },
   '/game/stack': { title: '叠叠高', desc: '全新 3D 叠塔 · 完美连击' },
   '/game/snake': { title: '贪吃蛇', desc: '怀旧经典 · 排行榜' },
   '/game/tetris': { title: '俄罗斯方块', desc: '消除益智 · 挑战高分' },
@@ -189,7 +191,7 @@ const paletteNav: { path: string; label: string; desc?: string; icon: React.Reac
   { path: '/tools/capsule', label: '时间胶囊', desc: '写信给未来的自己', icon: <span style={{ fontSize: 16 }}>💌</span> },
   { path: '/tools/music', label: '音乐工坊', desc: '点格子作曲', icon: <IconNote size={17} /> },
   { path: '/stats', label: '统计分析', desc: '月度收支与预算', icon: <IconChart size={17} /> },
-  { path: '/game', label: '游戏中心', desc: '8 款经典小游戏', icon: <IconGamepad size={17} /> },
+  { path: '/game', label: '游戏中心', desc: '9 款经典小游戏', icon: <IconGamepad size={17} /> },
   { path: '/settings', label: '设置', desc: '主题、预算与数据', icon: <IconSettings size={17} /> },
 ];
 
@@ -215,6 +217,7 @@ const appRoutes = (
     <Route path="/tools/music" element={<AnimatedPage><MusicStudioPage /></AnimatedPage>} />
     <Route path="/settings" element={<AnimatedPage><Settings /></AnimatedPage>} />
     <Route path="/game" element={<AnimatedPage><GameHub /></AnimatedPage>} />
+    <Route path="/game/runner" element={<AnimatedPage><RunnerGamePage /></AnimatedPage>} />
     <Route path="/game/stack" element={<AnimatedPage><StackGamePage /></AnimatedPage>} />
     <Route path="/game/snake" element={<AnimatedPage><SnakeGamePage /></AnimatedPage>} />
     <Route path="/game/tetris" element={<AnimatedPage><TetrisGamePage /></AnimatedPage>} />

@@ -4,7 +4,7 @@
  * + 游戏 Bento 网格 + 生活工具 + 特性条 + 页脚
  * 全部视觉由 CSS 变量驱动，随主题切换自动适配
  */
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   IconSnake, IconTetris, Icon2048,
@@ -15,6 +15,9 @@ import {
 } from '../components/Icons';
 import { api } from '../services/api';
 import { getBudget, budgetProgress, budgetStatus } from '../services/budget';
+
+/* 3D Hero 场景(桌面端,懒加载 Three.js) */
+const Hero3D = lazy(() => import('../components/Hero3D'));
 
 interface GameItem {
   key: string;
@@ -246,7 +249,7 @@ function useParallax(): React.RefObject<HTMLDivElement> {
 
 /** 跑马灯内容 */
 const marqueeItems = [
-  '🦊 青狐伙伴', '🧊 叠叠高 3D', '🎮 贪吃蛇', '🧱 俄罗斯方块', '🔢 2048', '💣 扫雷', '🧱 打砖块', '🐹 打地鼠', '⭕ 井字棋',
+  '🚀 星际跑酷 3D', '🦊 青狐伙伴', '🧊 叠叠高 3D', '🎮 贪吃蛇', '🧱 俄罗斯方块', '🔢 2048', '💣 扫雷', '🧱 打砖块', '🐹 打地鼠', '⭕ 井字棋',
   '💬 智能记账', '⏳ 倒数日', '🍅 番茄钟', '🌧️ 白噪音', '📝 备忘录', '🎯 心愿单', '✅ 习惯打卡', '💌 时间胶囊', '🎹 音乐工坊', '📊 年度报告',
 ];
 
@@ -263,7 +266,7 @@ const HeroCanvas: React.FC = () => {
 
     let raf = 0;
     let visible = true;
-    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    const DPR = Math.min(window.devicePixelRatio || 1, 3);
     const primary = getComputedStyle(document.documentElement).getPropertyValue('--qg-primary').trim() || '#06b6d4';
     const accent = getComputedStyle(document.documentElement).getPropertyValue('--qg-accent').trim() || '#34d399';
     const colors = [primary, accent, '#ffffff'];
@@ -469,8 +472,11 @@ const HomePage: React.FC = () => {
   return (
     <div className="landing" onMouseMove={spotlight} onMouseLeave={resetTilt}>
       <LandingCursor />
-      {/* ======== Hero 区域（极光动效 + 粒子星空 + 视差） ======== */}
+      {/* ======== Hero 区域（WebGL 3D + 极光 + 粒子星空 + 视差） ======== */}
       <section className="landing-hero reveal">
+        <Suspense fallback={null}>
+          <Hero3D />
+        </Suspense>
         <div className="aurora" ref={auroraRef}>
           <div className="aurora-blob aurora-blob-1" />
           <div className="aurora-blob aurora-blob-2" />
@@ -493,7 +499,7 @@ const HomePage: React.FC = () => {
           </h1>
           <div className="landing-subtitle">你的离线时光伙伴</div>
           <p className="landing-desc">
-            8 款经典小游戏 + 收支记账 + 生活工具，
+            9 款经典小游戏 + 收支记账 + 生活工具，
             把无聊时光变成快乐时光。数据全部保存在本地，断网也能玩，用着更安心。
           </p>
           <div className="landing-ctas">
@@ -604,6 +610,29 @@ const HomePage: React.FC = () => {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* ======== 星际跑酷 3D 横幅 ======== */}
+      <section className="landing-section reveal">
+        <div className="runner-banner" onClick={() => navigate('/game/runner')} data-spotlight data-tilt>
+          <div className="runner-banner-bg">
+            <i className="runner-star" style={{ top: '18%', left: '8%', animationDelay: '0s' }} />
+            <i className="runner-star" style={{ top: '62%', left: '16%', animationDelay: '0.6s' }} />
+            <i className="runner-star" style={{ top: '30%', left: '32%', animationDelay: '1.1s' }} />
+            <i className="runner-star" style={{ top: '70%', left: '46%', animationDelay: '0.3s' }} />
+            <i className="runner-star" style={{ top: '24%', left: '68%', animationDelay: '0.9s' }} />
+            <i className="runner-star" style={{ top: '64%', left: '84%', animationDelay: '1.4s' }} />
+            <i className="runner-star" style={{ top: '40%', left: '93%', animationDelay: '0.2s' }} />
+          </div>
+          <div className="runner-banner-body">
+            <span className="runner-banner-tag">NEW · WebGL 真 3D</span>
+            <div className="runner-banner-title">🚀 星际跑酷</div>
+            <div className="runner-banner-desc">三赛道疾驰宇宙,跳跃躲障、收集星能,速度与反应的对决</div>
+          </div>
+          <div className="runner-banner-cta">
+            立即起飞 <IconRight size={15} />
+          </div>
         </div>
       </section>
 

@@ -1,0 +1,365 @@
+/* 星际跑酷 — WebGL 3D 无尽跑酷(与 three.js 源码拼接后内联运行,使用同模块作用域的 THREE) */
+(function () {
+  'use strict';
+
+  var canvas = document.getElementById('game');
+  var isMobile = window.innerWidth < 768;
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: !isMobile, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 2 : 3));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x060810, 1);
+
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x060810, 0.016);
+
+  var camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 140);
+  camera.position.set(0, 4.6, 8.8);
+  camera.lookAt(0, 1.4, -24);
+
+  scene.add(new THREE.AmbientLight(0x475569, 2.2));
+  var headLight = new THREE.DirectionalLight(0x7dd3fc, 2.4);
+  headLight.position.set(0, 8, 6);
+  scene.add(headLight);
+  var rimLight = new THREE.PointLight(0x8b5cf6, 40, 60);
+  rimLight.position.set(-6, 3, -4);
+  scene.add(rimLight);
+
+  /* ---- 星空 ---- */
+  var starGeo = new THREE.BufferGeometry();
+  var starCount = 320;
+  var starPos = new Float32Array(starCount * 3);
+  for (var si = 0; si < starCount; si++) {
+    starPos[si * 3] = (Math.random() - 0.5) * 70;
+    starPos[si * 3 + 1] = Math.random() * 24 - 2;
+    starPos[si * 3 + 2] = -Math.random() * 110 - 6;
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  var stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xcbd5e1, size: 0.14, transparent: true, opacity: 0.8 }));
+  scene.add(stars);
+
+  /* ---- 地面网格 ---- */
+  var grid = new THREE.GridHelper(160, 80, 0x0e7490, 0x164e63);
+  grid.position.y = -0.5;
+  scene.add(grid);
+
+  /* ---- 玩家 ---- */
+  var player = new THREE.Group();
+  var bodyMat = new THREE.MeshStandardMaterial({ color: 0x22d3ee, roughness: 0.25, metalness: 0.6, emissive: 0x0e7490, emissiveIntensity: 0.9 });
+  var body = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.85, 1.05), bodyMat);
+  player.add(body);
+  var nose = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.34, 0.5), new THREE.MeshStandardMaterial({ color: 0xa5f3fc, roughness: 0.3, metalness: 0.5, emissive: 0x22d3ee, emissiveIntensity: 1.4 }));
+  nose.position.set(0, 0.02, -0.72);
+  player.add(nose);
+  var engineGlow = new THREE.PointLight(0x22d3ee, 26, 9);
+  engineGlow.position.set(0, 0.1, 0.9);
+  player.add(engineGlow);
+  scene.add(player);
+
+  var LANES = [-2.3, 0, 2.3];
+  var lane = 1;
+  var laneTarget = 1;
+  var playerY = 0;
+  var vy = 0;
+  var gravity = 27;
+  var jumpSpeed = 9.6;
+  var grounded = true;
+
+  /* ---- 障碍物池 ---- */
+  var OBSTACLE_COUNT = 18;
+  var obstacles = [];
+  var obstacleGeo = new THREE.BoxGeometry(1.15, 1, 1.15);
+  var pillarMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.4, metalness: 0.5, emissive: 0x7f1d1d, emissiveIntensity: 0.7 });
+  var wallMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.4, metalness: 0.5, emissive: 0x7c2d12, emissiveIntensity: 0.7 });
+  for (var oi = 0; oi < OBSTACLE_COUNT; oi++) {
+    var ob = new THREE.Mesh(obstacleGeo, oi % 2 ? wallMat : pillarMat);
+    ob.visible = false;
+    ob.userData = { active: false, kind: 'pillar' };
+    scene.add(ob);
+    obstacles.push(ob);
+  }
+
+  /* ---- 星能(金币)池 ---- */
+  var COIN_COUNT = 24;
+  var coins = [];
+  var coinGeo = new THREE.OctahedronGeometry(0.34, 0);
+  var coinMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.2, metalness: 0.5, emissive: 0x92400e, emissiveIntensity: 1.6 });
+  for (var ci = 0; ci < COIN_COUNT; ci++) {
+    var coin = new THREE.Mesh(coinGeo, coinMat);
+    coin.visible = false;
+    coin.userData = { active: false };
+    scene.add(coin);
+    coins.push(coin);
+  }
+
+  /* ---- 状态 ---- */
+  var state = 'menu'; // menu | playing | over
+  var speed = 15;
+  var score = 0;
+  var best = 0;
+  var traveled = 0;
+  var nextSpawn = 22;
+  var nextCoin = 10;
+  var shakeT = 0;
+  var lastT = 0;
+  var scoreEl = document.getElementById('scoreNum');
+  var bestEl = document.getElementById('bestNum');
+
+  function fmtScore() { scoreEl.textContent = String(Math.floor(score)); }
+
+  /* ---- 生成一波障碍(保证有路可走) ---- */
+  function spawnWave() {
+    var z = -68;
+    var lanesUsed = [];
+    var kindPool = [];
+    var count = 1 + (Math.random() < 0.4 + speed / 80 ? 1 : 0);
+    count = Math.min(count, 2);
+    var freeLane = Math.floor(Math.random() * 3);
+    var pool = [0, 1, 2].filter(function (l) { return l !== freeLane; });
+    for (var i = 0; i < count; i++) {
+      if (pool.length === 0) break;
+      var idx = Math.floor(Math.random() * pool.length);
+      var l = pool.splice(idx, 1)[0];
+      lanesUsed.push(l);
+      kindPool.push(Math.random() < 0.5 ? 'pillar' : 'wall');
+    }
+    /* 有时叠加双障碍(同车道) */
+    for (var k = 0; k < lanesUsed.length; k++) {
+      spawnObstacle(lanesUsed[k], z - k * 6, kindPool[k]);
+    }
+    nextSpawn = traveled + 20 + Math.random() * 14 - speed * 0.15;
+  }
+
+  function spawnObstacle(laneIdx, z, kind) {
+    var ob = null;
+    for (var i = 0; i < obstacles.length; i++) {
+      if (!obstacles[i].userData.active) { ob = obstacles[i]; break; }
+    }
+    if (!ob) return;
+    ob.userData.active = true;
+    ob.userData.kind = kind;
+    ob.userData.lane = laneIdx;
+    ob.material = kind === 'pillar' ? pillarMat : wallMat;
+    var h = kind === 'pillar' ? 1.05 : 3.1;
+    ob.scale.set(1, h, 1);
+    ob.position.set(LANES[laneIdx], h / 2 - 0.5, z);
+    ob.visible = true;
+  }
+
+  function spawnCoinRow() {
+    var l = Math.floor(Math.random() * 3);
+    var z = -60;
+    var n = 3 + Math.floor(Math.random() * 3);
+    var placed = 0;
+    for (var i = 0; i < coins.length && placed < n; i++) {
+      if (!coins[i].userData.active) {
+        coins[i].userData.active = true;
+        coins[i].userData.lane = l;
+        coins[i].position.set(LANES[l], 0.9, z - placed * 2.6);
+        coins[i].visible = true;
+        placed++;
+      }
+    }
+    nextCoin = traveled + 14 + Math.random() * 16;
+  }
+
+  /* ---- 碰撞 ---- */
+  function checkCollision() {
+    var px = player.position.x;
+    var py = playerY;
+    for (var i = 0; i < obstacles.length; i++) {
+      var ob = obstacles[i];
+      if (!ob.userData.active) continue;
+      var h = ob.scale.y;
+      var oz = ob.position.z;
+      if (oz > 1.8 || oz < -2.4) continue;
+      var half = 0.5;
+      if (Math.abs(px - ob.position.x) < half + 0.42) {
+        var top = h - 0.5;
+        if (py < top + 0.55) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function collectCoins() {
+    var px = player.position.x;
+    for (var i = 0; i < coins.length; i++) {
+      var coin = coins[i];
+      if (!coin.userData.active) continue;
+      if (coin.position.z > 2.6 || coin.position.z < -2.6) continue;
+      if (Math.abs(coin.position.x - px) < 0.85 && playerY < 1.6 && coin.position.y < playerY + 1.3) {
+        coin.userData.active = false;
+        coin.visible = false;
+        score += 10;
+        fmtScore();
+        if (window.qg) { qg.sfx.score(); qg.vibrate(10); }
+      }
+    }
+  }
+
+  /* ---- 游戏流程 ---- */
+  function startGame() {
+    for (var i = 0; i < obstacles.length; i++) { obstacles[i].userData.active = false; obstacles[i].visible = false; }
+    for (var j = 0; j < coins.length; j++) { coins[j].userData.active = false; coins[j].visible = false; }
+    lane = 1; laneTarget = 1; playerY = 0; vy = 0;
+    player.position.set(0, 0, 0);
+    player.rotation.set(0, 0, 0);
+    player.scale.set(1, 1, 1);
+    speed = 15; score = 0; traveled = 0;
+    nextSpawn = 22; nextCoin = 10;
+    state = 'playing';
+    fmtScore();
+    document.getElementById('startOverlay').style.display = 'none';
+    document.getElementById('overOverlay').style.display = 'none';
+    if (window.qg) qg.sfx.click();
+  }
+
+  function gameOver() {
+    state = 'over';
+    shakeT = 1;
+    if (window.qg) { qg.sfx.over(); qg.vibrate([70, 50, 90]); }
+    var finalScore = Math.floor(score);
+    if (finalScore > best) { best = finalScore; if (window.qg) qg.best('runner', best); }
+    bestEl.textContent = String(best);
+    document.getElementById('overScore').textContent = String(finalScore);
+    document.getElementById('overBest').textContent = '最佳纪录:' + best;
+    setTimeout(function () {
+      document.getElementById('overOverlay').style.display = 'flex';
+    }, 480);
+  }
+
+  /* ---- 输入 ---- */
+  var touchStartX = 0, touchStartY = 0, touchMoved = false;
+  function onPointerDown(e) {
+    touchStartX = e.clientX;
+    touchStartY = e.clientY;
+    touchMoved = false;
+  }
+  function onPointerUp(e) {
+    if (state !== 'playing') return;
+    var dx = e.clientX - touchStartX;
+    var dy = e.clientY - touchStartY;
+    if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) moveLane(1); else moveLane(-1);
+      touchMoved = true;
+    } else if (Math.abs(dx) <= 36 && Math.abs(dy) <= 36) {
+      jump();
+    }
+  }
+  function moveLane(dir) {
+    laneTarget = Math.max(0, Math.min(2, laneTarget + dir));
+    if (window.qg) qg.sfx.move();
+  }
+  function jump() {
+    if (grounded) {
+      vy = jumpSpeed;
+      grounded = false;
+      if (window.qg) qg.sfx.drop();
+    }
+  }
+  canvas.addEventListener('pointerdown', onPointerDown, { passive: true });
+  canvas.addEventListener('pointerup', onPointerUp, { passive: true });
+  window.addEventListener('keydown', function (e) {
+    if (state === 'playing') {
+      if (e.code === 'ArrowLeft') moveLane(-1);
+      else if (e.code === 'ArrowRight') moveLane(1);
+      else if (e.code === 'ArrowUp' || e.code === 'Space' || e.code === 'KeyW') { e.preventDefault(); jump(); }
+    }
+  });
+
+  /* ---- 主循环 ---- */
+  function loop(now) {
+    var dt = lastT ? Math.min((now - lastT) / 1000, 0.05) : 0.016;
+    lastT = now;
+    var t = now / 1000;
+
+    if (state === 'playing') {
+      traveled += speed * dt;
+      score += speed * dt * 0.6;
+      speed = Math.min(36, 15 + traveled * 0.02);
+      fmtScore();
+
+      /* 生成 */
+      if (traveled >= nextSpawn) spawnWave();
+      if (traveled >= nextCoin) spawnCoinRow();
+
+      /* 玩家物理 */
+      lane += (laneTarget - lane) * Math.min(1, dt * 12);
+      player.position.x = LANES[lane];
+      player.rotation.z += ((laneTarget - lane) * 0.5 - player.rotation.z) * Math.min(1, dt * 8);
+      if (!grounded) {
+        vy -= gravity * dt;
+        playerY += vy * dt;
+        if (playerY <= 0) { playerY = 0; vy = 0; grounded = true; }
+      }
+      player.position.y = playerY;
+      var stretch = grounded ? 1 + Math.abs(player.rotation.z) * 0.08 : 1.06;
+      player.scale.set(1, stretch, grounded ? 1 : 1.08);
+
+      /* 世界前进 */
+      var move = speed * dt;
+      grid.position.z = (grid.position.z + move) % 2;
+      stars.position.z += move * 0.6;
+      for (var si2 = 0; si2 < starCount; si2++) {
+        var pz = starPos[si2 * 3 + 2] + move * 0.6;
+        if (pz > 4) pz -= 116;
+        starPos[si2 * 3 + 2] = pz;
+      }
+      starGeo.attributes.position.needsUpdate = true;
+
+      for (var i = 0; i < obstacles.length; i++) {
+        var ob = obstacles[i];
+        if (!ob.userData.active) continue;
+        ob.position.z += move;
+        if (ob.position.z > 6) { ob.userData.active = false; ob.visible = false; }
+      }
+      for (var c = 0; c < coins.length; c++) {
+        var coin = coins[c];
+        if (!coin.userData.active) continue;
+        coin.position.z += move;
+        coin.rotation.y += dt * 3;
+        coin.rotation.x += dt * 1.5;
+        if (coin.position.z > 6) { coin.userData.active = false; coin.visible = false; }
+      }
+
+      collectCoins();
+
+      /* 相机跟随 */
+      camera.position.x += (player.position.x * 0.5 - camera.position.x) * Math.min(1, dt * 6);
+      if (checkCollision()) gameOver();
+    }
+
+    /* 震屏 */
+    if (shakeT > 0) {
+      shakeT = Math.max(0, shakeT - dt * 2.2);
+      camera.position.y += (Math.random() - 0.5) * shakeT * 0.5;
+      camera.position.x += (Math.random() - 0.5) * shakeT * 0.5;
+    }
+
+    camera.lookAt(player.position.x * 0.4, 1.2 + playerY * 0.3, -20);
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  }
+
+  /* ---- 菜单 ---- */
+  function goBack() {
+    try { window.parent.postMessage({ type: 'game-back' }, '*'); } catch (e) {}
+  }
+  best = window.qg ? qg.best('runner') : 0;
+  bestEl.textContent = String(best);
+  document.getElementById('startBest').textContent = '最佳纪录:' + best;
+  document.getElementById('btnStart').addEventListener('click', startGame);
+  document.getElementById('btnRestart').addEventListener('click', function () { if (window.qg) qg.sfx.click(); startGame(); });
+  document.getElementById('btnBack').addEventListener('click', goBack);
+  document.getElementById('btnBack2').addEventListener('click', goBack);
+
+  window.addEventListener('resize', function () {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+
+  requestAnimationFrame(loop);
+})();
