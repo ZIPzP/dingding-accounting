@@ -342,11 +342,12 @@ class WebDatabase {
         { name: '其他收入', icon: '💰', code: 'income_other', subs: ['退款', '二手闲置', '其他'] },
       ];
       for (const cat of incomeCategories) {
-        this.db.run('INSERT INTO categories (name, icon, code, kind) VALUES (?, ?, ?, ?)', [
+        this.db.run('INSERT OR IGNORE INTO categories (name, icon, code, kind) VALUES (?, ?, ?, ?)', [
           cat.name, cat.icon, cat.code, 'income',
         ]);
-        const idResult = this.db.exec('SELECT last_insert_rowid() as id');
+        const idResult = this.db.exec('SELECT id FROM categories WHERE code = ?', [cat.code]);
         const categoryId = idResult[0]?.values[0]?.[0] as number;
+        if (!categoryId) continue;
         for (const sub of cat.subs) {
           this.db.run('INSERT INTO sub_categories (category_id, name) VALUES (?, ?)', [categoryId, sub]);
         }

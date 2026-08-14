@@ -3,14 +3,16 @@
  * 展示月度收入/支出/结余概览、预算进度、分类饼图、收支趋势
  */
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, DatePicker, Statistic, Spin, Empty, Progress } from 'antd';
-import { IconChart, IconWallet, IconCalendar, IconShopping } from '../components/Icons';
+import { useNavigate } from 'react-router-dom';
+import { Card, Row, Col, DatePicker, Statistic, Spin, Empty, Progress, Button } from 'antd';
+import { IconChart, IconWallet, IconReport } from '../components/Icons';
 import ReactECharts from 'echarts-for-react';
 import dayjs from 'dayjs';
 import { api } from '../services/api';
 import { getBudget, budgetProgress, budgetStatus } from '../services/budget';
 
 const Statistics: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(dayjs());
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats | null>(null);
@@ -258,6 +260,20 @@ const Statistics: React.FC = () => {
                 </Card>
               </Col>
             </Row>
+
+            {/* 年度报告入口 */}
+            <div className="report-entry" onClick={() => navigate('/report')}>
+              <div className="report-entry-icon">
+                <IconReport size={26} />
+              </div>
+              <div className="report-entry-body">
+                <div className="report-entry-title">年度账单报告</div>
+                <div className="report-entry-desc">把这一年的每一笔,变成一份有仪式感的总结 ✨</div>
+              </div>
+              <Button type="primary" size="small" onClick={(e) => { e.stopPropagation(); navigate('/report'); }}>
+                查看报告
+              </Button>
+            </div>
           </>
         ) : (
           !loading && <Empty description="暂无统计数据" />

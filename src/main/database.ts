@@ -162,14 +162,15 @@ function migrate(): void {
   const incomeCount = (incomeResult[0]?.values[0]?.[0] as number) || 0;
   if (incomeCount === 0) {
     for (const cat of PRESET_INCOME_CATEGORIES) {
-      db.run('INSERT INTO categories (name, icon, code, kind) VALUES (?, ?, ?, ?)', [
+      db.run('INSERT OR IGNORE INTO categories (name, icon, code, kind) VALUES (?, ?, ?, ?)', [
         cat.name,
         cat.icon,
         cat.code,
         'income',
       ]);
-      const idResult = db.exec('SELECT last_insert_rowid() as id');
+      const idResult = db.exec('SELECT id FROM categories WHERE code = ?', [cat.code]);
       const categoryId = idResult[0]?.values[0]?.[0] as number;
+      if (!categoryId) continue;
       for (const subName of cat.subs) {
         db.run('INSERT INTO sub_categories (category_id, name) VALUES (?, ?)', [
           categoryId,

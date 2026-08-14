@@ -2,9 +2,10 @@
  * 记一笔 / 编辑记录 页面
  * 支持支出 / 收入两种类型，表单：类型、金额、日期、分类（两级）、备注
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../services/api';
+import { parseBillText, type ParsedBill } from '../services/smartParse';
 import {
   Form,
   InputNumber,
@@ -14,10 +15,12 @@ import {
   Button,
   Card,
   Segmented,
+  Tag,
+  Divider,
   message,
   Spin,
 } from 'antd';
-import { IconSave, IconLeft } from '../components/Icons';
+import { IconSave, IconLeft, IconSparkle } from '../components/Icons';
 import dayjs from 'dayjs';
 
 const { TextArea } = Input;
@@ -35,9 +38,30 @@ const AddRecord: React.FC = () => {
   const [recordType, setRecordType] = useState<'expense' | 'income'>('expense');
   const isIncome = recordType === 'income';
 
+  // 智能记账：自然语言输入与解析
+  const [smartText, setSmartText] = useState('');
+  const [parsed, setParsed] = useState<ParsedBill | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     api.getCategories().then(setCategories);
   }, []);
+
+  /* 智能解析（防抖） */
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const text = smartText.trim();
+    if (!text) {
+      setParsed(null);
+      return;
+    }
+    debounceRef.current = setTimeout(() => {
+      setParsed(parseBillText(text, categories));
+    }, 250);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [smartText, categories]);
 
   /* 按类型过滤分类 */
   const cascaderOptions = useMemo(
@@ -81,6 +105,28 @@ const AddRecord: React.FC = () => {
   const handleTypeChange = (val: 'expense' | 'income') => {
     setRecordType(val);
     form.setFieldsValue({ type: val, category: undefined });
+  };
+
+  /* 智能解析结果预览 */
+  const parsedCategory = parsed?.categoryId ? categories.find((c) => c.id === parsed.categoryId) : undefined;
+  const parsedSub = parsed?.subCategoryId
+    ? parsedCategory?.subs.find((s) => s.id === parsed.subCategoryId)
+    : undefined;
+
+  /* 一键填入表单 */
+  const applyParsed = () => {
+    if (!parsed) return;
+    setRecordType(parsed.type);
+    const fallbackCat = categories.find((c) => c.kind === parsed.type);
+    const catId = parsed.categoryId ?? fallbackCat?.id;
+    form.setFieldsValue({
+      type: parsed.type,
+      amount: parsed.amount,
+      record_date: parsed.date ? dayjs(parsed.date) : dayjs(),
+      category: parsed.subCategoryId && catId ? [catId, parsed.subCategoryId] : catId ? [catId] : undefined,
+      note: parsed.note || '',
+    });
+    message.success('已识别并填入,确认无误后保存即可');
   };
 
   // 提交
@@ -140,6 +186,48 @@ const AddRecord: React.FC = () => {
       </div>
 
       <Card style={{ maxWidth: 520, borderRadius: 14 }}>
+        {/* 智能记账输入 */}
+        {!isEdit && (
+          <div className="smart-input-section">
+            <div className="smart-input-label">
+              <IconSparkle size={15} /> 智能记账
+              <span className="smart-input-badge">像聊天一样记账</span>
+            </div>
+            <Input
+              size="large"
+              value={smartText}
+              onChange={(e) => setSmartText(e.target.value)}
+              placeholder="试试输入:中午吃面15 / 昨天打车22元 / 工资8000"
+              prefix={<IconSparkle size={16} />}
+              allowClear
+            />
+            {parsed && (
+              <div className="smart-preview">
+                <div className="smart-preview-tags">
+                  <Tag color={parsed.type === 'income' ? 'success' : 'error'}>
+                    {parsed.type === 'income' ? '💰 收入' : '💸 支出'}
+                  </Tag>
+                  <Tag color="blue">¥{parsed.amount}</Tag>
+                  {parsedCategory && (
+                    <Tag color="processing">
+                      {parsedCategory.icon} {parsedCategory.name}
+                      {parsedSub ? ` / ${parsedSub.name}` : ''}
+                    </Tag>
+                  )}
+                  {parsed.date && <Tag>{parsed.date}</Tag>}
+                </div>
+                <Button size="small" type="primary" onClick={applyParsed}>
+                  一键填入 ↓
+                </Button>
+              </div>
+            )}
+            {smartText.trim() && !parsed && (
+              <div className="smart-hint">没识别出金额,试试加上数字,例如:中午吃面15</div>
+            )}
+            <Divider style={{ margin: '14px 0' }} />
+          </div>
+        )}
+
         <Form
           form={form}
           layout="vertical"

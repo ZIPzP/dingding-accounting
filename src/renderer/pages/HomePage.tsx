@@ -11,6 +11,7 @@ import {
   IconMine, IconBreakout, IconWhackAMole, IconTicTacToe,
   IconBook, IconRight, IconZap, IconLogo,
   IconPlusCircle, IconHourglass, IconTimer, IconNote, IconTools,
+  IconWave, IconTarget, IconCheckCircle, IconReport,
 } from '../components/Icons';
 import { api } from '../services/api';
 import { getBudget, budgetProgress, budgetStatus } from '../services/budget';
@@ -37,9 +38,14 @@ const games: GameItem[] = [
 
 const toolCards = [
   { key: 'bookkeeping', name: '收支记账', icon: IconBook, desc: '分类统计 · 预算管理 · 数据导出', route: '/bills', color: '#06b6d4' },
+  { key: 'smart', name: '智能记账', icon: IconPlusCircle, desc: '打字就能记账,自动识别', route: '/add', color: '#4f6df5' },
   { key: 'countdown', name: '倒数日', icon: IconHourglass, desc: '重要日子，一天不落', route: '/tools/countdown', color: '#ec4899' },
   { key: 'pomodoro', name: '番茄钟', icon: IconTimer, desc: '专注 25 分钟，效率翻倍', route: '/tools/pomodoro', color: '#f59e0b' },
+  { key: 'whitenoise', name: '白噪音', icon: IconWave, desc: '雨声海浪篝火，实时合成', route: '/tools/whitenoise', color: '#0ea5e9' },
   { key: 'notes', name: '备忘录', icon: IconNote, desc: '灵感与待办，随手记录', route: '/tools/notes', color: '#10b981' },
+  { key: 'wishlist', name: '心愿单', icon: IconTarget, desc: '想要的,一点点攒下来', route: '/tools/wishlist', color: '#8b5cf6' },
+  { key: 'habits', name: '习惯打卡', icon: IconCheckCircle, desc: '每天一点点,坚持看得见', route: '/tools/habits', color: '#f43f5e' },
+  { key: 'report', name: '年度报告', icon: IconReport, desc: '一年的账单,一份仪式感', route: '/report', color: '#14b8a6' },
 ];
 
 const features = [
@@ -107,7 +113,7 @@ function useReveal(): void {
   }, []);
 }
 
-/** 卡片聚光灯跟随鼠标 */
+/** 卡片聚光灯跟随鼠标 + 3D 倾斜 */
 function spotlight(e: React.MouseEvent<HTMLElement>): void {
   if (prefersReducedMotion()) return;
   const card = (e.target as HTMLElement).closest<HTMLElement>('[data-spotlight]');
@@ -115,7 +121,125 @@ function spotlight(e: React.MouseEvent<HTMLElement>): void {
   const rect = card.getBoundingClientRect();
   card.style.setProperty('--mx', `${e.clientX - rect.left}px`);
   card.style.setProperty('--my', `${e.clientY - rect.top}px`);
+  if (window.innerWidth >= 768 && card.hasAttribute('data-tilt')) {
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    card.style.setProperty('--rx', `${(-py * 5).toFixed(2)}deg`);
+    card.style.setProperty('--ry', `${(px * 7).toFixed(2)}deg`);
+  }
 }
+
+function resetTilt(e: React.MouseEvent<HTMLElement>): void {
+  const container = e.currentTarget;
+  container.querySelectorAll<HTMLElement>('[data-tilt]').forEach((card) => {
+    card.style.setProperty('--rx', '0deg');
+    card.style.setProperty('--ry', '0deg');
+  });
+}
+
+/** Hero 粒子星空背景（Canvas） */
+const HeroCanvas: React.FC = () => {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let raf = 0;
+    let visible = true;
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    const primary = getComputedStyle(document.documentElement).getPropertyValue('--qg-primary').trim() || '#06b6d4';
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--qg-accent').trim() || '#34d399';
+    const colors = [primary, accent, '#ffffff'];
+    let particles: { x: number; y: number; vx: number; vy: number; r: number; c: string; a: number }[] = [];
+    let W = 0;
+    let H = 0;
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      W = rect.width;
+      H = rect.height;
+      canvas.width = Math.max(1, Math.floor(W * DPR));
+      canvas.height = Math.max(1, Math.floor(H * DPR));
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      const count = Math.min(90, Math.max(30, Math.floor((W * H) / 14000)));
+      particles = Array.from({ length: count }, () => ({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        r: Math.random() * 1.8 + 0.6,
+        c: colors[Math.floor(Math.random() * colors.length)],
+        a: Math.random() * 0.5 + 0.25,
+      }));
+    };
+
+    const LINK = 110;
+    const tick = () => {
+      if (!visible) return;
+      ctx.clearRect(0, 0, W, H);
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < -10) p.x = W + 10;
+        if (p.x > W + 10) p.x = -10;
+        if (p.y < -10) p.y = H + 10;
+        if (p.y > H + 10) p.y = -10;
+      }
+      // 连线
+      ctx.lineWidth = 0.6;
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < LINK * LINK) {
+            const alpha = (1 - Math.sqrt(d2) / LINK) * 0.18;
+            ctx.strokeStyle = `rgba(148, 163, 184, ${alpha})`;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+      // 粒子
+      for (const p of particles) {
+        ctx.globalAlpha = p.a;
+        ctx.fillStyle = p.c;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      raf = requestAnimationFrame(tick);
+    };
+
+    const io = new IntersectionObserver((entries) => {
+      visible = entries[0]?.isIntersecting ?? false;
+      if (visible) {
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(tick);
+      }
+    });
+    io.observe(canvas);
+
+    resize();
+    window.addEventListener('resize', resize);
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', resize);
+      io.disconnect();
+    };
+  }, []);
+
+  return <canvas className="hero-canvas" ref={canvasRef} aria-hidden />;
+};
 
 function formatMoney(v: number): string {
   return v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -229,14 +353,15 @@ const HomePage: React.FC = () => {
   const budgetState = liveStats ? budgetStatus(liveStats.monthTotal, budget.amount) : 'none';
 
   return (
-    <div className="landing" onMouseMove={spotlight}>
-      {/* ======== Hero 区域（极光动效） ======== */}
+    <div className="landing" onMouseMove={spotlight} onMouseLeave={resetTilt}>
+      {/* ======== Hero 区域（极光动效 + 粒子星空） ======== */}
       <section className="landing-hero reveal">
         <div className="aurora">
           <div className="aurora-blob aurora-blob-1" />
           <div className="aurora-blob aurora-blob-2" />
           <div className="aurora-blob aurora-blob-3" />
         </div>
+        <HeroCanvas />
         <div className="landing-dots" />
         <div className="landing-hero-inner">
           <div className="landing-badge">
@@ -244,7 +369,12 @@ const HomePage: React.FC = () => {
             BOREDOM BUSTER · 2026
           </div>
           <h1 className="landing-title">
-            无聊<span className="landing-title-grad">救星</span>
+            {'无聊'.split('').map((c, i) => (
+              <span key={i} className="hero-char" style={{ animationDelay: `${i * 70}ms` }}>{c}</span>
+            ))}
+            {'救星'.split('').map((c, i) => (
+              <span key={i} className="hero-char landing-title-grad" style={{ animationDelay: `${(i + 2) * 70}ms` }}>{c}</span>
+            ))}
           </h1>
           <div className="landing-subtitle">你的离线时光伙伴</div>
           <p className="landing-desc">
@@ -331,6 +461,7 @@ const HomePage: React.FC = () => {
                 style={{ '--gc': t.color } as React.CSSProperties}
                 onClick={() => navigate(t.route)}
                 data-spotlight
+                data-tilt
               >
                 <div className="landing-card-top">
                   <span className="landing-card-icon" style={{ color: t.color }}>
@@ -361,7 +492,7 @@ const HomePage: React.FC = () => {
             const G1 = g1.icon;
             return (
               <>
-                <div className="landing-card landing-card-lg" style={{ '--gc': g0.color } as React.CSSProperties} onClick={() => navigate(g0.route)} data-spotlight>
+                <div className="landing-card landing-card-lg" style={{ '--gc': g0.color } as React.CSSProperties} onClick={() => navigate(g0.route)} data-spotlight data-tilt>
                   <div className="landing-card-top">
                     <span className="landing-card-icon" style={{ color: g0.color }}>
                       <G0 size={26} />
@@ -372,7 +503,7 @@ const HomePage: React.FC = () => {
                   <div className="landing-card-desc">{g0.desc}</div>
                   <IconRight size={16} className="landing-card-arrow" />
                 </div>
-                <div className="landing-card landing-card-lg" style={{ '--gc': g1.color } as React.CSSProperties} onClick={() => navigate(g1.route)} data-spotlight>
+                <div className="landing-card landing-card-lg" style={{ '--gc': g1.color } as React.CSSProperties} onClick={() => navigate(g1.route)} data-spotlight data-tilt>
                   <div className="landing-card-top">
                     <span className="landing-card-icon" style={{ color: g1.color }}>
                       <G1 size={26} />
@@ -390,7 +521,7 @@ const HomePage: React.FC = () => {
           {games.slice(2, 6).map((g) => {
             const GI = g.icon;
             return (
-              <div key={g.key} className="landing-card landing-card-sm" style={{ '--gc': g.color } as React.CSSProperties} onClick={() => navigate(g.route)} data-spotlight>
+              <div key={g.key} className="landing-card landing-card-sm" style={{ '--gc': g.color } as React.CSSProperties} onClick={() => navigate(g.route)} data-spotlight data-tilt>
                 <span className="landing-card-icon" style={{ color: g.color }}>
                   <GI size={24} />
                 </span>
@@ -407,7 +538,7 @@ const HomePage: React.FC = () => {
             const g6 = games[6];
             const G6 = g6.icon;
             return (
-              <div className="landing-card landing-card-wide" style={{ '--gc': g6.color } as React.CSSProperties} onClick={() => navigate(g6.route)} data-spotlight>
+              <div className="landing-card landing-card-wide" style={{ '--gc': g6.color } as React.CSSProperties} onClick={() => navigate(g6.route)} data-spotlight data-tilt>
                 <span className="landing-card-icon" style={{ color: g6.color }}>
                   <G6 size={24} />
                 </span>
@@ -426,7 +557,7 @@ const HomePage: React.FC = () => {
       {/* ======== 快捷记账 CTA ======== */}
       <section className="landing-section reveal">
         <div className="landing-accounting">
-          <div className="landing-acc-card" onClick={() => navigate('/add')} data-spotlight>
+          <div className="landing-acc-card" onClick={() => navigate('/add')} data-spotlight data-tilt>
             <div className="landing-acc-icon">
               <IconPlusCircle size={30} />
             </div>

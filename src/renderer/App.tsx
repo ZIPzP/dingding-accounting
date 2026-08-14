@@ -25,6 +25,10 @@ import {
   IconHourglass,
   IconTimer,
   IconNote,
+  IconWave,
+  IconTarget,
+  IconCheckCircle,
+  IconReport,
 } from './components/Icons';
 
 dayjs.locale('zh-cn');
@@ -40,6 +44,10 @@ const ToolsHub = lazy(() => import('./pages/ToolsHub'));
 const CountdownPage = lazy(() => import('./pages/CountdownPage'));
 const PomodoroPage = lazy(() => import('./pages/PomodoroPage'));
 const NotesPage = lazy(() => import('./pages/NotesPage'));
+const WhiteNoisePage = lazy(() => import('./pages/WhiteNoisePage'));
+const WishlistPage = lazy(() => import('./pages/WishlistPage'));
+const HabitsPage = lazy(() => import('./pages/HabitsPage'));
+const AnnualReport = lazy(() => import('./pages/AnnualReport'));
 const SnakeGamePage = lazy(() => import('./pages/SnakeGamePage'));
 const TetrisGamePage = lazy(() => import('./pages/TetrisGamePage'));
 const Game2048Page = lazy(() => import('./pages/Game2048Page'));
@@ -76,11 +84,22 @@ const menuItems: MenuProps['items'] = [
       { key: '/add', icon: <IconPlusCircle size={18} />, label: '记一笔' },
       { key: '/tools/countdown', icon: <IconHourglass size={18} />, label: '倒数日' },
       { key: '/tools/pomodoro', icon: <IconTimer size={18} />, label: '番茄钟' },
+      { key: '/tools/whitenoise', icon: <IconWave size={18} />, label: '白噪音' },
       { key: '/tools/notes', icon: <IconNote size={18} />, label: '备忘录' },
+      { key: '/tools/wishlist', icon: <IconTarget size={18} />, label: '心愿单' },
+      { key: '/tools/habits', icon: <IconCheckCircle size={18} />, label: '习惯打卡' },
     ],
   },
   { key: '/game', icon: <IconGamepad size={20} />, label: '游戏' },
-  { key: '/stats', icon: <IconChart size={20} />, label: '统计' },
+  {
+    key: 'stats',
+    icon: <IconChart size={20} />,
+    label: '统计',
+    children: [
+      { key: '/stats', icon: <IconChart size={18} />, label: '统计分析' },
+      { key: '/report', icon: <IconReport size={18} />, label: '年度报告' },
+    ],
+  },
   { key: '/settings', icon: <IconSettings size={20} />, label: '设置' },
 ];
 
@@ -101,14 +120,18 @@ interface RouteMeta {
 
 const routeMetaMap: Record<string, RouteMeta> = {
   '/': { title: '首页', desc: '无聊救星 · 随时解闷' },
-  '/tools': { title: '生活工具', desc: '记账 · 倒数日 · 番茄钟 · 备忘录' },
+  '/tools': { title: '生活工具', desc: '记账 · 倒数日 · 番茄钟 · 白噪音 · 心愿单 · 备忘录' },
   '/tools/countdown': { title: '倒数日', desc: '重要日子不错过' },
   '/tools/pomodoro': { title: '番茄钟', desc: '专注 25 分钟，效率翻倍' },
+  '/tools/whitenoise': { title: '白噪音', desc: '雨声 · 海浪 · 篝火，实时合成' },
   '/tools/notes': { title: '备忘录', desc: '灵感与待办随手记' },
+  '/tools/wishlist': { title: '心愿单', desc: '想要的东西，一点点攒' },
+  '/tools/habits': { title: '习惯打卡', desc: '每天一点点，坚持看得见' },
   '/bills': { title: '收支记账', desc: '账单明细与搜索' },
-  '/add': { title: '记一笔', desc: '快速记录一笔收支' },
+  '/add': { title: '记一笔', desc: '智能记账 · 像聊天一样记账' },
   '/edit': { title: '编辑账单', desc: '修改账单信息' },
   '/stats': { title: '统计分析', desc: '月度收支与预算' },
+  '/report': { title: '年度报告', desc: '这一年的每一笔,都有意义' },
   '/settings': { title: '设置', desc: '主题、预算与数据管理' },
   '/game': { title: '游戏中心', desc: '7 款经典小游戏' },
   '/game/snake': { title: '贪吃蛇', desc: '怀旧经典 · 排行榜' },
@@ -133,11 +156,15 @@ const appRoutes = (
     <Route path="/tools" element={<AnimatedPage><ToolsHub /></AnimatedPage>} />
     <Route path="/tools/countdown" element={<AnimatedPage><CountdownPage /></AnimatedPage>} />
     <Route path="/tools/pomodoro" element={<AnimatedPage><PomodoroPage /></AnimatedPage>} />
+    <Route path="/tools/whitenoise" element={<AnimatedPage><WhiteNoisePage /></AnimatedPage>} />
     <Route path="/tools/notes" element={<AnimatedPage><NotesPage /></AnimatedPage>} />
+    <Route path="/tools/wishlist" element={<AnimatedPage><WishlistPage /></AnimatedPage>} />
+    <Route path="/tools/habits" element={<AnimatedPage><HabitsPage /></AnimatedPage>} />
     <Route path="/bills" element={<AnimatedPage><BillList /></AnimatedPage>} />
     <Route path="/add" element={<AnimatedPage><AddRecord /></AnimatedPage>} />
     <Route path="/edit/:id" element={<AnimatedPage><AddRecord /></AnimatedPage>} />
     <Route path="/stats" element={<AnimatedPage><Statistics /></AnimatedPage>} />
+    <Route path="/report" element={<AnimatedPage><AnnualReport /></AnimatedPage>} />
     <Route path="/settings" element={<AnimatedPage><Settings /></AnimatedPage>} />
     <Route path="/game" element={<AnimatedPage><GameHub /></AnimatedPage>} />
     <Route path="/game/snake" element={<AnimatedPage><SnakeGamePage /></AnimatedPage>} />

@@ -188,3 +188,23 @@ export const IconReset: React.FC<IconProps> = ({ size = 24, className }) => (
 export const IconTrash: React.FC<IconProps> = ({ size = 24, className }) => (
   <span className={className}>{mk("M3 6h18 M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2 M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6", size)}</span>
 );
+
+export const IconWave: React.FC<IconProps> = ({ size = 24, className }) => (
+  <span className={className}>{mk("M2 12h2a2 2 0 0 0 4 0 2 2 0 0 1 4 0 2 2 0 0 0 4 0 2 2 0 0 1 4 0h2 M2 16h2a2 2 0 0 0 4 0 2 2 0 0 1 4 0 2 2 0 0 0 4 0 2 2 0 0 1 4 0h2 M2 8h2a2 2 0 0 0 4 0 2 2 0 0 1 4 0 2 2 0 0 0 4 0 2 2 0 0 1 4 0h2", size)}</span>
+);
+
+export const IconTarget: React.FC<IconProps> = ({ size = 24, className }) => (
+  <span className={className}>{mk("M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z", size)}</span>
+);
+
+export const IconCheckCircle: React.FC<IconProps> = ({ size = 24, className }) => (
+  <span className={className}>{mk("M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M9 12l2 2 4-4", size)}</span>
+);
+
+export const IconReport: React.FC<IconProps> = ({ size = 24, className }) => (
+  <span className={className}>{mk("M3 3v18h18 M8 17v-5 M13 17V7 M18 17v-9", size)}</span>
+);
+
+export const IconFire: React.FC<IconProps> = ({ size = 24, className }) => (
+  <span className={className}>{mk("M12 2s4 4.5 4 8.5A4 4 0 0 1 8 10.5c0-1 .5-2 1-2.5 0 1.5 1 3 3 4-1-2-1-5 0-10z M8 15a4 4 0 0 0 8 0c0-1-.5-1.5-1-2 .5 1 1 2 1 3", size)}</span>
+);
