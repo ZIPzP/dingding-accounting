@@ -117,6 +117,10 @@ export function achEmit(event: string, n = 1): void {
   s.counts[event] = (s.counts[event] || 0) + n;
   persist();
   checkAndUnlock();
+  /* 广播给其他系统（如青狐伙伴） */
+  try {
+    window.dispatchEvent(new CustomEvent('qinggu-ach-event', { detail: { event, n } }));
+  } catch { /* noop */ }
 }
 
 /** 直接设置事件计数为 max(当前, 值)，用于启动时从已有数据初始化 */

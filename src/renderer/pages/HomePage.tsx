@@ -37,7 +37,12 @@ const games: GameItem[] = [
   { key: 'whackamole', name: '打地鼠', icon: IconWhackAMole, desc: '30 秒限时，眼疾手快', route: '/game/whackamole', color: '#f87171', tag: '限时挑战' },
 ];
 
+/** Emoji 图标适配器 */
+const EmojiIcon = (emoji: string) =>
+  ({ size = 24 }: { size?: number }) => <span style={{ fontSize: size, lineHeight: 1 }}>{emoji}</span>;
+
 const toolCards = [
+  { key: 'fox', name: '青狐伙伴', icon: EmojiIcon('🦊'), desc: '赚狐粮,把它养大', route: '/fox', color: '#fb923c' },
   { key: 'bookkeeping', name: '收支记账', icon: IconBook, desc: '分类统计 · 预算管理 · 数据导出', route: '/bills', color: '#06b6d4' },
   { key: 'smart', name: '智能记账', icon: IconPlusCircle, desc: '打字就能记账,自动识别', route: '/add', color: '#4f6df5' },
   { key: 'countdown', name: '倒数日', icon: IconHourglass, desc: '重要日子，一天不落', route: '/tools/countdown', color: '#ec4899' },
@@ -46,6 +51,8 @@ const toolCards = [
   { key: 'notes', name: '备忘录', icon: IconNote, desc: '灵感与待办，随手记录', route: '/tools/notes', color: '#10b981' },
   { key: 'wishlist', name: '心愿单', icon: IconTarget, desc: '想要的,一点点攒下来', route: '/tools/wishlist', color: '#8b5cf6' },
   { key: 'habits', name: '习惯打卡', icon: IconCheckCircle, desc: '每天一点点,坚持看得见', route: '/tools/habits', color: '#f43f5e' },
+  { key: 'capsule', name: '时间胶囊', icon: EmojiIcon('💌'), desc: '写信给未来的自己', route: '/tools/capsule', color: '#d946ef' },
+  { key: 'music', name: '音乐工坊', icon: IconNote, desc: '8-bit 编曲,点格子作曲', route: '/tools/music', color: '#f472b6' },
   { key: 'report', name: '年度报告', icon: IconReport, desc: '一年的账单,一份仪式感', route: '/report', color: '#14b8a6' },
 ];
 
@@ -239,8 +246,8 @@ function useParallax(): React.RefObject<HTMLDivElement> {
 
 /** 跑马灯内容 */
 const marqueeItems = [
-  '🧊 叠叠高 3D', '🎮 贪吃蛇', '🧱 俄罗斯方块', '🔢 2048', '💣 扫雷', '🧱 打砖块', '🐹 打地鼠', '⭕ 井字棋',
-  '💬 智能记账', '⏳ 倒数日', '🍅 番茄钟', '🌧️ 白噪音', '📝 备忘录', '🎯 心愿单', '✅ 习惯打卡', '📊 年度报告',
+  '🦊 青狐伙伴', '🧊 叠叠高 3D', '🎮 贪吃蛇', '🧱 俄罗斯方块', '🔢 2048', '💣 扫雷', '🧱 打砖块', '🐹 打地鼠', '⭕ 井字棋',
+  '💬 智能记账', '⏳ 倒数日', '🍅 番茄钟', '🌧️ 白噪音', '📝 备忘录', '🎯 心愿单', '✅ 习惯打卡', '💌 时间胶囊', '🎹 音乐工坊', '📊 年度报告',
 ];
 
 /** Hero 粒子星空背景（Canvas） */

@@ -16,6 +16,7 @@ import CommandPalette, { type PaletteItem } from './components/CommandPalette';
 import SplashScreen from './components/SplashScreen';
 import { api } from './services/api';
 import { achSetMax } from './services/achievements';
+import './services/fox'; // 注册青狐伙伴的全局事件监听（应用内行为自动赚狐粮）
 import {
   IconLogo,
   IconHome,
@@ -56,6 +57,9 @@ const WishlistPage = lazy(() => import('./pages/WishlistPage'));
 const HabitsPage = lazy(() => import('./pages/HabitsPage'));
 const AnnualReport = lazy(() => import('./pages/AnnualReport'));
 const AchievementsPage = lazy(() => import('./pages/AchievementsPage'));
+const FoxPage = lazy(() => import('./pages/FoxPage'));
+const TimeCapsulePage = lazy(() => import('./pages/TimeCapsulePage'));
+const MusicStudioPage = lazy(() => import('./pages/MusicStudioPage'));
 const StackGamePage = lazy(() => import('./pages/StackGamePage'));
 const SnakeGamePage = lazy(() => import('./pages/SnakeGamePage'));
 const TetrisGamePage = lazy(() => import('./pages/TetrisGamePage'));
@@ -83,6 +87,7 @@ const AnimatedPage: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 /* 导航菜单项（桌面端） */
 const menuItems: MenuProps['items'] = [
   { key: '/', icon: <IconHome size={20} />, label: '首页' },
+  { key: '/fox', icon: <span style={{ fontSize: 16 }}>🦊</span>, label: '青狐伙伴' },
   {
     key: 'tools',
     icon: <IconTools size={20} />,
@@ -97,6 +102,8 @@ const menuItems: MenuProps['items'] = [
       { key: '/tools/notes', icon: <IconNote size={18} />, label: '备忘录' },
       { key: '/tools/wishlist', icon: <IconTarget size={18} />, label: '心愿单' },
       { key: '/tools/habits', icon: <IconCheckCircle size={18} />, label: '习惯打卡' },
+      { key: '/tools/capsule', icon: <span style={{ fontSize: 15 }}>💌</span>, label: '时间胶囊' },
+      { key: '/tools/music', icon: <IconNote size={18} />, label: '音乐工坊' },
     ],
   },
   { key: '/game', icon: <IconGamepad size={20} />, label: '游戏' },
@@ -143,6 +150,9 @@ const routeMetaMap: Record<string, RouteMeta> = {
   '/stats': { title: '统计分析', desc: '月度收支与预算' },
   '/report': { title: '年度报告', desc: '这一年的每一笔,都有意义' },
   '/achievements': { title: '成就殿堂', desc: '每一份坚持,都有勋章' },
+  '/fox': { title: '青狐伙伴', desc: '把应用用起来,把它养大' },
+  '/tools/capsule': { title: '时间胶囊', desc: '写信给未来的自己' },
+  '/tools/music': { title: '音乐工坊', desc: '8-bit 编曲器,点格子作曲' },
   '/settings': { title: '设置', desc: '主题、预算与数据管理' },
   '/game': { title: '游戏中心', desc: '8 款经典小游戏' },
   '/game/stack': { title: '叠叠高', desc: '全新 3D 叠塔 · 完美连击' },
@@ -175,6 +185,9 @@ const paletteNav: { path: string; label: string; desc?: string; icon: React.Reac
   { path: '/tools/habits', label: '习惯打卡', desc: '坚持看得见', icon: <IconCheckCircle size={17} /> },
   { path: '/report', label: '年度报告', desc: '有仪式感的总结', icon: <IconReport size={17} /> },
   { path: '/achievements', label: '成就殿堂', desc: '每一份坚持,都有勋章', icon: <IconTower size={17} /> },
+  { path: '/fox', label: '青狐伙伴', desc: '把应用用起来,把它养大', icon: <span style={{ fontSize: 16 }}>🦊</span> },
+  { path: '/tools/capsule', label: '时间胶囊', desc: '写信给未来的自己', icon: <span style={{ fontSize: 16 }}>💌</span> },
+  { path: '/tools/music', label: '音乐工坊', desc: '点格子作曲', icon: <IconNote size={17} /> },
   { path: '/stats', label: '统计分析', desc: '月度收支与预算', icon: <IconChart size={17} /> },
   { path: '/game', label: '游戏中心', desc: '8 款经典小游戏', icon: <IconGamepad size={17} /> },
   { path: '/settings', label: '设置', desc: '主题、预算与数据', icon: <IconSettings size={17} /> },
@@ -197,6 +210,9 @@ const appRoutes = (
     <Route path="/stats" element={<AnimatedPage><Statistics /></AnimatedPage>} />
     <Route path="/report" element={<AnimatedPage><AnnualReport /></AnimatedPage>} />
     <Route path="/achievements" element={<AnimatedPage><AchievementsPage /></AnimatedPage>} />
+    <Route path="/fox" element={<AnimatedPage><FoxPage /></AnimatedPage>} />
+    <Route path="/tools/capsule" element={<AnimatedPage><TimeCapsulePage /></AnimatedPage>} />
+    <Route path="/tools/music" element={<AnimatedPage><MusicStudioPage /></AnimatedPage>} />
     <Route path="/settings" element={<AnimatedPage><Settings /></AnimatedPage>} />
     <Route path="/game" element={<AnimatedPage><GameHub /></AnimatedPage>} />
     <Route path="/game/stack" element={<AnimatedPage><StackGamePage /></AnimatedPage>} />
