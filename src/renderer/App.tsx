@@ -1,17 +1,19 @@
 /**
  * 青孤项目 — 应用根组件
- * 桌面端：左侧可折叠菜单（工具分组）+ 顶部工具栏（页面标题 / 日期 / 快捷记一笔）
- * 手机端：底部标签栏（5 项）+ 悬浮记一笔按钮 + 头部设置入口
- * 全局：路由懒加载（首屏性能）、页面淡入动画、动态页面标题
+ * 桌面端：左侧可折叠菜单（工具分组）+ 顶部工具栏（标题 / 搜索 / 换主题 / 日期 / 记一笔）
+ * 手机端：底部标签栏（5 项）+ 悬浮记一笔按钮 + 头部搜索/设置
+ * 全局：命令面板(Ctrl+K)、开场品牌动画、路由懒加载、页面切换帷幕、阅读进度条
  */
-import React, { useState, Suspense, lazy, useEffect } from 'react';
+import React, { useState, Suspense, lazy, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Spin, Button } from 'antd';
+import { Layout, Menu, Spin, Button, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import CommandPalette, { type PaletteItem } from './components/CommandPalette';
+import SplashScreen from './components/SplashScreen';
 import {
   IconLogo,
   IconHome,
@@ -29,6 +31,8 @@ import {
   IconTarget,
   IconCheckCircle,
   IconReport,
+  IconSearch,
+  IconPalette,
 } from './components/Icons';
 
 dayjs.locale('zh-cn');
@@ -149,6 +153,24 @@ function resolveRouteMeta(pathname: string): RouteMeta | undefined {
   return routeMetaMap[first];
 }
 
+/* 命令面板候选（页面快捷导航） */
+const paletteNav: { path: string; label: string; desc?: string; icon: React.ReactNode }[] = [
+  { path: '/', label: '首页', desc: '无聊救星 · 随时解闷', icon: <IconHome size={17} /> },
+  { path: '/add', label: '记一笔', desc: '智能记账 · 像聊天一样记账', icon: <IconPlusCircle size={17} /> },
+  { path: '/tools', label: '工具中心', desc: '全部生活工具', icon: <IconTools size={17} /> },
+  { path: '/bills', label: '收支记账', desc: '账单明细与搜索', icon: <IconBook size={17} /> },
+  { path: '/tools/countdown', label: '倒数日', desc: '重要日子不错过', icon: <IconHourglass size={17} /> },
+  { path: '/tools/pomodoro', label: '番茄钟', desc: '专注 25 分钟', icon: <IconTimer size={17} /> },
+  { path: '/tools/whitenoise', label: '白噪音', desc: '雨声 · 海浪 · 篝火', icon: <IconWave size={17} /> },
+  { path: '/tools/notes', label: '备忘录', desc: '灵感与待办', icon: <IconNote size={17} /> },
+  { path: '/tools/wishlist', label: '心愿单', desc: '攒钱进度', icon: <IconTarget size={17} /> },
+  { path: '/tools/habits', label: '习惯打卡', desc: '坚持看得见', icon: <IconCheckCircle size={17} /> },
+  { path: '/report', label: '年度报告', desc: '有仪式感的总结', icon: <IconReport size={17} /> },
+  { path: '/stats', label: '统计分析', desc: '月度收支与预算', icon: <IconChart size={17} /> },
+  { path: '/game', label: '游戏中心', desc: '7 款经典小游戏', icon: <IconGamepad size={17} /> },
+  { path: '/settings', label: '设置', desc: '主题、预算与数据', icon: <IconSettings size={17} /> },
+];
+
 /* 路由表（桌面端 / 手机端共用，避免重复维护） */
 const appRoutes = (
   <>
@@ -178,17 +200,81 @@ const appRoutes = (
   </>
 );
 
+/** 顶部阅读进度条（绑定实际滚动容器） */
+const ScrollProgress: React.FC = () => {
+  const barRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const el = document.querySelector<HTMLElement>('.main-content');
+        if (!el || !barRef.current) return;
+        const max = el.scrollHeight - el.clientHeight;
+        const p = max > 0 ? el.scrollTop / max : 0;
+        barRef.current.style.transform = `scaleX(${p})`;
+      });
+    };
+    const timer = setInterval(() => {
+      const el = document.querySelector<HTMLElement>('.main-content');
+      if (el) {
+        el.addEventListener('scroll', update, { passive: true });
+        update();
+        clearInterval(timer);
+      }
+    }, 200);
+    return () => {
+      clearInterval(timer);
+      cancelAnimationFrame(raf);
+      document.querySelector<HTMLElement>('.main-content')?.removeEventListener('scroll', update);
+    };
+  }, []);
+
+  return <div className="scroll-progress" ref={barRef} />;
+};
+
 const AppContent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentTheme, setTheme, allThemes } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
   const [mobile, setMobile] = useState(() => window.innerWidth < 768);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [curtainKey, setCurtainKey] = useState(0);
+
+  /* 开场动画：每个会话仅一次 */
+  const [splash, setSplash] = useState<boolean>(() => {
+    try {
+      if (sessionStorage.getItem('qinggu-splash')) return false;
+      return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    } catch {
+      return false;
+    }
+  });
 
   React.useEffect(() => {
     const handleResize = () => setMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  /* Ctrl+K / ⌘K 呼出命令面板 */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  /* 页面切换帷幕动画 */
+  useEffect(() => {
+    setCurtainKey((k) => k + 1);
+  }, [location.pathname]);
 
   const currentKey = '/' + location.pathname.split('/')[1];
   const meta = resolveRouteMeta(location.pathname);
@@ -198,60 +284,89 @@ const AppContent: React.FC = () => {
     document.title = meta ? `${meta.title} · 青孤项目` : '青孤项目 · 离线工具集';
   }, [meta]);
 
-  /* ======== 手机端布局 ======== */
-  if (mobile) {
-    return (
-      <Layout style={{ minHeight: '100vh', paddingBottom: 62 }}>
-        <Content className={`main-content mobile-content ${currentKey === '/' ? 'landing-content' : ''}`}>
-          <div className="mobile-header">
-            <div className="mobile-header-spacer" />
-            <span className="mobile-header-title">
-              <IconLogo size={20} /> 青孤项目
-            </span>
-            <button
-              className="mobile-header-settings"
-              aria-label="设置"
-              onClick={() => navigate('/settings')}
-            >
-              <IconSettings size={20} />
-            </button>
-          </div>
-          <Suspense fallback={<PageLoader />}>
-            <ErrorBoundary>
-              <Routes>{appRoutes}</Routes>
-            </ErrorBoundary>
-          </Suspense>
-        </Content>
+  const paletteItems: PaletteItem[] = useMemo(
+    () =>
+      paletteNav.map((item) => ({
+        key: item.path,
+        label: item.label,
+        desc: item.desc,
+        icon: item.icon,
+        action: () => navigate(item.path),
+      })),
+    [navigate]
+  );
 
-        {/* 悬浮记一笔按钮 */}
-        <button className="fab-add" aria-label="记一笔" onClick={() => navigate('/add')}>
-          <IconPlusCircle size={26} />
-        </button>
+  const handleSplashDone = () => {
+    setSplash(false);
+    try {
+      sessionStorage.setItem('qinggu-splash', '1');
+    } catch { /* noop */ }
+  };
 
-        {/* 底部导航栏 */}
-        <div className="mobile-tab-bar">
-          {mobileTabs.map(({ key, Icon, label }) => {
-            const isActive = currentKey === key || (key === '/tools' && location.pathname.startsWith('/tools'));
-            return (
-              <div
-                key={key}
-                className={`mobile-tab-item ${isActive ? 'active' : ''}`}
-                onClick={() => navigate(key)}
-              >
-                <div className="mobile-tab-icon">
-                  <Icon size={22} />
-                </div>
-                <span className="mobile-tab-label">{label}</span>
-              </div>
-            );
-          })}
+  const themeMenu: MenuProps['items'] = allThemes.map((t) => ({
+    key: t.id,
+    label: (
+      <span className="topbar-theme-label">
+        <i className="topbar-theme-dot" style={{ background: t.primary }} />
+        {t.name}
+        {currentTheme.id === t.id && <span className="topbar-theme-check">✓</span>}
+      </span>
+    ),
+    onClick: () => setTheme(t),
+  }));
+
+  const layout = mobile ? (
+    /* ======== 手机端布局 ======== */
+    <Layout style={{ minHeight: '100vh', paddingBottom: 62 }}>
+      <Content className={`main-content mobile-content ${currentKey === '/' ? 'landing-content' : ''}`}>
+        <div className="mobile-header">
+          <button className="mobile-header-settings" aria-label="搜索" onClick={() => setPaletteOpen(true)}>
+            <IconSearch size={20} />
+          </button>
+          <span className="mobile-header-title">
+            <IconLogo size={20} /> 青孤项目
+          </span>
+          <button
+            className="mobile-header-settings"
+            aria-label="设置"
+            onClick={() => navigate('/settings')}
+          >
+            <IconSettings size={20} />
+          </button>
         </div>
-      </Layout>
-    );
-  }
+        <Suspense fallback={<PageLoader />}>
+          <ErrorBoundary>
+            <Routes>{appRoutes}</Routes>
+          </ErrorBoundary>
+        </Suspense>
+      </Content>
 
-  /* ======== 桌面端布局 ======== */
-  return (
+      {/* 悬浮记一笔按钮 */}
+      <button className="fab-add" aria-label="记一笔" onClick={() => navigate('/add')}>
+        <IconPlusCircle size={26} />
+      </button>
+
+      {/* 底部导航栏 */}
+      <div className="mobile-tab-bar">
+        {mobileTabs.map(({ key, Icon, label }) => {
+          const isActive = currentKey === key || (key === '/tools' && location.pathname.startsWith('/tools'));
+          return (
+            <div
+              key={key}
+              className={`mobile-tab-item ${isActive ? 'active' : ''}`}
+              onClick={() => navigate(key)}
+            >
+              <div className="mobile-tab-icon">
+                <Icon size={22} />
+              </div>
+              <span className="mobile-tab-label">{label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </Layout>
+  ) : (
+    /* ======== 桌面端布局 ======== */
     <Layout style={{ minHeight: '100vh' }}>
       <Sider
         collapsible
@@ -283,6 +398,16 @@ const AppContent: React.FC = () => {
             {meta?.desc && <span className="desktop-topbar-desc">{meta.desc}</span>}
           </div>
           <div className="desktop-topbar-right">
+            <button className="topbar-search" onClick={() => setPaletteOpen(true)}>
+              <IconSearch size={14} />
+              <span>搜索</span>
+              <kbd>Ctrl K</kbd>
+            </button>
+            <Dropdown menu={{ items: themeMenu }} trigger={['click']} placement="bottomRight">
+              <Button type="text" className="topbar-icon-btn" title="切换主题" aria-label="切换主题">
+                <IconPalette size={18} />
+              </Button>
+            </Dropdown>
             <span className="desktop-topbar-date">
               <IconCalendar size={14} />
               {dayjs().format('M月D日 dddd')}
@@ -305,6 +430,16 @@ const AppContent: React.FC = () => {
         </Content>
       </Layout>
     </Layout>
+  );
+
+  return (
+    <>
+      {layout}
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} items={paletteItems} />
+      {splash && <SplashScreen onDone={handleSplashDone} />}
+      <ScrollProgress />
+      {curtainKey > 0 && <div key={curtainKey} className="page-curtain" />}
+    </>
   );
 };
 

@@ -208,3 +208,7 @@ export const IconReport: React.FC<IconProps> = ({ size = 24, className }) => (
 export const IconFire: React.FC<IconProps> = ({ size = 24, className }) => (
   <span className={className}>{mk("M12 2s4 4.5 4 8.5A4 4 0 0 1 8 10.5c0-1 .5-2 1-2.5 0 1.5 1 3 3 4-1-2-1-5 0-10z M8 15a4 4 0 0 0 8 0c0-1-.5-1.5-1-2 .5 1 1 2 1 3", size)}</span>
 );
+
+export const IconPalette: React.FC<IconProps> = ({ size = 24, className }) => (
+  <span className={className}>{mk("M12 2a10 10 0 1 0 0 20 2 2 0 0 0 2-2c0-.6-.3-1-.7-1.4-.4-.5-.6-1-.6-1.6a2 2 0 0 1 2-2h2.8A4.5 4.5 0 0 0 22 10.5C22 5.8 17.5 2 12 2z M7.5 10.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z M12 8a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z M16.5 10.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z", size)}</span>
+);

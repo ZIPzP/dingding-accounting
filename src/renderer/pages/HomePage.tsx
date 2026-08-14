@@ -137,6 +137,111 @@ function resetTilt(e: React.MouseEvent<HTMLElement>): void {
   });
 }
 
+/** 磁性按钮：按钮轻微吸附鼠标 */
+function magnetic(e: React.MouseEvent<HTMLButtonElement>): void {
+  if (prefersReducedMotion() || window.innerWidth < 768) return;
+  const btn = e.currentTarget;
+  const r = btn.getBoundingClientRect();
+  const x = e.clientX - r.left - r.width / 2;
+  const y = e.clientY - r.top - r.height / 2;
+  btn.style.transform = `translate(${(x * 0.18).toFixed(1)}px, ${(y * 0.28).toFixed(1)}px)`;
+}
+
+function magneticReset(e: React.MouseEvent<HTMLButtonElement>): void {
+  e.currentTarget.style.transform = '';
+}
+
+/** 首页定制光标（桌面端 + 精细指针） */
+const LandingCursor: React.FC = () => {
+  const dotRef = React.useRef<HTMLDivElement>(null);
+  const ringRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    if (!window.matchMedia('(pointer: fine)').matches) return;
+    if (window.innerWidth < 768) return;
+    document.body.classList.add('has-landing-cursor');
+
+    let mx = -100;
+    let my = -100;
+    let rx = -100;
+    let ry = -100;
+    let raf = 0;
+    const move = (e: MouseEvent) => {
+      mx = e.clientX;
+      my = e.clientY;
+      if (dotRef.current) {
+        dotRef.current.style.transform = `translate(${mx}px, ${my}px)`;
+      }
+      const target = e.target as HTMLElement;
+      const interactive = !!target.closest('a,button,[data-spotlight],.landing-btn');
+      if (ringRef.current) {
+        ringRef.current.dataset.hot = interactive ? '1' : '0';
+      }
+    };
+    const loop = () => {
+      rx += (mx - rx) * 0.16;
+      ry += (my - ry) * 0.16;
+      if (ringRef.current) {
+        ringRef.current.style.transform = `translate(${rx}px, ${ry}px)`;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    window.addEventListener('mousemove', move, { passive: true });
+    raf = requestAnimationFrame(loop);
+    return () => {
+      window.removeEventListener('mousemove', move);
+      cancelAnimationFrame(raf);
+      document.body.classList.remove('has-landing-cursor');
+    };
+  }, []);
+
+  return (
+    <>
+      <div className="landing-cursor-dot" ref={dotRef} />
+      <div className="landing-cursor-ring" ref={ringRef} />
+    </>
+  );
+};
+
+/** 视差滚动：极光背景随滚动分层移动 */
+function useParallax(): React.RefObject<HTMLDivElement> {
+  const auroraRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (prefersReducedMotion() || window.innerWidth < 768) return;
+    let raf = 0;
+    const el = document.querySelector<HTMLElement>('.main-content');
+    if (!el) return;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const y = el.scrollTop;
+        if (auroraRef.current) {
+          auroraRef.current.style.transform = `translateY(${y * 0.18}px)`;
+          const blobs = auroraRef.current.querySelectorAll<HTMLElement>('.aurora-blob');
+          blobs.forEach((b, i) => {
+            b.style.setProperty('--parallax', `${y * (0.06 + i * 0.05)}px`);
+          });
+        }
+      });
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return auroraRef;
+}
+
+/** 跑马灯内容 */
+const marqueeItems = [
+  '🎮 贪吃蛇', '🧱 俄罗斯方块', '🔢 2048', '💣 扫雷', '🧱 打砖块', '🐹 打地鼠', '⭕ 井字棋',
+  '💬 智能记账', '⏳ 倒数日', '🍅 番茄钟', '🌧️ 白噪音', '📝 备忘录', '🎯 心愿单', '✅ 习惯打卡', '📊 年度报告',
+];
+
 /** Hero 粒子星空背景（Canvas） */
 const HeroCanvas: React.FC = () => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -307,6 +412,7 @@ const HomePage: React.FC = () => {
   const [trend, setTrend] = useState<TrendItem[]>([]);
   const budget = getBudget();
   const loadedRef = useRef(false);
+  const auroraRef = useParallax();
 
   useReveal();
 
@@ -354,9 +460,10 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="landing" onMouseMove={spotlight} onMouseLeave={resetTilt}>
-      {/* ======== Hero 区域（极光动效 + 粒子星空） ======== */}
+      <LandingCursor />
+      {/* ======== Hero 区域（极光动效 + 粒子星空 + 视差） ======== */}
       <section className="landing-hero reveal">
-        <div className="aurora">
+        <div className="aurora" ref={auroraRef}>
           <div className="aurora-blob aurora-blob-1" />
           <div className="aurora-blob aurora-blob-2" />
           <div className="aurora-blob aurora-blob-3" />
@@ -382,7 +489,12 @@ const HomePage: React.FC = () => {
             把无聊时光变成快乐时光。数据全部保存在本地，断网也能玩，用着更安心。
           </p>
           <div className="landing-ctas">
-            <button className="landing-btn landing-btn-primary" onClick={() => navigate('/game')}>
+            <button
+              className="landing-btn landing-btn-primary magnetic-btn"
+              onClick={() => navigate('/game')}
+              onMouseMove={magnetic}
+              onMouseLeave={magneticReset}
+            >
               立即体验
               <IconRight size={16} />
             </button>
@@ -393,6 +505,15 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* ======== 跑马灯 ======== */}
+      <div className="landing-marquee reveal">
+        <div className="marquee-track">
+          {[...marqueeItems, ...marqueeItems].map((item, i) => (
+            <span className="marquee-item" key={i}>{item}<i className="marquee-sep">✦</i></span>
+          ))}
+        </div>
+      </div>
 
       {/* ======== 数据条（真实账本数据 + 趋势图） ======== */}
       <section className="landing-stats reveal">
@@ -448,6 +569,7 @@ const HomePage: React.FC = () => {
       {/* ======== 生活工具 ======== */}
       <section className="landing-section reveal">
         <div className="landing-section-head">
+          <span className="landing-section-index">01</span>
           <h2 className="landing-section-title">生活工具</h2>
           <p className="landing-section-sub">记账、倒数日、番茄钟、备忘录 —— 离线可用，数据本地保存</p>
         </div>
@@ -480,6 +602,7 @@ const HomePage: React.FC = () => {
       {/* ======== 游戏区域（Bento 网格） ======== */}
       <section className="landing-section reveal">
         <div className="landing-section-head">
+          <span className="landing-section-index">02</span>
           <h2 className="landing-section-title">经典小游戏</h2>
           <p className="landing-section-sub">经典怀旧，即开即玩，所有进度自动保存</p>
         </div>
@@ -556,6 +679,11 @@ const HomePage: React.FC = () => {
 
       {/* ======== 快捷记账 CTA ======== */}
       <section className="landing-section reveal">
+        <div className="landing-section-head">
+          <span className="landing-section-index">03</span>
+          <h2 className="landing-section-title">智能记账</h2>
+          <p className="landing-section-sub">像聊天一样记账，自动识别金额、分类与日期</p>
+        </div>
         <div className="landing-accounting">
           <div className="landing-acc-card" onClick={() => navigate('/add')} data-spotlight data-tilt>
             <div className="landing-acc-icon">
