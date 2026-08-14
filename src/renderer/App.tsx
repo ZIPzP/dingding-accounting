@@ -11,6 +11,7 @@ import type { MenuProps } from 'antd';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import { ThemeProvider } from './contexts/ThemeContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import {
   IconLogo,
   IconHome,
@@ -189,7 +190,9 @@ const AppContent: React.FC = () => {
             </button>
           </div>
           <Suspense fallback={<PageLoader />}>
-            <Routes>{appRoutes}</Routes>
+            <ErrorBoundary>
+              <Routes>{appRoutes}</Routes>
+            </ErrorBoundary>
           </Suspense>
         </Content>
 
@@ -268,7 +271,9 @@ const AppContent: React.FC = () => {
         </header>
         <Content className={`main-content ${currentKey === '/' ? 'landing-content' : ''}`}>
           <Suspense fallback={<PageLoader />}>
-            <Routes>{appRoutes}</Routes>
+            <ErrorBoundary>
+              <Routes>{appRoutes}</Routes>
+            </ErrorBoundary>
           </Suspense>
         </Content>
       </Layout>

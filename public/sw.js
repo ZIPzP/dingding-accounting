@@ -2,7 +2,7 @@
 // 提供离线缓存支持，让 PWA 可以离线访问
 // 策略：HTML 网络优先（保证更新即时生效）、静态资源缓存优先（后台刷新）
 
-const CACHE_NAME = 'qinggu-project-v3';
+const CACHE_NAME = 'qinggu-project-v4';
 
 // 需要预缓存的静态资源（应用外壳）
 const PRECACHE_URLS = [

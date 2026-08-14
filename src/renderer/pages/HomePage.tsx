@@ -126,14 +126,29 @@ const Sparkline: React.FC<{ data: TrendItem[] }> = ({ data }) => {
   const w = 360;
   const h = 100;
   const pad = 10;
+
+  /* 数据为空时显示占位（避免访问不存在的点导致崩溃） */
+  if (!data || data.length === 0) {
+    return (
+      <div className="sparkline-empty">
+        <svg viewBox={`0 0 ${w} ${h}`} className="sparkline" preserveAspectRatio="none" aria-hidden>
+          <line x1={pad} y1={h / 2} x2={w - pad} y2={h / 2} stroke="var(--qg-border)" strokeWidth="2" strokeDasharray="6 6" />
+        </svg>
+        <span>记几笔账，这里就会画出收支曲线 📈</span>
+      </div>
+    );
+  }
+
   const max = Math.max(...data.map((d) => Math.max(d.total, d.incomeTotal)), 1);
   const x = (i: number) => pad + (i * (w - pad * 2)) / Math.max(data.length - 1, 1);
   const y = (v: number) => h - pad - (v / max) * (h - pad * 2);
   const expensePts = data.map((d, i) => [x(i), y(d.total)] as const);
   const incomePts = data.map((d, i) => [x(i), y(d.incomeTotal)] as const);
-  const areaPath = `M ${expensePts[0][0]},${expensePts[0][1]} ${expensePts
+  const first = expensePts[0] ?? [pad, h - pad];
+  const last = expensePts[expensePts.length - 1] ?? first;
+  const areaPath = `M ${first[0]},${first[1]} ${expensePts
     .map(([px, py]) => `L ${px},${py}`)
-    .join(' ')} L ${expensePts[expensePts.length - 1][0]},${h - pad} L ${expensePts[0][0]},${h - pad} Z`;
+    .join(' ')} L ${last[0]},${h - pad} L ${first[0]},${h - pad} Z`;
   const expenseLine = expensePts.map(([px, py]) => `${px},${py}`).join(' ');
   const incomeLine = incomePts.map(([px, py]) => `${px},${py}`).join(' ');
 

@@ -2468,8 +2468,7 @@ body.has-bg-image::after {
   .landing-tools {
     grid-template-columns: repeat(2, 1fr);
   }
-}
-@media (max-width: 640px) {
+}@media (max-width: 640px) {
   .landing-tools {
     grid-template-columns: 1fr;
   }
@@ -2493,4 +2492,63 @@ body.has-bg-image::after {
   .pomodoro-time {
     font-size: 44px;
   }
+}
+
+/* ============================================================
+   ---- 30. 全局错误兜底页 ----
+   ============================================================ */
+.error-boundary {
+  min-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+}
+.error-boundary-emoji {
+  font-size: 64px;
+  line-height: 1;
+}
+.error-boundary-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--qg-text);
+  margin: 16px 0 10px;
+}
+.error-boundary-desc {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--qg-text-secondary);
+  max-width: 420px;
+}
+.error-boundary-detail {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--qg-text-tertiary);
+  max-width: 420px;
+  word-break: break-all;
+  opacity: 0.8;
+}
+.error-boundary-actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 24px;
+}
+.mobile-content .error-boundary {
+  min-height: calc(100vh - 140px);
+}
+
+/* 趋势图空状态 */
+.sparkline-empty {
+  position: relative;
+}
+.sparkline-empty span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--qg-text-tertiary);
 }
