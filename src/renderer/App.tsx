@@ -14,6 +14,8 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import CommandPalette, { type PaletteItem } from './components/CommandPalette';
 import SplashScreen from './components/SplashScreen';
+import { api } from './services/api';
+import { achSetMax } from './services/achievements';
 import {
   IconLogo,
   IconHome,
@@ -33,6 +35,7 @@ import {
   IconReport,
   IconSearch,
   IconPalette,
+  IconTower,
 } from './components/Icons';
 
 dayjs.locale('zh-cn');
@@ -52,6 +55,7 @@ const WhiteNoisePage = lazy(() => import('./pages/WhiteNoisePage'));
 const WishlistPage = lazy(() => import('./pages/WishlistPage'));
 const HabitsPage = lazy(() => import('./pages/HabitsPage'));
 const AnnualReport = lazy(() => import('./pages/AnnualReport'));
+const AchievementsPage = lazy(() => import('./pages/AchievementsPage'));
 const StackGamePage = lazy(() => import('./pages/StackGamePage'));
 const SnakeGamePage = lazy(() => import('./pages/SnakeGamePage'));
 const TetrisGamePage = lazy(() => import('./pages/TetrisGamePage'));
@@ -96,6 +100,7 @@ const menuItems: MenuProps['items'] = [
     ],
   },
   { key: '/game', icon: <IconGamepad size={20} />, label: '游戏' },
+  { key: '/achievements', icon: <IconTower size={20} />, label: '成就' },
   {
     key: 'stats',
     icon: <IconChart size={20} />,
@@ -137,6 +142,7 @@ const routeMetaMap: Record<string, RouteMeta> = {
   '/edit': { title: '编辑账单', desc: '修改账单信息' },
   '/stats': { title: '统计分析', desc: '月度收支与预算' },
   '/report': { title: '年度报告', desc: '这一年的每一笔,都有意义' },
+  '/achievements': { title: '成就殿堂', desc: '每一份坚持,都有勋章' },
   '/settings': { title: '设置', desc: '主题、预算与数据管理' },
   '/game': { title: '游戏中心', desc: '8 款经典小游戏' },
   '/game/stack': { title: '叠叠高', desc: '全新 3D 叠塔 · 完美连击' },
@@ -168,6 +174,7 @@ const paletteNav: { path: string; label: string; desc?: string; icon: React.Reac
   { path: '/tools/wishlist', label: '心愿单', desc: '攒钱进度', icon: <IconTarget size={17} /> },
   { path: '/tools/habits', label: '习惯打卡', desc: '坚持看得见', icon: <IconCheckCircle size={17} /> },
   { path: '/report', label: '年度报告', desc: '有仪式感的总结', icon: <IconReport size={17} /> },
+  { path: '/achievements', label: '成就殿堂', desc: '每一份坚持,都有勋章', icon: <IconTower size={17} /> },
   { path: '/stats', label: '统计分析', desc: '月度收支与预算', icon: <IconChart size={17} /> },
   { path: '/game', label: '游戏中心', desc: '8 款经典小游戏', icon: <IconGamepad size={17} /> },
   { path: '/settings', label: '设置', desc: '主题、预算与数据', icon: <IconSettings size={17} /> },
@@ -189,6 +196,7 @@ const appRoutes = (
     <Route path="/edit/:id" element={<AnimatedPage><AddRecord /></AnimatedPage>} />
     <Route path="/stats" element={<AnimatedPage><Statistics /></AnimatedPage>} />
     <Route path="/report" element={<AnimatedPage><AnnualReport /></AnimatedPage>} />
+    <Route path="/achievements" element={<AnimatedPage><AchievementsPage /></AnimatedPage>} />
     <Route path="/settings" element={<AnimatedPage><Settings /></AnimatedPage>} />
     <Route path="/game" element={<AnimatedPage><GameHub /></AnimatedPage>} />
     <Route path="/game/stack" element={<AnimatedPage><StackGamePage /></AnimatedPage>} />
@@ -301,6 +309,22 @@ const AppContent: React.FC = () => {
       return next;
     });
   }, [location.pathname]);
+
+  /* 启动时初始化成就计数（老用户历史数据也能点亮成就） */
+  useEffect(() => {
+    (async () => {
+      try {
+        const [all, exp, inc] = await Promise.all([
+          api.getRecords({ pageSize: 1 }),
+          api.getRecords({ pageSize: 1, type: 'expense' }),
+          api.getRecords({ pageSize: 1, type: 'income' }),
+        ]);
+        achSetMax('record_total', all.total);
+        achSetMax('record_expense', exp.total);
+        achSetMax('record_income', inc.total);
+      } catch { /* noop */ }
+    })();
+  }, []);
 
   const currentKey = '/' + location.pathname.split('/')[1];
   const meta = resolveRouteMeta(location.pathname);

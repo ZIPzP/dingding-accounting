@@ -3,7 +3,7 @@
  * 数据导出、备份恢复、关于信息、主题切换
  */
 import React, { useState } from 'react';
-import { Card, Button, Space, message, Modal, Typography, Descriptions, Divider, InputNumber, Checkbox } from 'antd';
+import { Card, Button, Space, message, Modal, Typography, Descriptions, Divider, InputNumber, Checkbox, ColorPicker, Segmented } from 'antd';
 import {
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
@@ -12,6 +12,7 @@ import { api } from '../services/api';
 import { getBudget, setBudget } from '../services/budget';
 import CategoryManager from '../components/CategoryManager/CategoryManager';
 import { useTheme } from '../contexts/ThemeContext';
+import { buildCustomTheme, saveCustomTheme } from '../themes';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -45,7 +46,24 @@ const Settings: React.FC = () => {
   const [clearModalVisible, setClearModalVisible] = useState(false);
   const [clearChecked, setClearChecked] = useState(false);
   const [clearing, setClearing] = useState(false);
-  const { currentTheme, setTheme, allThemes } = useTheme();
+  const [customModalVisible, setCustomModalVisible] = useState(false);
+  const [customColor, setCustomColor] = useState('#06b6d4');
+  const [customDark, setCustomDark] = useState<boolean>(true);
+  const { currentTheme, setTheme, allThemes, refreshThemes } = useTheme();
+
+  // 保存自定义主题
+  const handleSaveCustomTheme = () => {
+    const theme = buildCustomTheme(customColor, customDark);
+    if (!theme) {
+      message.error('颜色格式不正确');
+      return;
+    }
+    saveCustomTheme(customColor, customDark);
+    refreshThemes();
+    setTheme(theme);
+    setCustomModalVisible(false);
+    message.success('🎨 你的专属主题已生效!');
+  };
 
   // 清空全部数据
   const handleClearAll = async () => {
@@ -198,6 +216,16 @@ const Settings: React.FC = () => {
               <span className="theme-option-name">{theme.name}</span>
             </div>
           ))}
+          {/* 自定义主题入口 */}
+          <div className="theme-option" onClick={() => setCustomModalVisible(true)}>
+            <div
+              className="theme-option-preview"
+              style={{
+                background: 'conic-gradient(from 0deg, #f43f5e, #f59e0b, #10b981, #06b6d4, #8b5cf6, #f43f5e)',
+              }}
+            />
+            <span className="theme-option-name">🎨 自定义</span>
+          </div>
         </div>
       </Card>
 
@@ -370,7 +398,7 @@ const Settings: React.FC = () => {
       <Card title="ℹ️ 关于">
         <Descriptions column={1} size="small">
           <Descriptions.Item label="应用名称">青孤项目</Descriptions.Item>
-          <Descriptions.Item label="版本">1.4.0</Descriptions.Item>
+          <Descriptions.Item label="版本">1.6.0</Descriptions.Item>
           <Descriptions.Item label="技术栈">Electron + React + TypeScript</Descriptions.Item>
           <Descriptions.Item label="数据存储">
             本地 SQLite 数据库（数据完全保存在您的电脑上，不联网）
@@ -383,7 +411,7 @@ const Settings: React.FC = () => {
           所有数据均保存在您的电脑上，不会上传至任何服务器。请定期备份数据以防丢失。
         </Paragraph>
         <Paragraph type="secondary" style={{ fontSize: 12, opacity: 0.8 }}>
-          v1.4.0 更新：账单搜索与按日分组、清空数据、PWA 安装引导、番茄钟声音开关、跨设备迁移说明。
+          v1.6.0 更新:成就殿堂(18 枚徽章)、记账热力图、自定义专属主题。
         </Paragraph>
       </Card>
 
@@ -410,6 +438,62 @@ const Settings: React.FC = () => {
           <Checkbox checked={clearChecked} onChange={(e) => setClearChecked(e.target.checked)}>
             我明白,并已确认不需要这些数据(建议先备份)
           </Checkbox>
+        </div>
+      </Modal>
+
+      {/* 自定义主题弹窗 */}
+      <Modal
+        title="🎨 创建专属主题"
+        open={customModalVisible}
+        onCancel={() => setCustomModalVisible(false)}
+        onOk={handleSaveCustomTheme}
+        okText="使用这个主题"
+        cancelText="取消"
+        destroyOnClose
+      >
+        <div style={{ marginTop: 8 }}>
+          <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+            挑选一个主色,我们会自动生成一整套配色
+          </Text>
+          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            <div>
+              <Text strong style={{ display: 'block', marginBottom: 10 }}>主色调</Text>
+              <ColorPicker
+                value={customColor}
+                onChange={(c) => setCustomColor(c.toHexString())}
+                showText
+                presets={[
+                  { label: '推荐', colors: ['#06b6d4', '#4f6df5', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444', '#0ea5e9', '#14b8a6', '#f97316'] },
+                ]}
+              />
+            </div>
+            <div>
+              <Text strong style={{ display: 'block', marginBottom: 10 }}>明暗模式</Text>
+              <Segmented
+                value={customDark ? 'dark' : 'light'}
+                onChange={(v) => setCustomDark(v === 'dark')}
+                options={[
+                  { label: '🌙 深色', value: 'dark' },
+                  { label: '☀️ 浅色', value: 'light' },
+                ]}
+              />
+            </div>
+            <div>
+              <Text strong style={{ display: 'block', marginBottom: 10 }}>预览</Text>
+              <div
+                className="custom-theme-preview"
+                style={{
+                  background: customDark ? 'hsl(220, 30%, 9%)' : 'hsl(220, 45%, 97%)',
+                }}
+              >
+                <div className="ctp-card">
+                  <span className="ctp-dot" style={{ background: customColor }} />
+                  <span className="ctp-line" style={{ background: customDark ? '#e2e8f0' : '#1f2937' }} />
+                </div>
+                <div className="ctp-btn" style={{ background: customColor }}>按钮</div>
+              </div>
+            </div>
+          </Space>
         </div>
       </Modal>
     </div>

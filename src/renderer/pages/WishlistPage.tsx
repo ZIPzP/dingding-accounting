@@ -5,6 +5,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Modal, Form, Input, InputNumber, message, Empty, Popconfirm, Progress } from 'antd';
 import { IconTarget, IconPlusCircle, IconEdit, IconTrash, IconWallet } from '../components/Icons';
+import { achEmit } from '../services/achievements';
 
 interface WishItem {
   id: string;
@@ -87,6 +88,7 @@ const WishlistPage: React.FC = () => {
       setItems(next);
       saveItems(next);
       setModalVisible(false);
+      if (!editing) achEmit('wish_created');
       message.success(editing ? '已更新' : '心愿已加入');
     } catch { /* 校验失败 */ }
   };
@@ -107,7 +109,10 @@ const WishlistPage: React.FC = () => {
     setItems(next);
     saveItems(next);
     const updated = next.find((i) => i.id === item.id);
-    if (updated?.achieved && !item.achieved) message.success(`🎉 恭喜!「${item.title}」攒够了!`);
+    if (updated?.achieved && !item.achieved) {
+      achEmit('wish_done');
+      message.success(`🎉 恭喜!「${item.title}」攒够了!`);
+    }
   };
 
   return (

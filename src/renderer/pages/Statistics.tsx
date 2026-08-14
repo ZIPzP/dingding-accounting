@@ -2,14 +2,15 @@
  * 统计页面
  * 展示月度收入/支出/结余概览、预算进度、分类饼图、收支趋势
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Row, Col, DatePicker, Statistic, Spin, Empty, Progress, Button } from 'antd';
+import { Card, Row, Col, DatePicker, Statistic, Spin, Empty, Progress, Button, Tooltip } from 'antd';
 import { IconChart, IconWallet, IconReport } from '../components/Icons';
 import ReactECharts from 'echarts-for-react';
 import dayjs from 'dayjs';
 import { api } from '../services/api';
 import { getBudget, budgetProgress, budgetStatus } from '../services/budget';
+import { achEmit } from '../services/achievements';
 
 const Statistics: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +19,20 @@ const Statistics: React.FC = () => {
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats | null>(null);
   const [trend, setTrend] = useState<TrendItem[]>([]);
   const [budget] = useState(() => getBudget());
+  const [heatData, setHeatData] = useState<Map<string, number>>(new Map());
+
+  /* 热力图数据:近半年全部支出 */
+  useEffect(() => {
+    api.getRecords({ pageSize: 99999 }).then((res) => {
+      const m = new Map<string, number>();
+      for (const r of res.records) {
+        if (r.type === 'expense') {
+          m.set(r.record_date, (m.get(r.record_date) || 0) + r.amount);
+        }
+      }
+      setHeatData(m);
+    }).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -31,6 +46,11 @@ const Statistics: React.FC = () => {
       .then(([stats, trendData]) => {
         setMonthlyStats(stats);
         setTrend(trendData);
+        // 预算守门员成就
+        const b = getBudget();
+        if (b.amount > 0 && stats.total > 0 && stats.total <= b.amount) {
+          achEmit('budget_ok');
+        }
       })
       .finally(() => setLoading(false));
   }, [selectedMonth]);
@@ -149,6 +169,30 @@ const Statistics: React.FC = () => {
   const statusText = { none: '未设置预算', safe: '预算充足', warn: '接近预算上限', over: '已超出预算' }[status];
   const statusColor = { none: 'var(--qg-text-tertiary)', safe: 'var(--qg-success)', warn: 'var(--qg-warning)', over: 'var(--qg-error)' }[status];
 
+  /* 热力图:近 26 周(182 天) */
+  const heatWeeks = useMemo(() => {
+    const start = dayjs().subtract(25, 'week').startOf('week');
+    const weeks: { date: string; amount: number }[][] = [];
+    for (let w = 0; w < 26; w++) {
+      const col: { date: string; amount: number }[] = [];
+      for (let d = 0; d < 7; d++) {
+        const date = start.add(w * 7 + d, 'day');
+        const ds = date.format('YYYY-MM-DD');
+        col.push({ date: ds, amount: heatData.get(ds) || 0 });
+      }
+      weeks.push(col);
+    }
+    return weeks;
+  }, [heatData]);
+
+  const heatLevel = (amount: number): number => {
+    if (amount <= 0) return 0;
+    if (amount < 50) return 1;
+    if (amount < 150) return 2;
+    if (amount < 400) return 3;
+    return 4;
+  };
+
   return (
     <div className="page-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -165,6 +209,40 @@ const Statistics: React.FC = () => {
       </div>
 
       <Spin spinning={loading}>
+        {/* 记账热力图（独立渲染，不依赖月度统计） */}
+        <Card title="🗓️ 记账热力图 · 近半年" style={{ marginBottom: 24 }}>
+          <div className="heatmap-wrap">
+            <div className="heatmap-labels">
+              <span>一</span><span>三</span><span>五</span><span>日</span>
+            </div>
+            <div className="heatmap">
+              {heatWeeks.map((col, wi) => (
+                <div className="heat-col" key={wi}>
+                  {col.map((day) => (
+                    <Tooltip
+                      key={day.date}
+                      title={`${day.date}${day.amount > 0 ? ` · 支出 ¥${day.amount.toFixed(2)}` : ' · 无支出'}`}
+                    >
+                      <span
+                        className={`heat-cell l${heatLevel(day.amount)}`}
+                        data-date={day.date}
+                      />
+                    </Tooltip>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="heatmap-legend">
+            <span>少</span>
+            {[0, 1, 2, 3, 4].map((l) => (
+              <span key={l} className={`heat-cell l${l}`} style={{ width: 11, height: 11, borderRadius: 3 }} />
+            ))}
+            <span>多</span>
+            <span className="heatmap-legend-note">颜色越深,当天支出越多</span>
+          </div>
+        </Card>
+
         {monthlyStats ? (
           <>
             {/* 月度概览卡片 */}

@@ -6,6 +6,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Segmented, InputNumber, Switch, message } from 'antd';
 import { IconTimer, IconPlay, IconPause, IconReset } from '../components/Icons';
+import { achEmit } from '../services/achievements';
 
 type Mode = 'focus' | 'short' | 'long';
 
@@ -125,6 +126,7 @@ const PomodoroPage: React.FC = () => {
       const nextCycle = completedFocusInCycle + 1;
       setCompletedFocusInCycle(nextCycle);
       const isLong = nextCycle % config.sessionsBeforeLong === 0;
+      achEmit('pomodoro_total');
       setStats((prev) => {
         const next = { ...prev, today: prev.today + 1, total: prev.total + 1 };
         try { localStorage.setItem(STATS_KEY, JSON.stringify(next)); } catch { /* noop */ }

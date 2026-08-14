@@ -419,7 +419,116 @@ function isDarkTheme(theme: ThemeConfig): boolean {
 export function loadSavedTheme(): ThemeConfig {
   try {
     const saved = localStorage.getItem('qinggu-theme');
+    if (saved === 'custom') {
+      const custom = loadCustomTheme();
+      if (custom) return custom;
+    }
     if (saved) return getThemeById(saved);
   } catch { /* noop */ }
   return techCyanTheme;
+}
+
+/* ==============================
+   自定义主题（用户取色器生成）
+   ============================== */
+const CUSTOM_KEY = 'qinggu-custom-theme';
+
+export function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
+  const m = hex.replace('#', '').match(/^([0-9a-f]{6})$/i);
+  if (!m) return null;
+  const r = parseInt(m[1].slice(0, 2), 16) / 255;
+  const g = parseInt(m[1].slice(2, 4), 16) / 255;
+  const b = parseInt(m[1].slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return { h: 0, s: 0, l: Math.round(l * 100) };
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h: number;
+  switch (max) {
+    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+    case g: h = (b - r) / d + 2; break;
+    default: h = (r - g) / d + 4;
+  }
+  h /= 6;
+  return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+}
+
+function hslStr(h: number, s: number, l: number): string {
+  return `hsl(${h}, ${Math.max(0, Math.min(100, s))}%, ${Math.max(0, Math.min(100, l))}%)`;
+}
+
+/** 根据主色与明暗模式生成完整主题 */
+export function buildCustomTheme(primary: string, dark: boolean): ThemeConfig | null {
+  const c = hexToHsl(primary);
+  if (!c) return null;
+  const { h } = c;
+  const primaryColor = hslStr(h, 78, 52);
+  const primaryLight = hslStr(h, 80, 62);
+  const primaryDark = hslStr(h, 78, 42);
+  const accent = hslStr((h + 40) % 360, 82, 55);
+  const accentLight = hslStr((h + 40) % 360, 84, 68);
+  const success = dark ? '#34d399' : '#10b981';
+  const warning = '#f59e0b';
+  const error = dark ? '#f87171' : '#ef4444';
+  const bg = dark ? hslStr(h, 30, 9) : hslStr(h, 45, 97);
+  const bgSecondary = dark ? hslStr(h, 28, 13) : hslStr(h, 40, 93);
+  const cardBg = dark ? hslStr(h, 28, 16) : '#ffffff';
+  const text = dark ? '#e2e8f0' : hslStr(h, 30, 18);
+  const textSecondary = dark ? '#94a3b8' : hslStr(h, 15, 42);
+  const textTertiary = dark ? '#64748b' : hslStr(h, 12, 62);
+  const textDisabled = dark ? '#334155' : hslStr(h, 10, 78);
+  const border = dark ? hslStr(h, 24, 22) : hslStr(h, 35, 88);
+  const borderLight = dark ? hslStr(h, 24, 18) : hslStr(h, 40, 93);
+  const disabledBg = dark ? hslStr(h, 26, 15) : hslStr(h, 40, 92);
+
+  return {
+    id: 'custom',
+    name: '自定义',
+    primary: primaryColor,
+    primaryLight,
+    primaryDark,
+    primaryHover: primaryLight,
+    primaryActive: primaryDark,
+    accent,
+    accentLight,
+    success,
+    warning,
+    error,
+    bg,
+    bgSecondary,
+    cardBg,
+    cardBgTransparent: dark ? 'rgba(22, 26, 44, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+    text,
+    textSecondary,
+    textTertiary,
+    textDisabled,
+    border,
+    borderLight,
+    shadow: dark ? '0 2px 12px rgba(0, 0, 0, 0.35)' : '0 2px 12px rgba(0, 0, 0, 0.06)',
+    shadowHover: dark ? '0 10px 32px rgba(0, 0, 0, 0.45)' : '0 8px 24px rgba(0, 0, 0, 0.12)',
+    shadowLg: dark ? '0 20px 50px rgba(0, 0, 0, 0.5)' : '0 16px 40px rgba(0, 0, 0, 0.10)',
+    disabledBg,
+    gameBg: bg,
+    gameSurface: cardBg,
+    gameBorder: border,
+  };
+}
+
+export function saveCustomTheme(primary: string, dark: boolean): void {
+  try {
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify({ primary, dark }));
+  } catch { /* noop */ }
+}
+
+export function loadCustomTheme(): ThemeConfig | null {
+  try {
+    const raw = localStorage.getItem(CUSTOM_KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      return buildCustomTheme(p.primary, !!p.dark);
+    }
+  } catch { /* noop */ }
+  return null;
 }

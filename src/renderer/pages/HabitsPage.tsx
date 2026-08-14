@@ -5,6 +5,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Modal, Form, Input, message, Empty, Popconfirm } from 'antd';
 import { IconCheckCircle, IconPlusCircle, IconEdit, IconTrash, IconFire } from '../components/Icons';
+import { achEmit } from '../services/achievements';
 import dayjs from 'dayjs';
 
 interface Habit {
@@ -120,6 +121,8 @@ const HabitsPage: React.FC = () => {
     } else {
       completions[today] = true;
       const streak = calcStreak(completions);
+      if (streak >= 7) achEmit('habit_streak7');
+      if (streak >= 21) achEmit('habit_streak21');
       try {
         if ('vibrate' in navigator) navigator.vibrate(20);
       } catch { /* noop */ }

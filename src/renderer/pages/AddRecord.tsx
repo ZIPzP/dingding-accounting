@@ -6,6 +6,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { parseBillText, type ParsedBill } from '../services/smartParse';
+import { achEmit } from '../services/achievements';
 import {
   Form,
   InputNumber,
@@ -153,6 +154,9 @@ const AddRecord: React.FC = () => {
       } else {
         await api.addRecord(params);
         message.success(isIncome ? '收入已记录！' : '记账成功！');
+        achEmit('record_total');
+        achEmit(isIncome ? 'record_income' : 'record_expense');
+        if (!isIncome && params.amount >= 1000) achEmit('big_spend');
         try {
           if ('vibrate' in navigator) navigator.vibrate(25);
         } catch { /* noop */ }

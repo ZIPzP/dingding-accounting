@@ -5,6 +5,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Modal, Form, Input, DatePicker, message, Empty, Popconfirm } from 'antd';
 import { IconHourglass, IconPlusCircle, IconEdit, IconTrash } from '../components/Icons';
+import { achEmit } from '../services/achievements';
 import dayjs from 'dayjs';
 
 interface CountdownEvent {
@@ -93,6 +94,7 @@ const CountdownPage: React.FC = () => {
       setEvents(next);
       saveEvents(next);
       setModalVisible(false);
+      if (!editing) achEmit('countdown_created');
       message.success(editing ? '已更新' : '已添加');
     } catch { /* 校验失败 */ }
   };

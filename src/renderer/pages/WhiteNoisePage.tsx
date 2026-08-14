@@ -5,6 +5,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button, Slider, Segmented, message } from 'antd';
 import { IconWave, IconPlay, IconPause } from '../components/Icons';
+import { achEmit } from '../services/achievements';
 
 interface Preset {
   id: string;
@@ -248,6 +249,7 @@ const WhiteNoisePage: React.FC = () => {
     } else {
       startPreset(config.preset);
       setPlaying(true);
+      achEmit('noise_played');
     }
   };
 
