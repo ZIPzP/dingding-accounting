@@ -1,14 +1,15 @@
 /**
  * 一级分类表单弹窗（新增 / 编辑）
+ * 支持选择分类归属：支出 / 收入
  */
 import React, { useEffect } from 'react';
-import { Modal, Form, Input } from 'antd';
+import { Modal, Form, Input, Segmented } from 'antd';
 import EmojiPicker from './EmojiPicker';
 
 interface CategoryFormModalProps {
   visible: boolean;
-  editingCategory?: { id: number; name: string; icon: string; code: string } | null;
-  onOk: (values: { name: string; icon: string; code: string }) => void;
+  editingCategory?: { id: number; name: string; icon: string; code: string; kind?: 'expense' | 'income' } | null;
+  onOk: (values: { name: string; icon: string; code: string; kind: 'expense' | 'income' }) => void;
   onCancel: () => void;
   submitting: boolean;
 }
@@ -20,7 +21,7 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
   onCancel,
   submitting,
 }) => {
-  const [form] = Form.useForm<{ name: string; icon: string; code: string }>();
+  const [form] = Form.useForm<{ name: string; icon: string; code: string; kind: 'expense' | 'income' }>();
   const isEdit = !!editingCategory;
 
   useEffect(() => {
@@ -30,6 +31,7 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
           name: editingCategory.name,
           icon: editingCategory.icon,
           code: editingCategory.code,
+          kind: editingCategory.kind === 'income' ? 'income' : 'expense',
         });
       } else {
         form.resetFields();
@@ -58,6 +60,22 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
       destroyOnClose
     >
       <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+        <Form.Item
+          label="分类归属"
+          name="kind"
+          initialValue="expense"
+          extra={isEdit ? '分类归属创建后不可修改' : '收入分类会出现在「记一笔」的收入来源中'}
+        >
+          <Segmented
+            block
+            disabled={isEdit}
+            options={[
+              { label: '💸 支出分类', value: 'expense' },
+              { label: '💰 收入分类', value: 'income' },
+            ]}
+          />
+        </Form.Item>
+
         <Form.Item
           label="名称"
           name="name"

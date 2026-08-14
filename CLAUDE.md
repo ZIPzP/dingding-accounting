@@ -111,6 +111,13 @@
 | 2026-07-12 | 首页数据条 | 接入本地账本真实数据 | 硬编码数字改为"本月支出/笔数/累计账单"，配数字滚动动画 |
 | 2026-07-12 | 桌面顶栏 | 新增顶部工具栏 | 页面标题 + 日期 + 快捷"记一笔"，提升桌面端效率与质感 |
 | 2026-07-12 | 移除 xlsx | 从依赖中删除 | 导出走 CSV，xlsx 从未被引用，减少依赖降低安全风险 |
+| 2026-07-13 | 收入记账 | 记账升级为收支双类型 | 数据库加 type/kind 列并自动迁移，预置 5 个收入分类，统计支持收入/结余 |
+| 2026-07-13 | 月度预算 | localStorage 轻量方案 | 预算仅存本地配置，统计页与首页展示进度条与超支提醒 |
+| 2026-07-13 | 新生活工具 | 倒数日 / 番茄钟 / 备忘录 | 三大工具全部离线可用，数据存 localStorage，导航并入"工具"分组 |
+| 2026-07-13 | 导航重构 | 桌面分组菜单 + 移动悬浮按钮 | 桌面"工具"子菜单，手机 5 标签 + 右下角悬浮"记一笔"，设置入口放头部 |
+| 2026-07-13 | 首页重做 | 2026 极光风落地页 | 极光动效 Hero、真实数据条、纯 SVG 趋势图、聚光灯卡片、滚动渐显 |
+| 2026-07-13 | 数字字体 | Outfit（OFL 开源协议） | 从 Google Fonts 合法获取并本地托管 4 个字重，用于金额与统计数字 |
+| 2026-07-13 | 版本号 | 1.1.0 | 新增收入记账、预算与三大工具，进入 1.1 版本 |
 
 ---
 
@@ -136,20 +143,37 @@
 │       ├── index.tsx            # React 入口
 │       ├── App.tsx              # 根组件
 │       ├── App.css              # 全局样式
+│       ├── vite-env.d.ts        # Vite 资源类型声明
+│       ├── assets/
+│       │   └── fonts/           # Outfit 数字字体（OFL 许可证）
 │       ├── pages/
-│       │   ├── HomePage.tsx     # 首页（账单列表）
-│       │   ├── AddRecord.tsx    # 记一笔
-│       │   ├── Statistics.tsx   # 统计页
-│       │   ├── Settings.tsx     # 设置页
+│       │   ├── HomePage.tsx     # 首页（2026 极光风落地页）
+│       │   ├── BillList.tsx     # 收支记账（账单列表）
+│       │   ├── AddRecord.tsx    # 记一笔（支出/收入）
+│       │   ├── Statistics.tsx   # 统计页（收支/预算/图表）
+│       │   ├── Settings.tsx     # 设置页（主题/预算/数据）
+│       │   ├── ToolsHub.tsx     # 工具中心
+│       │   ├── CountdownPage.tsx # 倒数日
+│       │   ├── PomodoroPage.tsx  # 番茄钟
+│       │   ├── NotesPage.tsx     # 备忘录
 │       │   ├── GameHub.tsx      # 游戏中心
+│       │   ├── NotFoundPage.tsx # 404 页面
 │       │   └── SnakeGamePage.tsx # 贪吃蛇游戏
+│       ├── services/
+│       │   ├── api.ts           # 跨平台数据服务
+│       │   ├── env.ts           # 环境检测
+│       │   └── budget.ts        # 预算服务（localStorage）
 │       ├── components/
 │       │   └── CategoryManager/ # 分类管理组件
 │       ├── hooks/               # 自定义 Hooks
 │       ├── utils/               # 工具函数
 │       └── styles/              # 样式文件
 ├── public/
-│   └── games/                    # 小游戏 HTML 文件
+│   ├── games/                    # 小游戏 HTML 文件
+│   ├── fonts/OFL.txt             # Outfit 字体许可证（随发布分发）
+│   └── *.png / *.svg             # PWA 图标
+├── scripts/
+│   └── gen-icons.mjs            # PWA 图标生成器（零依赖）
 ├── game/                         # 用户提供的游戏源文件
 └── resources/                   # 应用图标等资源
 ```

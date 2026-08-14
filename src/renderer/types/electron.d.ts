@@ -2,12 +2,18 @@
  * 为 window.electronAPI 提供 TypeScript 类型声明
  */
 
+/** 记录类型：支出 / 收入 */
+type RecordType = 'expense' | 'income';
+/** 分类归属：支出分类 / 收入分类 */
+type CategoryKind = 'expense' | 'income';
+
 interface RecordParams {
   amount: number;
   record_date: string;
   category_id: number;
   sub_category_id?: number | null;
   note?: string;
+  type?: RecordType;
 }
 
 interface RecordUpdateParams extends RecordParams {
@@ -18,6 +24,7 @@ interface QueryParams {
   year?: number;
   month?: number;
   category_id?: number;
+  type?: RecordType;
   keyword?: string;
   page?: number;
   pageSize?: number;
@@ -28,6 +35,7 @@ interface Category {
   name: string;
   icon: string;
   code: string;
+  kind: CategoryKind;
 }
 
 interface SubCategory {
@@ -47,6 +55,7 @@ interface RecordItem {
   category_id: number;
   sub_category_id: number | null;
   note: string | null;
+  type: RecordType;
   created_at: string;
   updated_at: string;
   category_name: string;
@@ -64,9 +73,19 @@ interface CategoryStat {
 }
 
 interface MonthlyStats {
+  /** 当月支出合计 */
   total: number;
+  /** 当月支出笔数 */
   count: number;
+  /** 当月收入合计 */
+  incomeTotal: number;
+  /** 当月收入笔数 */
+  incomeCount: number;
+  /** 结余 = 收入 - 支出 */
+  balance: number;
+  /** 日均支出 */
   dailyAvg: number;
+  /** 支出分类统计 */
   categoryStats: CategoryStat[];
 }
 
@@ -74,13 +93,16 @@ interface TrendItem {
   year: number;
   month: number;
   label: string;
+  /** 当月支出 */
   total: number;
+  /** 当月收入 */
+  incomeTotal: number;
 }
 
 interface ElectronAPI {
   getCategories: () => Promise<CategoryWithSubs[]>;
   getAllCategories: () => Promise<CategoryWithSubs[]>;
-  addCategory: (params: { name: string; icon: string; code: string }) =>
+  addCategory: (params: { name: string; icon: string; code: string; kind: CategoryKind }) =>
     Promise<{ success: true; id: number } | { success: false; error: string }>;
   updateCategory: (id: number, params: { name: string; icon: string }) =>
     Promise<{ success: true } | { success: false; error: string }>;

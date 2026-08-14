@@ -1,7 +1,7 @@
 /**
  * 青孤项目 — 应用根组件
- * 桌面端：左侧可折叠菜单 + 顶部工具栏（页面标题 / 日期 / 快捷记一笔）
- * 手机端：底部标签栏（触屏优化）
+ * 桌面端：左侧可折叠菜单（工具分组）+ 顶部工具栏（页面标题 / 日期 / 快捷记一笔）
+ * 手机端：底部标签栏（5 项）+ 悬浮记一笔按钮 + 头部设置入口
  * 全局：路由懒加载（首屏性能）、页面淡入动画、动态页面标题
  */
 import React, { useState, Suspense, lazy, useEffect } from 'react';
@@ -20,6 +20,10 @@ import {
   IconGamepad,
   IconSettings,
   IconCalendar,
+  IconTools,
+  IconHourglass,
+  IconTimer,
+  IconNote,
 } from './components/Icons';
 
 dayjs.locale('zh-cn');
@@ -31,6 +35,10 @@ const AddRecord = lazy(() => import('./pages/AddRecord'));
 const Statistics = lazy(() => import('./pages/Statistics'));
 const Settings = lazy(() => import('./pages/Settings'));
 const GameHub = lazy(() => import('./pages/GameHub'));
+const ToolsHub = lazy(() => import('./pages/ToolsHub'));
+const CountdownPage = lazy(() => import('./pages/CountdownPage'));
+const PomodoroPage = lazy(() => import('./pages/PomodoroPage'));
+const NotesPage = lazy(() => import('./pages/NotesPage'));
 const SnakeGamePage = lazy(() => import('./pages/SnakeGamePage'));
 const TetrisGamePage = lazy(() => import('./pages/TetrisGamePage'));
 const Game2048Page = lazy(() => import('./pages/Game2048Page'));
@@ -54,23 +62,34 @@ const AnimatedPage: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   <div className="page-enter">{children}</div>
 );
 
-/* 导航菜单项 */
+/* 导航菜单项（桌面端） */
 const menuItems: MenuProps['items'] = [
-  { key: '/',       icon: <IconHome size={20} />,       label: '首页' },
-  { key: '/bills',  icon: <IconBook size={20} />,       label: '记账' },
-  { key: '/game',   icon: <IconGamepad size={20} />,    label: '游戏' },
-  { key: '/add',    icon: <IconPlusCircle size={20} />,  label: '记一笔' },
-  { key: '/stats',  icon: <IconChart size={20} />,      label: '统计' },
+  { key: '/', icon: <IconHome size={20} />, label: '首页' },
+  {
+    key: 'tools',
+    icon: <IconTools size={20} />,
+    label: '工具',
+    children: [
+      { key: '/tools', icon: <IconTools size={18} />, label: '工具中心' },
+      { key: '/bills', icon: <IconBook size={18} />, label: '收支记账' },
+      { key: '/add', icon: <IconPlusCircle size={18} />, label: '记一笔' },
+      { key: '/tools/countdown', icon: <IconHourglass size={18} />, label: '倒数日' },
+      { key: '/tools/pomodoro', icon: <IconTimer size={18} />, label: '番茄钟' },
+      { key: '/tools/notes', icon: <IconNote size={18} />, label: '备忘录' },
+    ],
+  },
+  { key: '/game', icon: <IconGamepad size={20} />, label: '游戏' },
+  { key: '/stats', icon: <IconChart size={20} />, label: '统计' },
   { key: '/settings', icon: <IconSettings size={20} />, label: '设置' },
 ];
 
 /* 手机端底部导航项 */
 const mobileTabs = [
-  { key: '/',       Icon: IconHome,       label: '首页' },
-  { key: '/bills',  Icon: IconBook,       label: '记账' },
-  { key: '/game',   Icon: IconGamepad,    label: '游戏' },
-  { key: '/stats',  Icon: IconChart,      label: '统计' },
-  { key: '/settings', Icon: IconSettings,  label: '设置' },
+  { key: '/', Icon: IconHome, label: '首页' },
+  { key: '/tools', Icon: IconTools, label: '工具' },
+  { key: '/bills', Icon: IconBook, label: '记账' },
+  { key: '/game', Icon: IconGamepad, label: '游戏' },
+  { key: '/stats', Icon: IconChart, label: '统计' },
 ];
 
 /* 路由元信息：顶栏标题 / 描述 / 浏览器标签页标题 */
@@ -81,11 +100,15 @@ interface RouteMeta {
 
 const routeMetaMap: Record<string, RouteMeta> = {
   '/': { title: '首页', desc: '无聊救星 · 随时解闷' },
-  '/bills': { title: '记账', desc: '账单明细与搜索' },
-  '/add': { title: '记一笔', desc: '快速记录一笔开销' },
+  '/tools': { title: '生活工具', desc: '记账 · 倒数日 · 番茄钟 · 备忘录' },
+  '/tools/countdown': { title: '倒数日', desc: '重要日子不错过' },
+  '/tools/pomodoro': { title: '番茄钟', desc: '专注 25 分钟，效率翻倍' },
+  '/tools/notes': { title: '备忘录', desc: '灵感与待办随手记' },
+  '/bills': { title: '收支记账', desc: '账单明细与搜索' },
+  '/add': { title: '记一笔', desc: '快速记录一笔收支' },
   '/edit': { title: '编辑账单', desc: '修改账单信息' },
-  '/stats': { title: '统计', desc: '月度消费分析' },
-  '/settings': { title: '设置', desc: '主题与数据管理' },
+  '/stats': { title: '统计分析', desc: '月度收支与预算' },
+  '/settings': { title: '设置', desc: '主题、预算与数据管理' },
   '/game': { title: '游戏中心', desc: '7 款经典小游戏' },
   '/game/snake': { title: '贪吃蛇', desc: '怀旧经典 · 排行榜' },
   '/game/tetris': { title: '俄罗斯方块', desc: '消除益智 · 挑战高分' },
@@ -106,6 +129,10 @@ function resolveRouteMeta(pathname: string): RouteMeta | undefined {
 const appRoutes = (
   <>
     <Route path="/" element={<AnimatedPage><HomePage /></AnimatedPage>} />
+    <Route path="/tools" element={<AnimatedPage><ToolsHub /></AnimatedPage>} />
+    <Route path="/tools/countdown" element={<AnimatedPage><CountdownPage /></AnimatedPage>} />
+    <Route path="/tools/pomodoro" element={<AnimatedPage><PomodoroPage /></AnimatedPage>} />
+    <Route path="/tools/notes" element={<AnimatedPage><NotesPage /></AnimatedPage>} />
     <Route path="/bills" element={<AnimatedPage><BillList /></AnimatedPage>} />
     <Route path="/add" element={<AnimatedPage><AddRecord /></AnimatedPage>} />
     <Route path="/edit/:id" element={<AnimatedPage><AddRecord /></AnimatedPage>} />
@@ -149,17 +176,32 @@ const AppContent: React.FC = () => {
       <Layout style={{ minHeight: '100vh', paddingBottom: 62 }}>
         <Content className={`main-content mobile-content ${currentKey === '/' ? 'landing-content' : ''}`}>
           <div className="mobile-header">
-            <IconLogo size={22} /> 青孤项目
+            <div className="mobile-header-spacer" />
+            <span className="mobile-header-title">
+              <IconLogo size={20} /> 青孤项目
+            </span>
+            <button
+              className="mobile-header-settings"
+              aria-label="设置"
+              onClick={() => navigate('/settings')}
+            >
+              <IconSettings size={20} />
+            </button>
           </div>
           <Suspense fallback={<PageLoader />}>
             <Routes>{appRoutes}</Routes>
           </Suspense>
         </Content>
 
+        {/* 悬浮记一笔按钮 */}
+        <button className="fab-add" aria-label="记一笔" onClick={() => navigate('/add')}>
+          <IconPlusCircle size={26} />
+        </button>
+
         {/* 底部导航栏 */}
         <div className="mobile-tab-bar">
           {mobileTabs.map(({ key, Icon, label }) => {
-            const isActive = currentKey === key;
+            const isActive = currentKey === key || (key === '/tools' && location.pathname.startsWith('/tools'));
             return (
               <div
                 key={key}
@@ -197,7 +239,8 @@ const AppContent: React.FC = () => {
         </div>
         <Menu
           mode="inline"
-          selectedKeys={[currentKey]}
+          selectedKeys={[location.pathname.startsWith('/tools') && currentKey === '/tools' ? location.pathname : currentKey]}
+          defaultOpenKeys={['tools']}
           items={menuItems}
           onClick={({ key }) => navigate(key)}
         />

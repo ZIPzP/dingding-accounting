@@ -44,9 +44,10 @@ export const api = {
     return getWebDB().then((db) => db.getAllCategories());
   },
 
-  addCategory: (params: { name: string; icon: string; code: string }): Promise<any> => {
-    if (isElectron()) return getElectronAPI().addCategory(params);
-    return getWebDB().then((db) => db.addCategory(params));
+  addCategory: (params: { name: string; icon: string; code: string; kind?: 'expense' | 'income' }): Promise<any> => {
+    const payload = { ...params, kind: params.kind || ('expense' as const) };
+    if (isElectron()) return getElectronAPI().addCategory(payload);
+    return getWebDB().then((db) => db.addCategory(payload));
   },
 
   updateCategory: (id: number, params: { name: string; icon: string }): Promise<any> => {
@@ -217,6 +218,9 @@ class WebDatabase {
       }
     }
 
+    // 结构升级（幂等：补齐新列、预置收入分类）
+    wdb.migrate();
+
     return wdb;
   }
 
@@ -280,7 +284,8 @@ class WebDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         icon TEXT NOT NULL,
-        code TEXT NOT NULL UNIQUE
+        code TEXT NOT NULL UNIQUE,
+        kind TEXT NOT NULL DEFAULT 'expense'
       );
       CREATE TABLE IF NOT EXISTS sub_categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -295,6 +300,7 @@ class WebDatabase {
         category_id INTEGER NOT NULL,
         sub_category_id INTEGER,
         note TEXT,
+        type TEXT NOT NULL DEFAULT 'expense',
         created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
         FOREIGN KEY (category_id) REFERENCES categories(id),
@@ -304,6 +310,51 @@ class WebDatabase {
       CREATE INDEX IF NOT EXISTS idx_records_category ON records(category_id);
     `);
     this.db.run('PRAGMA foreign_keys = ON');
+  }
+
+  /** 表结构升级：为老数据库补齐新列并预置收入分类 */
+  private migrate(): void {
+    let changed = false;
+    const tableCols = (table: string): string[] => {
+      const r = this.db.exec(`PRAGMA table_info(${table})`);
+      if (r.length === 0) return [];
+      return r[0].values.map((row: unknown[]) => String(row[1]));
+    };
+
+    if (!tableCols('records').includes('type')) {
+      this.db.run("ALTER TABLE records ADD COLUMN type TEXT NOT NULL DEFAULT 'expense'");
+      changed = true;
+    }
+    if (!tableCols('categories').includes('kind')) {
+      this.db.run("ALTER TABLE categories ADD COLUMN kind TEXT NOT NULL DEFAULT 'expense'");
+      changed = true;
+    }
+
+    // 预置收入分类（仅当不存在时）
+    const incomeCount = this.db.exec("SELECT COUNT(*) as c FROM categories WHERE kind='income'");
+    const hasIncome = (incomeCount[0]?.values[0]?.[0] as number) > 0;
+    if (!hasIncome) {
+      const incomeCategories = [
+        { name: '工资收入', icon: '💼', code: 'salary', subs: ['月薪', '奖金', '补贴'] },
+        { name: '兼职收入', icon: '💻', code: 'parttime', subs: ['接单', '稿费', '其他兼职'] },
+        { name: '理财收益', icon: '📈', code: 'invest', subs: ['利息', '基金', '股票'] },
+        { name: '红包礼金', icon: '🧧', code: 'gift', subs: ['节日红包', '生日礼金', '人情回礼'] },
+        { name: '其他收入', icon: '💰', code: 'income_other', subs: ['退款', '二手闲置', '其他'] },
+      ];
+      for (const cat of incomeCategories) {
+        this.db.run('INSERT INTO categories (name, icon, code, kind) VALUES (?, ?, ?, ?)', [
+          cat.name, cat.icon, cat.code, 'income',
+        ]);
+        const idResult = this.db.exec('SELECT last_insert_rowid() as id');
+        const categoryId = idResult[0]?.values[0]?.[0] as number;
+        for (const sub of cat.subs) {
+          this.db.run('INSERT INTO sub_categories (category_id, name) VALUES (?, ?)', [categoryId, sub]);
+        }
+      }
+      changed = true;
+    }
+
+    if (changed) this.saveToIndexedDB();
   }
 
   private seedCategories(): void {
@@ -366,8 +417,8 @@ class WebDatabase {
   }
 
   addRecord(params: RecordParams): number {
-    this.db.run('INSERT INTO records (amount, record_date, category_id, sub_category_id, note) VALUES (?, ?, ?, ?, ?)',
-      [params.amount, params.record_date, params.category_id, params.sub_category_id || null, params.note || null]);
+    this.db.run('INSERT INTO records (amount, record_date, category_id, sub_category_id, note, type) VALUES (?, ?, ?, ?, ?, ?)',
+      [params.amount, params.record_date, params.category_id, params.sub_category_id || null, params.note || null, params.type || 'expense']);
     const r = this.db.exec('SELECT last_insert_rowid() as id');
     this.saveToIndexedDB();
     return r[0]?.values[0]?.[0] as number;
@@ -375,8 +426,8 @@ class WebDatabase {
 
   updateRecord(params: RecordUpdateParams): boolean {
     this.db.run(
-      `UPDATE records SET amount=?, record_date=?, category_id=?, sub_category_id=?, note=?, updated_at=datetime('now','localtime') WHERE id=?`,
-      [params.amount, params.record_date, params.category_id, params.sub_category_id || null, params.note || null, params.id]
+      `UPDATE records SET amount=?, record_date=?, category_id=?, sub_category_id=?, note=?, type=?, updated_at=datetime('now','localtime') WHERE id=?`,
+      [params.amount, params.record_date, params.category_id, params.sub_category_id || null, params.note || null, params.type || 'expense', params.id]
     );
     this.saveToIndexedDB();
     return true;
@@ -394,6 +445,7 @@ class WebDatabase {
     if (params.year) { conds.push("strftime('%Y', record_date)=?"); vals.push(String(params.year)); }
     if (params.month) { conds.push("strftime('%m', record_date)=?"); vals.push(String(params.month).padStart(2, '0')); }
     if (params.category_id) { conds.push('r.category_id=?'); vals.push(params.category_id); }
+    if (params.type) { conds.push('r.type=?'); vals.push(params.type); }
     if (params.keyword) { conds.push('r.note LIKE ?'); vals.push(`%${params.keyword}%`); }
 
     const where = conds.length > 0 ? `WHERE ${conds.join(' AND ')}` : '';
@@ -428,12 +480,12 @@ class WebDatabase {
 
   // ========= 分类管理 =========
 
-  addCategory(params: { name: string; icon: string; code: string }): { success: true; id: number } | { success: false; error: string } {
+  addCategory(params: { name: string; icon: string; code: string; kind?: 'expense' | 'income' }): { success: true; id: number } | { success: false; error: string } {
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(params.code)) {
       return { success: false, error: '分类代码只能包含字母、数字和下划线，且必须以字母或下划线开头' };
     }
     try {
-      this.db.run('INSERT INTO categories (name, icon, code) VALUES (?, ?, ?)', [params.name, params.icon, params.code]);
+      this.db.run('INSERT INTO categories (name, icon, code, kind) VALUES (?, ?, ?, ?)', [params.name, params.icon, params.code, params.kind || 'expense']);
       const r = this.db.exec('SELECT last_insert_rowid() as id');
       this.saveToIndexedDB();
       return { success: true, id: (r[0]?.values[0]?.[0] as number) || 0 };
@@ -503,22 +555,39 @@ class WebDatabase {
   getMonthlyStats(year: number, month: number): MonthlyStats {
     const m = String(month).padStart(2, '0');
     const tr = this.db.exec(
-      `SELECT COALESCE(SUM(amount),0) as total, COUNT(*) as count FROM records
+      `SELECT
+         COALESCE(SUM(CASE WHEN type='expense' THEN amount ELSE 0 END),0) as total,
+         COALESCE(SUM(CASE WHEN type='expense' THEN 1 ELSE 0 END),0) as count,
+         COALESCE(SUM(CASE WHEN type='income' THEN amount ELSE 0 END),0) as incomeTotal,
+         COALESCE(SUM(CASE WHEN type='income' THEN 1 ELSE 0 END),0) as incomeCount
+       FROM records
        WHERE strftime('%Y',record_date)=? AND strftime('%m',record_date)=?`,
       [String(year), m]
     );
     const total = (tr[0]?.values[0]?.[0] as number) || 0;
     const count = (tr[0]?.values[0]?.[1] as number) || 0;
+    const incomeTotal = (tr[0]?.values[0]?.[2] as number) || 0;
+    const incomeCount = (tr[0]?.values[0]?.[3] as number) || 0;
 
     const cr = this.db.exec(
       `SELECT c.id, c.name, c.icon, c.code, COALESCE(SUM(r.amount),0) as total
        FROM categories c
-       LEFT JOIN records r ON c.id=r.category_id AND strftime('%Y',r.record_date)=? AND strftime('%m',r.record_date)=?
+       LEFT JOIN records r ON c.id=r.category_id AND r.type='expense'
+         AND strftime('%Y',r.record_date)=? AND strftime('%m',r.record_date)=?
+       WHERE c.kind='expense' AND c.code != '_deleted'
        GROUP BY c.id ORDER BY total DESC`,
       [String(year), m]
     );
     const daysInMonth = new Date(year, month, 0).getDate();
-    return { total, count, dailyAvg: count > 0 ? total / daysInMonth : 0, categoryStats: this.rowsToObjects<CategoryStat>(cr) };
+    return {
+      total,
+      count,
+      incomeTotal,
+      incomeCount,
+      balance: incomeTotal - total,
+      dailyAvg: count > 0 ? total / daysInMonth : 0,
+      categoryStats: this.rowsToObjects<CategoryStat>(cr),
+    };
   }
 
   getMonthlyTrend(months: number = 6): TrendItem[] {
@@ -529,10 +598,19 @@ class WebDatabase {
       const y = d.getFullYear();
       const m = d.getMonth() + 1;
       const mr = this.db.exec(
-        `SELECT COALESCE(SUM(amount),0) as total FROM records WHERE strftime('%Y',record_date)=? AND strftime('%m',record_date)=?`,
+        `SELECT
+           COALESCE(SUM(CASE WHEN type='expense' THEN amount ELSE 0 END),0) as total,
+           COALESCE(SUM(CASE WHEN type='income' THEN amount ELSE 0 END),0) as incomeTotal
+         FROM records WHERE strftime('%Y',record_date)=? AND strftime('%m',record_date)=?`,
         [String(y), String(m).padStart(2, '0')]
       );
-      result.push({ year: y, month: m, label: `${y}年${m}月`, total: (mr[0]?.values[0]?.[0] as number) || 0 });
+      result.push({
+        year: y,
+        month: m,
+        label: `${y}年${m}月`,
+        total: (mr[0]?.values[0]?.[0] as number) || 0,
+        incomeTotal: (mr[0]?.values[0]?.[1] as number) || 0,
+      });
     }
     return result;
   }

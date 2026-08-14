@@ -3,12 +3,13 @@
  * 数据导出、备份恢复、关于信息、主题切换
  */
 import React, { useState } from 'react';
-import { Card, Button, Space, message, Modal, Typography, Descriptions, Divider } from 'antd';
+import { Card, Button, Space, message, Modal, Typography, Descriptions, Divider, InputNumber } from 'antd';
 import {
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import { IconDownload, IconSave, IconUpload, IconInfo } from '../components/Icons';
 import { api } from '../services/api';
+import { getBudget, setBudget } from '../services/budget';
 import CategoryManager from '../components/CategoryManager/CategoryManager';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -18,7 +19,20 @@ const Settings: React.FC = () => {
   const [exporting, setExporting] = useState(false);
   const [backingUp, setBackingUp] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [budgetValue, setBudgetValue] = useState<number | null>(() => {
+    const b = getBudget();
+    return b.amount > 0 ? b.amount : null;
+  });
+  const [savingBudget, setSavingBudget] = useState(false);
   const { currentTheme, setTheme, allThemes } = useTheme();
+
+  // 保存月度预算
+  const handleSaveBudget = () => {
+    setSavingBudget(true);
+    setBudget(budgetValue ?? 0);
+    setSavingBudget(false);
+    message.success(budgetValue && budgetValue > 0 ? `月度预算已设置为 ¥${budgetValue}` : '已关闭月度预算');
+  };
 
   // 导出 CSV
   const handleExportCSV = async () => {
@@ -26,9 +40,10 @@ const Settings: React.FC = () => {
     try {
       const { records } = await api.getRecords({ pageSize: 99999 });
 
-      const headers = ['日期', '一级分类', '二级分类', '金额（元）', '备注'];
+      const headers = ['日期', '类型', '一级分类', '二级分类', '金额（元）', '备注'];
       const rows = records.map((r) => [
         r.record_date,
+        r.type === 'income' ? '收入' : '支出',
         r.category_name,
         r.sub_category_name || '',
         r.amount.toFixed(2),
@@ -141,6 +156,38 @@ const Settings: React.FC = () => {
         </div>
       </Card>
 
+      {/* 预算设置 */}
+      <Card title="🎯 月度预算" style={{ marginBottom: 24 }}>
+        <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+          设置每月支出预算，统计页会展示预算使用进度
+        </Text>
+        <Space wrap size="middle">
+          <InputNumber
+            prefix="¥"
+            placeholder="例如 3000"
+            min={0}
+            precision={2}
+            value={budgetValue}
+            onChange={(v) => setBudgetValue(v as number | null)}
+            style={{ width: 180 }}
+            size="large"
+          />
+          <Button
+            type="primary"
+            icon={<IconSave size={16} />}
+            onClick={handleSaveBudget}
+            loading={savingBudget}
+          >
+            保存预算
+          </Button>
+          {budgetValue && budgetValue > 0 && (
+            <Button onClick={() => { setBudgetValue(null); setBudget(0); message.success('已关闭月度预算'); }}>
+              关闭预算
+            </Button>
+          )}
+        </Space>
+      </Card>
+
       {/* 分类管理 */}
       <Card title="📂 分类管理" style={{ marginBottom: 24 }}>
         <CategoryManager />
@@ -229,7 +276,7 @@ const Settings: React.FC = () => {
       <Card title="ℹ️ 关于">
         <Descriptions column={1} size="small">
           <Descriptions.Item label="应用名称">青孤项目</Descriptions.Item>
-          <Descriptions.Item label="版本">1.0.0</Descriptions.Item>
+          <Descriptions.Item label="版本">1.1.0</Descriptions.Item>
           <Descriptions.Item label="技术栈">Electron + React + TypeScript</Descriptions.Item>
           <Descriptions.Item label="数据存储">
             本地 SQLite 数据库（数据完全保存在您的电脑上，不联网）
@@ -237,8 +284,12 @@ const Settings: React.FC = () => {
         </Descriptions>
         <Divider />
         <Paragraph type="secondary" style={{ fontSize: 13 }}>
-          青孤项目是一款陪你打发无聊的离线工具集，所有数据均保存在您的电脑上，
+          青孤项目是一款陪你打发无聊的离线工具集：7 款经典小游戏、收支记账、
+          倒数日、番茄钟与备忘录。所有数据均保存在您的电脑上，
           不会上传至任何服务器。请定期备份数据以防丢失。
+        </Paragraph>
+        <Paragraph type="secondary" style={{ fontSize: 12, opacity: 0.8 }}>
+          v1.1.0 更新：新增收入记账与月度预算、倒数日 / 番茄钟 / 备忘录三大工具、全新首页视觉。
         </Paragraph>
       </Card>
     </div>

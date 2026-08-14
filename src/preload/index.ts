@@ -12,7 +12,7 @@ const electronAPI = {
 
   getAllCategories: () => ipcRenderer.invoke('get-all-categories'),
 
-  addCategory: (params: { name: string; icon: string; code: string }) =>
+  addCategory: (params: { name: string; icon: string; code: string; kind?: 'expense' | 'income' }) =>
     ipcRenderer.invoke('add-category', params),
 
   updateCategory: (id: number, params: { name: string; icon: string }) =>
@@ -35,6 +35,7 @@ const electronAPI = {
     category_id: number;
     sub_category_id?: number | null;
     note?: string;
+    type?: 'expense' | 'income';
   }) => ipcRenderer.invoke('add-record', params),
 
   updateRecord: (params: {
@@ -44,6 +45,7 @@ const electronAPI = {
     category_id: number;
     sub_category_id?: number | null;
     note?: string;
+    type?: 'expense' | 'income';
   }) => ipcRenderer.invoke('update-record', params),
 
   deleteRecord: (id: number) => ipcRenderer.invoke('delete-record', id),
@@ -52,6 +54,7 @@ const electronAPI = {
     year?: number;
     month?: number;
     category_id?: number;
+    type?: 'expense' | 'income';
     keyword?: string;
     page?: number;
     pageSize?: number;

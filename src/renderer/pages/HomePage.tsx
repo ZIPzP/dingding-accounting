@@ -1,16 +1,19 @@
 /**
- * 首页 — 现代科技风落地页
- * Hero + 真实数据条（本月支出/笔数/累计账单）+ 游戏 Bento 网格 + 记账卡 + 特性条 + 页脚
- * 数据来自本地数据库，全部视觉由 CSS 变量驱动，随主题切换自动适配
+ * 首页 — 2026 版落地页
+ * 极光 Hero + 真实数据条 + 近 6 月趋势 + 预算进度
+ * + 游戏 Bento 网格 + 生活工具 + 特性条 + 页脚
+ * 全部视觉由 CSS 变量驱动，随主题切换自动适配
  */
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   IconSnake, IconTetris, Icon2048,
   IconMine, IconBreakout, IconWhackAMole, IconTicTacToe,
   IconBook, IconRight, IconZap, IconLogo,
+  IconPlusCircle, IconHourglass, IconTimer, IconNote, IconTools,
 } from '../components/Icons';
 import { api } from '../services/api';
+import { getBudget, budgetProgress, budgetStatus } from '../services/budget';
 
 interface GameItem {
   key: string;
@@ -32,17 +35,18 @@ const games: GameItem[] = [
   { key: 'tictactoe', name: '井字棋', icon: IconTicTacToe, desc: '人机对战，三子连珠', route: '/game/tictactoe', color: '#a78bfa', tag: '策略对战' },
 ];
 
+const toolCards = [
+  { key: 'bookkeeping', name: '收支记账', icon: IconBook, desc: '分类统计 · 预算管理 · 数据导出', route: '/bills', color: '#06b6d4' },
+  { key: 'countdown', name: '倒数日', icon: IconHourglass, desc: '重要日子，一天不落', route: '/tools/countdown', color: '#ec4899' },
+  { key: 'pomodoro', name: '番茄钟', icon: IconTimer, desc: '专注 25 分钟，效率翻倍', route: '/tools/pomodoro', color: '#f59e0b' },
+  { key: 'notes', name: '备忘录', icon: IconNote, desc: '灵感与待办，随手记录', route: '/tools/notes', color: '#10b981' },
+];
+
 const features = [
   { title: '随时解闷', desc: '无聊时刻，打开就能玩' },
   { title: '数据安全', desc: '本地存储，绝不上传' },
-  { title: '零依赖', desc: '不依赖任何外部服务' },
+  { title: '完全离线', desc: '不依赖任何外部服务' },
   { title: '开源免费', desc: '代码开源，永久免费' },
-];
-
-const accountingFeatures = [
-  { title: '分类统计', desc: '自动归类每一笔开销' },
-  { title: '数据导出', desc: '一键导出 CSV 账单' },
-  { title: '本地备份', desc: '数据随时备份恢复' },
 ];
 
 /** 尊重系统的"减弱动态效果"设置 */
@@ -79,113 +83,262 @@ function useCountUp(target: number | null, duration = 900): number {
   return value;
 }
 
-/** 金额格式化：¥1,234.56 */
+/** 滚动渐显动画 */
+function useReveal(): void {
+  useEffect(() => {
+    const els = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
+    if (prefersReducedMotion() || typeof IntersectionObserver === 'undefined') {
+      els.forEach((el) => el.classList.add('revealed'));
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -30px 0px' }
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, []);
+}
+
+/** 卡片聚光灯跟随鼠标 */
+function spotlight(e: React.MouseEvent<HTMLElement>): void {
+  if (prefersReducedMotion()) return;
+  const card = (e.target as HTMLElement).closest<HTMLElement>('[data-spotlight]');
+  if (!card) return;
+  const rect = card.getBoundingClientRect();
+  card.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+  card.style.setProperty('--my', `${e.clientY - rect.top}px`);
+}
+
 function formatMoney(v: number): string {
   return v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+/** 迷你趋势图（纯 SVG，无图表库依赖） */
+const Sparkline: React.FC<{ data: TrendItem[] }> = ({ data }) => {
+  const w = 360;
+  const h = 100;
+  const pad = 10;
+  const max = Math.max(...data.map((d) => Math.max(d.total, d.incomeTotal)), 1);
+  const x = (i: number) => pad + (i * (w - pad * 2)) / Math.max(data.length - 1, 1);
+  const y = (v: number) => h - pad - (v / max) * (h - pad * 2);
+  const expensePts = data.map((d, i) => [x(i), y(d.total)] as const);
+  const incomePts = data.map((d, i) => [x(i), y(d.incomeTotal)] as const);
+  const areaPath = `M ${expensePts[0][0]},${expensePts[0][1]} ${expensePts
+    .map(([px, py]) => `L ${px},${py}`)
+    .join(' ')} L ${expensePts[expensePts.length - 1][0]},${h - pad} L ${expensePts[0][0]},${h - pad} Z`;
+  const expenseLine = expensePts.map(([px, py]) => `${px},${py}`).join(' ');
+  const incomeLine = incomePts.map(([px, py]) => `${px},${py}`).join(' ');
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="sparkline" preserveAspectRatio="none" aria-hidden>
+      <defs>
+        <linearGradient id="spark-expense" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#f43f5e" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill="url(#spark-expense)" />
+      <polyline points={expenseLine} fill="none" stroke="#f43f5e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <polyline points={incomeLine} fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      {expensePts.map(([px, py], i) => (
+        <circle key={i} cx={px} cy={py} r="3" fill="var(--qg-card-bg)" stroke="#f43f5e" strokeWidth="2" />
+      ))}
+    </svg>
+  );
+};
+
 interface LiveStats {
   monthTotal: number;
-  monthCount: number;
+  monthIncome: number;
+  balance: number;
   totalRecords: number;
 }
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [liveStats, setLiveStats] = useState<LiveStats | null>(null);
+  const [trend, setTrend] = useState<TrendItem[]>([]);
+  const budget = getBudget();
+  const loadedRef = useRef(false);
 
-  /* 从本地数据库读取真实数据 */
-  useEffect(() => {
-    let alive = true;
+  useReveal();
+
+  const loadData = useCallback(() => {
+    if (loadedRef.current) return;
+    loadedRef.current = true;
     (async () => {
       try {
         const now = new Date();
-        const [monthly, list] = await Promise.all([
+        const [monthly, trendData, list] = await Promise.all([
           api.getMonthlyStats(now.getFullYear(), now.getMonth() + 1),
+          api.getMonthlyTrend(6),
           api.getRecords({ page: 1, pageSize: 1 }),
         ]);
-        if (alive) {
-          setLiveStats({
-            monthTotal: monthly.total,
-            monthCount: monthly.count,
-            totalRecords: list.total,
-          });
-        }
+        setLiveStats({
+          monthTotal: monthly.total,
+          monthIncome: monthly.incomeTotal,
+          balance: monthly.balance,
+          totalRecords: list.total,
+        });
+        setTrend(trendData);
       } catch {
         /* 数据库未就绪时保持占位显示 */
       }
     })();
-    return () => { alive = false; };
   }, []);
 
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
   const monthTotalAnim = useCountUp(liveStats?.monthTotal ?? null);
-  const monthCountAnim = useCountUp(liveStats?.monthCount ?? null);
+  const monthIncomeAnim = useCountUp(liveStats?.monthIncome ?? null);
   const totalRecordsAnim = useCountUp(liveStats?.totalRecords ?? null);
 
   const stats = [
-    {
-      label: '本月支出',
-      value: liveStats ? `¥${formatMoney(monthTotalAnim)}` : '—',
-    },
-    {
-      label: '本月笔数',
-      value: liveStats ? `${Math.round(monthCountAnim)} 笔` : '—',
-    },
-    {
-      label: '累计账单',
-      value: liveStats ? `${Math.round(totalRecordsAnim)} 笔` : '—',
-    },
-    { label: '经典小游戏', value: '7 款' },
+    { label: '本月支出', value: liveStats ? `¥${formatMoney(monthTotalAnim)}` : '—', cls: 'landing-stat-expense' },
+    { label: '本月收入', value: liveStats ? `¥${formatMoney(monthIncomeAnim)}` : '—', cls: 'landing-stat-income' },
+    { label: '本月结余', value: liveStats ? `${liveStats.balance >= 0 ? '+' : ''}¥${formatMoney(liveStats.balance)}` : '—', cls: liveStats && liveStats.balance >= 0 ? 'landing-stat-income' : 'landing-stat-expense' },
+    { label: '累计账单', value: liveStats ? `${Math.round(totalRecordsAnim)} 笔` : '—', cls: '' },
   ];
 
+  const budgetProg = liveStats ? budgetProgress(liveStats.monthTotal, budget.amount) : 0;
+  const budgetState = liveStats ? budgetStatus(liveStats.monthTotal, budget.amount) : 'none';
+
   return (
-    <div className="landing">
-      {/* ======== Hero 区域 ======== */}
-      <section className="landing-hero">
-        <div className="landing-hero-glow" />
+    <div className="landing" onMouseMove={spotlight}>
+      {/* ======== Hero 区域（极光动效） ======== */}
+      <section className="landing-hero reveal">
+        <div className="aurora">
+          <div className="aurora-blob aurora-blob-1" />
+          <div className="aurora-blob aurora-blob-2" />
+          <div className="aurora-blob aurora-blob-3" />
+        </div>
         <div className="landing-dots" />
         <div className="landing-hero-inner">
           <div className="landing-badge">
             <IconZap size={13} />
-            BOREDOM BUSTER
+            BOREDOM BUSTER · 2026
           </div>
-          <h1 className="landing-title">无聊救星</h1>
+          <h1 className="landing-title">
+            无聊<span className="landing-title-grad">救星</span>
+          </h1>
           <div className="landing-subtitle">你的离线时光伙伴</div>
           <p className="landing-desc">
-            7 款经典小游戏 + 智能记账，把无聊时光变成快乐时光。
-            数据全部保存在本地，断网也能玩，用着更安心。
+            7 款经典小游戏 + 收支记账 + 生活工具，
+            把无聊时光变成快乐时光。数据全部保存在本地，断网也能玩，用着更安心。
           </p>
           <div className="landing-ctas">
             <button className="landing-btn landing-btn-primary" onClick={() => navigate('/game')}>
               立即体验
               <IconRight size={16} />
             </button>
-            <button className="landing-btn landing-btn-ghost" onClick={() => navigate('/bills')}>
-              开始记账
+            <button className="landing-btn landing-btn-ghost" onClick={() => navigate('/tools')}>
+              <IconTools size={16} />
+              生活工具
             </button>
           </div>
         </div>
       </section>
 
-      {/* ======== 数据条（来自本地账本的真实数据） ======== */}
-      <section className="landing-stats">
+      {/* ======== 数据条（真实账本数据 + 趋势图） ======== */}
+      <section className="landing-stats reveal">
         {stats.map((s) => (
           <div className="landing-stat" key={s.label}>
-            <div className="landing-stat-value">{s.value}</div>
+            <div className={`landing-stat-value ${s.cls}`}>{s.value}</div>
             <div className="landing-stat-label">{s.label}</div>
           </div>
         ))}
       </section>
 
+      <section className="landing-trend reveal" data-spotlight>
+        <div className="landing-trend-head">
+          <div>
+            <div className="landing-trend-title">近 6 个月收支</div>
+            <div className="landing-trend-sub">红色为支出，绿色为收入</div>
+          </div>
+          <div className="landing-trend-legend">
+            <span className="legend-item"><i className="legend-dot" style={{ background: '#f43f5e' }} />支出</span>
+            <span className="legend-item"><i className="legend-dot" style={{ background: '#10b981' }} />收入</span>
+          </div>
+        </div>
+        <div className="landing-trend-chart">
+          <Sparkline data={trend} />
+          <div className="landing-trend-labels">
+            {trend.map((t, i) => (
+              <span key={i} className={i === trend.length - 1 ? 'current' : ''}>{t.month}月</span>
+            ))}
+          </div>
+        </div>
+        {budget.amount > 0 && liveStats && (
+          <div className="landing-budget">
+            <div className="landing-budget-head">
+              <span>本月预算</span>
+              <span className={`landing-budget-state state-${budgetState}`}>
+                {{ none: '未设置', safe: '预算充足', warn: '接近上限', over: '已超支' }[budgetState]}
+              </span>
+            </div>
+            <div className="landing-budget-bar">
+              <div
+                className={`landing-budget-fill fill-${budgetState}`}
+                style={{ width: `${Math.round(budgetProg * 100)}%` }}
+              />
+            </div>
+            <div className="landing-budget-nums">
+              <span>已用 ¥{formatMoney(liveStats.monthTotal)}</span>
+              <span>预算 ¥{formatMoney(budget.amount)}</span>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ======== 生活工具 ======== */}
+      <section className="landing-section reveal">
+        <div className="landing-section-head">
+          <h2 className="landing-section-title">生活工具</h2>
+          <p className="landing-section-sub">记账、倒数日、番茄钟、备忘录 —— 离线可用，数据本地保存</p>
+        </div>
+        <div className="landing-tools">
+          {toolCards.map((t) => {
+            const TIcon = t.icon;
+            return (
+              <div
+                key={t.key}
+                className="landing-card landing-tool-card"
+                style={{ '--gc': t.color } as React.CSSProperties}
+                onClick={() => navigate(t.route)}
+                data-spotlight
+              >
+                <div className="landing-card-top">
+                  <span className="landing-card-icon" style={{ color: t.color }}>
+                    <TIcon size={26} />
+                  </span>
+                </div>
+                <div className="landing-card-name">{t.name}</div>
+                <div className="landing-card-desc">{t.desc}</div>
+                <IconRight size={16} className="landing-card-arrow" />
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* ======== 游戏区域（Bento 网格） ======== */}
-      <section className="landing-section">
+      <section className="landing-section reveal">
         <div className="landing-section-head">
           <h2 className="landing-section-title">经典小游戏</h2>
           <p className="landing-section-sub">经典怀旧，即开即玩，所有进度自动保存</p>
         </div>
 
         <div className="landing-games">
-          {/* 2 大卡：贪吃蛇 + 俄罗斯方块 */}
           {(() => {
             const g0 = games[0];
             const G0 = g0.icon;
@@ -193,7 +346,7 @@ const HomePage: React.FC = () => {
             const G1 = g1.icon;
             return (
               <>
-                <div className="landing-card landing-card-lg" style={{ '--gc': g0.color } as React.CSSProperties} onClick={() => navigate(g0.route)}>
+                <div className="landing-card landing-card-lg" style={{ '--gc': g0.color } as React.CSSProperties} onClick={() => navigate(g0.route)} data-spotlight>
                   <div className="landing-card-top">
                     <span className="landing-card-icon" style={{ color: g0.color }}>
                       <G0 size={26} />
@@ -204,7 +357,7 @@ const HomePage: React.FC = () => {
                   <div className="landing-card-desc">{g0.desc}</div>
                   <IconRight size={16} className="landing-card-arrow" />
                 </div>
-                <div className="landing-card landing-card-lg" style={{ '--gc': g1.color } as React.CSSProperties} onClick={() => navigate(g1.route)}>
+                <div className="landing-card landing-card-lg" style={{ '--gc': g1.color } as React.CSSProperties} onClick={() => navigate(g1.route)} data-spotlight>
                   <div className="landing-card-top">
                     <span className="landing-card-icon" style={{ color: g1.color }}>
                       <G1 size={26} />
@@ -219,11 +372,10 @@ const HomePage: React.FC = () => {
             );
           })()}
 
-          {/* 4 小卡：2048 / 扫雷 / 打砖块 / 打地鼠 */}
           {games.slice(2, 6).map((g) => {
             const GI = g.icon;
             return (
-              <div key={g.key} className="landing-card landing-card-sm" style={{ '--gc': g.color } as React.CSSProperties} onClick={() => navigate(g.route)}>
+              <div key={g.key} className="landing-card landing-card-sm" style={{ '--gc': g.color } as React.CSSProperties} onClick={() => navigate(g.route)} data-spotlight>
                 <span className="landing-card-icon" style={{ color: g.color }}>
                   <GI size={24} />
                 </span>
@@ -236,12 +388,11 @@ const HomePage: React.FC = () => {
             );
           })}
 
-          {/* 1 宽卡：井字棋 */}
           {(() => {
             const g6 = games[6];
             const G6 = g6.icon;
             return (
-              <div className="landing-card landing-card-wide" style={{ '--gc': g6.color } as React.CSSProperties} onClick={() => navigate(g6.route)}>
+              <div className="landing-card landing-card-wide" style={{ '--gc': g6.color } as React.CSSProperties} onClick={() => navigate(g6.route)} data-spotlight>
                 <span className="landing-card-icon" style={{ color: g6.color }}>
                   <G6 size={24} />
                 </span>
@@ -257,32 +408,31 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* ======== 记账区域 ======== */}
-      <section className="landing-section">
-        <div className="landing-section-head">
-          <h2 className="landing-section-title">智能记账</h2>
-          <p className="landing-section-sub">记录每一笔开销，自动分类统计，支持数据导出与本地备份</p>
-        </div>
-
+      {/* ======== 快捷记账 CTA ======== */}
+      <section className="landing-section reveal">
         <div className="landing-accounting">
-          <div className="landing-acc-card" onClick={() => navigate('/add')}>
+          <div className="landing-acc-card" onClick={() => navigate('/add')} data-spotlight>
             <div className="landing-acc-icon">
-              <IconBook size={30} />
+              <IconPlusCircle size={30} />
             </div>
-            <div className="landing-acc-title">轻松管理每一笔开销</div>
+            <div className="landing-acc-title">记一笔，只要 3 秒</div>
             <p className="landing-acc-desc">
-              九大分类体系，支持自定义二级分类，
-              随手记录，月度统计一目了然。
+              支出、收入都能记，九大分类体系，
+              支持自定义分类与月度预算。
             </p>
             <button className="landing-btn landing-btn-primary">
-              开始使用
+              开始记账
               <IconRight size={16} />
             </button>
           </div>
 
           <div className="landing-acc-list">
-            {accountingFeatures.map((f) => (
-              <div className="landing-acc-feature" key={f.title} onClick={() => navigate('/stats')}>
+            {[
+              { title: '收支统计', desc: '饼图 + 趋势图，一目了然', route: '/stats' },
+              { title: '账单明细', desc: '按月筛选，搜索备注', route: '/bills' },
+              { title: '数据备份', desc: 'CSV 导出 + 数据库备份', route: '/settings' },
+            ].map((f) => (
+              <div className="landing-acc-feature" key={f.title} onClick={() => navigate(f.route)} data-spotlight>
                 <div className="landing-acc-feature-icon">
                   <IconZap size={18} />
                 </div>
@@ -298,7 +448,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* ======== 特性条 ======== */}
-      <section className="landing-features">
+      <section className="landing-features reveal">
         {features.map((f) => (
           <div className="landing-feature" key={f.title}>
             <div className="landing-feature-title">{f.title}</div>
@@ -316,6 +466,7 @@ const HomePage: React.FC = () => {
           </div>
           <div className="landing-footer-links">
             <span onClick={() => navigate('/settings')}>设置</span>
+            <span onClick={() => navigate('/tools')}>工具</span>
             <span onClick={() => navigate('/game')}>游戏</span>
             <span onClick={() => navigate('/stats')}>统计</span>
           </div>

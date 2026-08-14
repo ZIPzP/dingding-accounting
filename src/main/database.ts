@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS categories (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   icon TEXT NOT NULL,
-  code TEXT NOT NULL UNIQUE
+  code TEXT NOT NULL UNIQUE,
+  kind TEXT NOT NULL DEFAULT 'expense'
 );
 
 CREATE TABLE IF NOT EXISTS sub_categories (
@@ -36,6 +37,7 @@ CREATE TABLE IF NOT EXISTS records (
   category_id INTEGER NOT NULL,
   sub_category_id INTEGER,
   note TEXT,
+  type TEXT NOT NULL DEFAULT 'expense',
   created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
   FOREIGN KEY (category_id) REFERENCES categories(id),
@@ -45,6 +47,15 @@ CREATE TABLE IF NOT EXISTS records (
 CREATE INDEX IF NOT EXISTS idx_records_date ON records(record_date);
 CREATE INDEX IF NOT EXISTS idx_records_category ON records(category_id);
 `;
+
+/** 收入分类预置数据（新老库升级时写入） */
+const PRESET_INCOME_CATEGORIES: CategorySeed[] = [
+  { name: '工资收入', icon: '💼', code: 'salary', subs: ['月薪', '奖金', '补贴'] },
+  { name: '兼职收入', icon: '💻', code: 'parttime', subs: ['接单', '稿费', '其他兼职'] },
+  { name: '理财收益', icon: '📈', code: 'invest', subs: ['利息', '基金', '股票'] },
+  { name: '红包礼金', icon: '🧧', code: 'gift', subs: ['节日红包', '生日礼金', '人情回礼'] },
+  { name: '其他收入', icon: '💰', code: 'income_other', subs: ['退款', '二手闲置', '其他'] },
+];
 
 // ==================== 预置分类数据 ====================
 
@@ -122,6 +133,58 @@ export async function initDatabase(): Promise<void> {
 
   // 确保系统兜底分类存在
   ensureSystemCategory();
+
+  // 表结构升级（幂等：补齐新列、预置收入分类）
+  migrate();
+}
+
+/** 表结构升级：为老数据库补齐新列并预置收入分类 */
+function migrate(): void {
+  let changed = false;
+
+  const tableCols = (table: string): string[] => {
+    const result = db.exec(`PRAGMA table_info(${table})`);
+    if (result.length === 0) return [];
+    return result[0].values.map((row) => String(row[1]));
+  };
+
+  if (!tableCols('records').includes('type')) {
+    db.run("ALTER TABLE records ADD COLUMN type TEXT NOT NULL DEFAULT 'expense'");
+    changed = true;
+  }
+  if (!tableCols('categories').includes('kind')) {
+    db.run("ALTER TABLE categories ADD COLUMN kind TEXT NOT NULL DEFAULT 'expense'");
+    changed = true;
+  }
+
+  // 预置收入分类（仅当不存在时）
+  const incomeResult = db.exec("SELECT COUNT(*) as cnt FROM categories WHERE kind = 'income'");
+  const incomeCount = (incomeResult[0]?.values[0]?.[0] as number) || 0;
+  if (incomeCount === 0) {
+    for (const cat of PRESET_INCOME_CATEGORIES) {
+      db.run('INSERT INTO categories (name, icon, code, kind) VALUES (?, ?, ?, ?)', [
+        cat.name,
+        cat.icon,
+        cat.code,
+        'income',
+      ]);
+      const idResult = db.exec('SELECT last_insert_rowid() as id');
+      const categoryId = idResult[0]?.values[0]?.[0] as number;
+      for (const subName of cat.subs) {
+        db.run('INSERT INTO sub_categories (category_id, name) VALUES (?, ?)', [
+          categoryId,
+          subName,
+        ]);
+      }
+    }
+    changed = true;
+    console.log('✅ 收入分类已预置');
+  }
+
+  if (changed) {
+    persist();
+    console.log('✅ 数据库结构升级完成');
+  }
 }
 
 function seedCategories(): void {
@@ -196,16 +259,18 @@ export function addCategory(params: {
   name: string;
   icon: string;
   code: string;
+  kind?: 'expense' | 'income';
 }): { success: true; id: number } | { success: false; error: string } {
   // 校验代码格式
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(params.code)) {
     return { success: false, error: '分类代码只能包含字母、数字和下划线，且必须以字母或下划线开头' };
   }
   try {
-    db.run('INSERT INTO categories (name, icon, code) VALUES (?, ?, ?)', [
+    db.run('INSERT INTO categories (name, icon, code, kind) VALUES (?, ?, ?, ?)', [
       params.name,
       params.icon,
       params.code,
+      params.kind || 'expense',
     ]);
     const result = db.exec('SELECT last_insert_rowid() as id');
     persist();
@@ -336,16 +401,18 @@ export function addRecord(params: {
   category_id: number;
   sub_category_id?: number | null;
   note?: string;
+  type?: 'expense' | 'income';
 }): number {
   db.run(
-    `INSERT INTO records (amount, record_date, category_id, sub_category_id, note)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO records (amount, record_date, category_id, sub_category_id, note, type)
+     VALUES (?, ?, ?, ?, ?, ?)`,
     [
       params.amount,
       params.record_date,
       params.category_id,
       params.sub_category_id || null,
       params.note || null,
+      params.type || 'expense',
     ]
   );
   const result = db.exec('SELECT last_insert_rowid() as id');
@@ -361,11 +428,12 @@ export function updateRecord(params: {
   category_id: number;
   sub_category_id?: number | null;
   note?: string;
+  type?: 'expense' | 'income';
 }): void {
   db.run(
     `UPDATE records
      SET amount = ?, record_date = ?, category_id = ?,
-         sub_category_id = ?, note = ?,
+         sub_category_id = ?, note = ?, type = ?,
          updated_at = datetime('now', 'localtime')
      WHERE id = ?`,
     [
@@ -374,6 +442,7 @@ export function updateRecord(params: {
       params.category_id,
       params.sub_category_id || null,
       params.note || null,
+      params.type || 'expense',
       params.id,
     ]
   );
@@ -391,6 +460,7 @@ export function getRecords(params: {
   year?: number;
   month?: number;
   category_id?: number;
+  type?: 'expense' | 'income';
   keyword?: string;
   page?: number;
   pageSize?: number;
@@ -409,6 +479,10 @@ export function getRecords(params: {
   if (params.category_id) {
     conditions.push('r.category_id = ?');
     values.push(params.category_id);
+  }
+  if (params.type) {
+    conditions.push('r.type = ?');
+    values.push(params.type);
   }
   if (params.keyword) {
     conditions.push('r.note LIKE ?');
@@ -462,24 +536,32 @@ export function getRecordById(id: number): RecordItem | undefined {
 export function getMonthlyStats(year: number, month: number): MonthlyStats {
   const monthStr = String(month).padStart(2, '0');
 
-  // 当月总支出
+  // 当月支出 / 收入汇总
   const totalResult = db.exec(
-    `SELECT COALESCE(SUM(amount), 0) as total, COUNT(*) as count
+    `SELECT
+       COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total,
+       COALESCE(SUM(CASE WHEN type = 'expense' THEN 1 ELSE 0 END), 0) as count,
+       COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as incomeTotal,
+       COALESCE(SUM(CASE WHEN type = 'income' THEN 1 ELSE 0 END), 0) as incomeCount
      FROM records
      WHERE strftime('%Y', record_date) = ? AND strftime('%m', record_date) = ?`,
     [String(year), monthStr]
   );
-  const totalRow = totalResult[0]?.values[0] || [0, 0];
+  const totalRow = totalResult[0]?.values[0] || [0, 0, 0, 0];
   const totalAmount = totalRow[0] as number;
   const totalCount = totalRow[1] as number;
+  const incomeTotal = totalRow[2] as number;
+  const incomeCount = totalRow[3] as number;
 
-  // 分类统计
+  // 支出分类统计（仅支出分类与支出记录）
   const catResult = db.exec(
     `SELECT c.id, c.name, c.icon, c.code, COALESCE(SUM(r.amount), 0) as total
      FROM categories c
      LEFT JOIN records r ON c.id = r.category_id
+       AND r.type = 'expense'
        AND strftime('%Y', r.record_date) = ?
        AND strftime('%m', r.record_date) = ?
+     WHERE c.kind = 'expense' AND c.code != '_deleted'
      GROUP BY c.id
      ORDER BY total DESC`,
     [String(year), monthStr]
@@ -492,6 +574,9 @@ export function getMonthlyStats(year: number, month: number): MonthlyStats {
   return {
     total: totalAmount,
     count: totalCount,
+    incomeTotal,
+    incomeCount,
+    balance: incomeTotal - totalAmount,
     dailyAvg: totalCount > 0 ? totalAmount / daysInMonth : 0,
     categoryStats,
   };
@@ -509,18 +594,22 @@ export function getMonthlyTrend(months: number = 6): TrendItem[] {
     const monthStr = String(month).padStart(2, '0');
 
     const trendResult = db.exec(
-      `SELECT COALESCE(SUM(amount), 0) as total
+      `SELECT
+         COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total,
+         COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as incomeTotal
        FROM records
        WHERE strftime('%Y', record_date) = ? AND strftime('%m', record_date) = ?`,
       [String(year), monthStr]
     );
     const total = (trendResult[0]?.values[0]?.[0] as number) || 0;
+    const incomeTotal = (trendResult[0]?.values[0]?.[1] as number) || 0;
 
     result.push({
       year,
       month,
       label: `${year}年${month}月`,
       total,
+      incomeTotal,
     });
   }
 
@@ -542,11 +631,15 @@ export function closeDatabase(): void {
 
 // ==================== 类型定义 ====================
 
+export type RecordType = 'expense' | 'income';
+export type CategoryKind = 'expense' | 'income';
+
 export interface Category {
   id: number;
   name: string;
   icon: string;
   code: string;
+  kind: CategoryKind;
 }
 
 export interface SubCategory {
@@ -566,6 +659,7 @@ export interface RecordItem {
   category_id: number;
   sub_category_id: number | null;
   note: string | null;
+  type: RecordType;
   created_at: string;
   updated_at: string;
   category_name: string;
@@ -585,6 +679,9 @@ export interface CategoryStat {
 export interface MonthlyStats {
   total: number;
   count: number;
+  incomeTotal: number;
+  incomeCount: number;
+  balance: number;
   dailyAvg: number;
   categoryStats: CategoryStat[];
 }
@@ -594,4 +691,5 @@ export interface TrendItem {
   month: number;
   label: string;
   total: number;
+  incomeTotal: number;
 }

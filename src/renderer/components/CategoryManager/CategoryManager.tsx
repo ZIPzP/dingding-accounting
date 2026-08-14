@@ -20,6 +20,7 @@ const { Text } = Typography;
 const PRESET_CODES = [
   'food', 'transport', 'shopping', 'housing', 'entertainment',
   'health', 'education', 'social', 'other',
+  'salary', 'parttime', 'invest', 'gift', 'income_other',
 ];
 
 const CategoryManager: React.FC = () => {
@@ -59,7 +60,7 @@ const CategoryManager: React.FC = () => {
     setCatModalVisible(true);
   };
 
-  const handleCatSubmit = async (values: { name: string; icon: string; code: string }) => {
+  const handleCatSubmit = async (values: { name: string; icon: string; code: string; kind: 'expense' | 'income' }) => {
     setSubmitting(true);
     try {
       if (editingCat) {
@@ -75,7 +76,12 @@ const CategoryManager: React.FC = () => {
           message.error(result.error || '更新失败');
         }
       } else {
-        const result = await api.addCategory(values);
+        const result = await api.addCategory({
+          name: values.name,
+          icon: values.icon,
+          code: values.code,
+          kind: values.kind || 'expense',
+        });
         if (result.success) {
           message.success('分类已添加');
           setCatModalVisible(false);
@@ -226,6 +232,11 @@ const CategoryManager: React.FC = () => {
                 <Text strong style={{ fontSize: 16 }}>
                   {cat.name}
                 </Text>
+                {cat.kind === 'income' && (
+                  <Tag style={{ marginLeft: 8, fontSize: 10 }} color="success">
+                    收入
+                  </Tag>
+                )}
                 {PRESET_CODES.includes(cat.code) && (
                   <Tag style={{ marginLeft: 8, fontSize: 10 }} color="default">
                     预置
@@ -314,7 +325,7 @@ const CategoryManager: React.FC = () => {
         visible={catModalVisible}
         editingCategory={
           editingCat
-            ? { id: editingCat.id, name: editingCat.name, icon: editingCat.icon, code: editingCat.code }
+            ? { id: editingCat.id, name: editingCat.name, icon: editingCat.icon, code: editingCat.code, kind: editingCat.kind }
             : null
         }
         onOk={handleCatSubmit}
