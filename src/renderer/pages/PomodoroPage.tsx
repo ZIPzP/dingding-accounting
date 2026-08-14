@@ -4,7 +4,7 @@
  * 配置保存在 localStorage
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Segmented, InputNumber, message } from 'antd';
+import { Button, Segmented, InputNumber, Switch, message } from 'antd';
 import { IconTimer, IconPlay, IconPause, IconReset } from '../components/Icons';
 
 type Mode = 'focus' | 'short' | 'long';
@@ -14,6 +14,7 @@ interface PomodoroConfig {
   short: number;
   long: number;
   sessionsBeforeLong: number;
+  sound: boolean;
 }
 
 interface PomodoroStats {
@@ -25,7 +26,7 @@ interface PomodoroStats {
 const CONFIG_KEY = 'qinggu-pomodoro-config';
 const STATS_KEY = 'qinggu-pomodoro-stats';
 
-const DEFAULT_CONFIG: PomodoroConfig = { focus: 25, short: 5, long: 15, sessionsBeforeLong: 4 };
+const DEFAULT_CONFIG: PomodoroConfig = { focus: 25, short: 5, long: 15, sessionsBeforeLong: 4, sound: true };
 
 function loadConfig(): PomodoroConfig {
   try {
@@ -115,7 +116,10 @@ const PomodoroPage: React.FC = () => {
     if (!running || secondsLeft > 0) return;
     setRunning(false);
     runningRef.current = false;
-    playBeep(3);
+    if (loadConfig().sound !== false) playBeep(3);
+    try {
+      if ('vibrate' in navigator) navigator.vibrate([80, 60, 80]);
+    } catch { /* noop */ }
 
     if (mode === 'focus') {
       const nextCycle = completedFocusInCycle + 1;
@@ -162,13 +166,18 @@ const PomodoroPage: React.FC = () => {
     switchMode(m);
   };
 
-  /* 更新时长配置 */
-  const handleConfigChange = (key: keyof PomodoroConfig, val: number | null) => {
-    const v = Math.max(1, Math.min(120, val || 1));
-    const next = { ...config, [key]: v };
+  /* 更新配置 */
+  const handleConfigChange = (key: keyof PomodoroConfig, val: number | boolean | null) => {
+    let next: PomodoroConfig;
+    if (key === 'sound') {
+      next = { ...config, sound: !!val };
+    } else {
+      const v = Math.max(1, Math.min(120, Number(val) || 1));
+      next = { ...config, [key]: v };
+    }
     setConfig(next);
     try { localStorage.setItem(CONFIG_KEY, JSON.stringify(next)); } catch { /* noop */ }
-    if (!running) setSecondsLeft(next[mode] * 60);
+    if (!running && key !== 'sound') setSecondsLeft(next[mode] * 60);
   };
 
   /* 环形进度 */
@@ -279,6 +288,13 @@ const PomodoroPage: React.FC = () => {
             <InputNumber min={1} max={60} value={config.short} onChange={(v) => handleConfigChange('short', v)} />
             <label>长休</label>
             <InputNumber min={1} max={60} value={config.long} onChange={(v) => handleConfigChange('long', v)} />
+          </div>
+          <div className="pomodoro-config-row" style={{ marginTop: 12 }}>
+            <label>提示音</label>
+            <Switch checked={config.sound} onChange={(v) => handleConfigChange('sound', v)} />
+            <span style={{ fontSize: 12, color: 'var(--qg-text-tertiary)' }}>
+              {config.sound ? '完成时响铃并震动' : '仅静默提醒'}
+            </span>
           </div>
         </div>
       </div>

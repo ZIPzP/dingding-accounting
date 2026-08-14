@@ -20,6 +20,7 @@ function createWindow(): void {
     minWidth: 900,
     minHeight: 600,
     title: '青孤项目',
+    backgroundColor: '#060810',
     icon: path.join(__dirname, '../../resources/icon.png'),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),

@@ -124,6 +124,7 @@ interface ElectronAPI {
   exportCSV: (csvContent: string) => Promise<{ success: boolean; path?: string }>;
   backupDatabase: () => Promise<{ success: boolean; path?: string }>;
   restoreDatabase: () => Promise<{ success: boolean; error?: string; message?: string }>;
+  clearAllData: () => Promise<{ success: boolean; error?: string }>;
 }
 
 interface Window {

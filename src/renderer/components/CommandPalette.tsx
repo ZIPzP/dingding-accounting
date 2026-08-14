@@ -10,6 +10,7 @@ export interface PaletteItem {
   label: string;
   desc?: string;
   icon?: React.ReactNode;
+  group?: string;
   action: () => void;
 }
 
@@ -103,23 +104,27 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose, items })
             <div className="palette-empty">没有找到「{query}」相关的页面</div>
           )}
           {filtered.map((item, i) => (
-            <div
-              key={item.key}
-              data-index={i}
-              className={`palette-item ${i === activeIndex ? 'active' : ''}`}
-              onMouseEnter={() => setActiveIndex(i)}
-              onClick={() => {
-                item.action();
-                onClose();
-              }}
-            >
-              <span className="palette-item-icon">{item.icon}</span>
-              <span className="palette-item-body">
-                <span className="palette-item-label">{item.label}</span>
-                {item.desc && <span className="palette-item-desc">{item.desc}</span>}
-              </span>
-              <IconRight size={14} className="palette-item-arrow" />
-            </div>
+            <React.Fragment key={item.key}>
+              {item.group && (
+                <div className="palette-group">{item.group}</div>
+              )}
+              <div
+                data-index={i}
+                className={`palette-item ${i === activeIndex ? 'active' : ''}`}
+                onMouseEnter={() => setActiveIndex(i)}
+                onClick={() => {
+                  item.action();
+                  onClose();
+                }}
+              >
+                <span className="palette-item-icon">{item.icon}</span>
+                <span className="palette-item-body">
+                  <span className="palette-item-label">{item.label}</span>
+                  {item.desc && <span className="palette-item-desc">{item.desc}</span>}
+                </span>
+                <IconRight size={14} className="palette-item-arrow" />
+              </div>
+            </React.Fragment>
           ))}
         </div>
         <div className="palette-footer">

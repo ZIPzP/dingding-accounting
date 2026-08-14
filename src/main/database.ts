@@ -622,6 +622,28 @@ export function getDbPath(): string {
   return dbPath;
 }
 
+/** 清空全部数据：删除数据库文件并重建初始库 */
+export function clearAllData(): { success: true } | { success: false; error: string } {
+  try {
+    db.close();
+    if (fs.existsSync(dbPath)) {
+      fs.unlinkSync(dbPath);
+    }
+    db = new SQL.Database();
+    db.run('PRAGMA foreign_keys = ON');
+    db.run(CREATE_TABLES_SQL);
+    seedCategories();
+    ensureSystemCategory();
+    migrate();
+    persist();
+    console.log('✅ 数据已清空并重建');
+    return { success: true };
+  } catch (e: any) {
+    console.error('清空数据失败:', e);
+    return { success: false, error: e?.message || '清空失败，请重试' };
+  }
+}
+
 // 关闭数据库（应用退出时调用）
 export function closeDatabase(): void {
   if (db) {

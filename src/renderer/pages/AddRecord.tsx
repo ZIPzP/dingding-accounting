@@ -153,6 +153,9 @@ const AddRecord: React.FC = () => {
       } else {
         await api.addRecord(params);
         message.success(isIncome ? '收入已记录！' : '记账成功！');
+        try {
+          if ('vibrate' in navigator) navigator.vibrate(25);
+        } catch { /* noop */ }
       }
 
       navigate('/bills');
@@ -224,6 +227,14 @@ const AddRecord: React.FC = () => {
             {smartText.trim() && !parsed && (
               <div className="smart-hint">没识别出金额,试试加上数字,例如:中午吃面15</div>
             )}
+            <div className="smart-examples">
+              <span className="smart-examples-label">试试:</span>
+              {['中午吃面15', '昨天打车22元', '奶茶16.5', '工资8000'].map((ex) => (
+                <span key={ex} className="smart-example-chip" onClick={() => setSmartText(ex)}>
+                  {ex}
+                </span>
+              ))}
+            </div>
             <Divider style={{ margin: '14px 0' }} />
           </div>
         )}

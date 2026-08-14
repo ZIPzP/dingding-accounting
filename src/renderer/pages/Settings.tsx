@@ -3,7 +3,7 @@
  * 数据导出、备份恢复、关于信息、主题切换
  */
 import React, { useState } from 'react';
-import { Card, Button, Space, message, Modal, Typography, Descriptions, Divider, InputNumber } from 'antd';
+import { Card, Button, Space, message, Modal, Typography, Descriptions, Divider, InputNumber, Checkbox } from 'antd';
 import {
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
@@ -15,6 +15,24 @@ import { useTheme } from '../contexts/ThemeContext';
 
 const { Title, Text, Paragraph } = Typography;
 
+/** 是否已作为 PWA 安装运行 */
+function isStandalone(): boolean {
+  try {
+    return window.matchMedia('(display-mode: standalone)').matches
+      || (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+  } catch {
+    return false;
+  }
+}
+
+function isIOS(): boolean {
+  try {
+    return /iPad|iPhone|iPod/i.test(navigator.userAgent);
+  } catch {
+    return false;
+  }
+}
+
 const Settings: React.FC = () => {
   const [exporting, setExporting] = useState(false);
   const [backingUp, setBackingUp] = useState(false);
@@ -24,7 +42,34 @@ const Settings: React.FC = () => {
     return b.amount > 0 ? b.amount : null;
   });
   const [savingBudget, setSavingBudget] = useState(false);
+  const [clearModalVisible, setClearModalVisible] = useState(false);
+  const [clearChecked, setClearChecked] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const { currentTheme, setTheme, allThemes } = useTheme();
+
+  // 清空全部数据
+  const handleClearAll = async () => {
+    setClearing(true);
+    try {
+      const result = await api.clearAllData();
+      if (result.success) {
+        Modal.success({
+          title: '数据已清空',
+          content: '所有账单与设置已恢复初始状态。',
+          okText: '好的',
+          onOk: () => window.location.reload(),
+        });
+      } else {
+        message.error(result.error || '清空失败，请重试');
+      }
+    } catch {
+      message.error('清空失败，请重试');
+    } finally {
+      setClearing(false);
+      setClearModalVisible(false);
+      setClearChecked(false);
+    }
+  };
 
   // 保存月度预算
   const handleSaveBudget = () => {
@@ -269,14 +314,63 @@ const Settings: React.FC = () => {
               恢复
             </Button>
           </div>
+
+          <Divider style={{ margin: '8px 0' }} />
+
+          <Text type="secondary" style={{ fontSize: 12.5, display: 'block', lineHeight: 1.7 }}>
+            💡 跨设备迁移：手机端在浏览器里点「备份」下载 .db 文件 → 传到电脑 → 桌面应用或网页里点「恢复」选择该文件，即可把手机数据搬到电脑（反向同理）。
+          </Text>
         </Space>
+      </Card>
+
+      {/* PWA 安装引导（未安装时显示） */}
+      {!isStandalone() && (
+        <Card title="📱 安装到手机/电脑" style={{ marginBottom: 24 }}>
+          <Paragraph type="secondary" style={{ marginBottom: 8, fontSize: 13.5 }}>
+            把青孤项目安装到主屏幕,像原生 App 一样全屏使用,还能离线打开。
+          </Paragraph>
+          {isIOS() ? (
+            <Paragraph style={{ marginBottom: 0, fontSize: 13.5 }}>
+              1️⃣ 用 <Text strong>Safari</Text> 打开本页面<br />
+              2️⃣ 点底部 <Text strong>分享按钮</Text>(方框带箭头)<br />
+              3️⃣ 选择 <Text strong>「添加到主屏幕」</Text> → 完成 ✅
+            </Paragraph>
+          ) : (
+            <Paragraph style={{ marginBottom: 0, fontSize: 13.5 }}>
+              1️⃣ 点浏览器地址栏右侧的 <Text strong>安装图标</Text>(⊕ 或 ↓)<br />
+              2️⃣ 或在浏览器菜单里选择 <Text strong>「安装应用」/「添加到主屏幕」</Text> → 完成 ✅
+            </Paragraph>
+          )}
+        </Card>
+      )}
+
+      {/* 危险操作 */}
+      <Card title="⚠️ 危险操作" style={{ marginBottom: 24 }} className="danger-card">
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <div>
+            <Text strong>清空所有数据</Text>
+            <br />
+            <Text type="secondary">删除全部账单记录与分类设置,恢复到初始状态,不可撤销</Text>
+          </div>
+          <Button danger onClick={() => { setClearChecked(false); setClearModalVisible(true); }}>
+            清空数据
+          </Button>
+        </div>
       </Card>
 
       {/* 关于 */}
       <Card title="ℹ️ 关于">
         <Descriptions column={1} size="small">
           <Descriptions.Item label="应用名称">青孤项目</Descriptions.Item>
-          <Descriptions.Item label="版本">1.1.0</Descriptions.Item>
+          <Descriptions.Item label="版本">1.4.0</Descriptions.Item>
           <Descriptions.Item label="技术栈">Electron + React + TypeScript</Descriptions.Item>
           <Descriptions.Item label="数据存储">
             本地 SQLite 数据库（数据完全保存在您的电脑上，不联网）
@@ -284,14 +378,40 @@ const Settings: React.FC = () => {
         </Descriptions>
         <Divider />
         <Paragraph type="secondary" style={{ fontSize: 13 }}>
-          青孤项目是一款陪你打发无聊的离线工具集：7 款经典小游戏、收支记账、
-          倒数日、番茄钟与备忘录。所有数据均保存在您的电脑上，
-          不会上传至任何服务器。请定期备份数据以防丢失。
+          青孤项目是一款陪你打发无聊的离线工具集：7 款经典小游戏、智能收支记账、
+          倒数日、番茄钟、白噪音、备忘录、心愿单、习惯打卡与年度报告。
+          所有数据均保存在您的电脑上，不会上传至任何服务器。请定期备份数据以防丢失。
         </Paragraph>
         <Paragraph type="secondary" style={{ fontSize: 12, opacity: 0.8 }}>
-          v1.1.0 更新：新增收入记账与月度预算、倒数日 / 番茄钟 / 备忘录三大工具、全新首页视觉。
+          v1.4.0 更新：账单搜索与按日分组、清空数据、PWA 安装引导、番茄钟声音开关、跨设备迁移说明。
         </Paragraph>
       </Card>
+
+      {/* 清空数据确认弹窗 */}
+      <Modal
+        title="清空所有数据"
+        open={clearModalVisible}
+        onCancel={() => setClearModalVisible(false)}
+        onOk={handleClearAll}
+        okText="确认清空"
+        cancelText="取消"
+        okButtonProps={{ danger: true, disabled: !clearChecked, loading: clearing }}
+        destroyOnClose
+      >
+        <div style={{ marginTop: 8 }}>
+          <Paragraph>
+            此操作将<Text strong type="danger">永久删除</Text>以下全部内容,且<Text strong type="danger">无法恢复</Text>:
+          </Paragraph>
+          <ul style={{ paddingLeft: 20, color: 'var(--qg-text-secondary)', fontSize: 13.5, lineHeight: 2 }}>
+            <li>所有账单记录(支出/收入)</li>
+            <li>所有自定义分类与子分类</li>
+            <li>预算设置</li>
+          </ul>
+          <Checkbox checked={clearChecked} onChange={(e) => setClearChecked(e.target.checked)}>
+            我明白,并已确认不需要这些数据(建议先备份)
+          </Checkbox>
+        </div>
+      </Modal>
     </div>
   );
 };

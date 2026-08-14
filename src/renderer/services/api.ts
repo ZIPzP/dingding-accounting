@@ -145,6 +145,14 @@ export const api = {
       input.click();
     });
   },
+
+  clearAllData: (): Promise<{ success: boolean; error?: string }> => {
+    if (isElectron()) return getElectronAPI().clearAllData();
+    return getWebDB().then((db) => {
+      db.resetAll();
+      return { success: true };
+    });
+  },
 };
 
 // ==================== 浏览器端 sql.js + IndexedDB ====================
@@ -273,6 +281,19 @@ class WebDatabase {
   importDatabase(data: Uint8Array): void {
     this.db.close();
     this.db = new this.SQL.Database(data);
+    this.saveToIndexedDB();
+  }
+
+  /** 清空全部数据并重建初始数据库 */
+  resetAll(): void {
+    try {
+      this.db.close();
+    } catch { /* noop */ }
+    this.db = new this.SQL.Database();
+    this.initTables();
+    this.seedCategories();
+    this.ensureSystemCategory();
+    this.migrate();
     this.saveToIndexedDB();
   }
 

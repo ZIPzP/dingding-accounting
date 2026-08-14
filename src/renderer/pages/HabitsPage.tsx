@@ -120,6 +120,9 @@ const HabitsPage: React.FC = () => {
     } else {
       completions[today] = true;
       const streak = calcStreak(completions);
+      try {
+        if ('vibrate' in navigator) navigator.vibrate(20);
+      } catch { /* noop */ }
       if (streak >= 7) message.success(`🔥 已连续打卡 ${streak} 天,太强了!`);
       else message.success('打卡成功,继续保持!');
     }

@@ -74,6 +74,8 @@ const electronAPI = {
   backupDatabase: () => ipcRenderer.invoke('backup-database'),
 
   restoreDatabase: () => ipcRenderer.invoke('restore-database'),
+
+  clearAllData: () => ipcRenderer.invoke('clear-data'),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

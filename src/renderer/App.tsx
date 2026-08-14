@@ -243,6 +243,16 @@ const AppContent: React.FC = () => {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [curtainKey, setCurtainKey] = useState(0);
 
+  /* 最近访问（命令面板） */
+  const [recentPaths, setRecentPaths] = useState<string[]>(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem('qinggu-recent') || '[]');
+      return Array.isArray(raw) ? raw : [];
+    } catch {
+      return [];
+    }
+  });
+
   /* 开场动画：每个会话仅一次 */
   const [splash, setSplash] = useState<boolean>(() => {
     try {
@@ -276,6 +286,19 @@ const AppContent: React.FC = () => {
     setCurtainKey((k) => k + 1);
   }, [location.pathname]);
 
+  /* 记录最近访问 */
+  useEffect(() => {
+    const p = location.pathname;
+    if (p === '/' || p === '') return;
+    setRecentPaths((prev) => {
+      const next = [p, ...prev.filter((x) => x !== p)].slice(0, 5);
+      try {
+        localStorage.setItem('qinggu-recent', JSON.stringify(next));
+      } catch { /* noop */ }
+      return next;
+    });
+  }, [location.pathname]);
+
   const currentKey = '/' + location.pathname.split('/')[1];
   const meta = resolveRouteMeta(location.pathname);
 
@@ -284,17 +307,30 @@ const AppContent: React.FC = () => {
     document.title = meta ? `${meta.title} · 青孤项目` : '青孤项目 · 离线工具集';
   }, [meta]);
 
-  const paletteItems: PaletteItem[] = useMemo(
-    () =>
-      paletteNav.map((item) => ({
+  const paletteItems: PaletteItem[] = useMemo(() => {
+    const recentItems: PaletteItem[] = recentPaths
+      .map((p) => paletteNav.find((n) => n.path === p))
+      .filter((n): n is (typeof paletteNav)[number] => !!n)
+      .map((item, i) => ({
+        key: `recent-${item.path}`,
+        label: item.label,
+        desc: item.desc,
+        icon: item.icon,
+        group: i === 0 ? '最近访问' : undefined,
+        action: () => navigate(item.path),
+      }));
+    const recentSet = new Set(recentPaths);
+    const rest: PaletteItem[] = paletteNav
+      .filter((n) => !recentSet.has(n.path))
+      .map((item) => ({
         key: item.path,
         label: item.label,
         desc: item.desc,
         icon: item.icon,
         action: () => navigate(item.path),
-      })),
-    [navigate]
-  );
+      }));
+    return [...recentItems, ...rest];
+  }, [navigate, recentPaths]);
 
   const handleSplashDone = () => {
     setSplash(false);

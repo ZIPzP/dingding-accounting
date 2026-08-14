@@ -21,6 +21,7 @@ import {
   getMonthlyTrend,
   getRecordById,
   getDbPath,
+  clearAllData,
 } from './database';
 import fs from 'fs';
 import path from 'path';
@@ -153,5 +154,9 @@ export function registerIpcHandlers(): void {
       return { success: true, message: '数据恢复成功，请重启应用以生效' };
     }
     return { success: false };
+  });
+
+  ipcMain.handle('clear-data', () => {
+    return clearAllData();
   });
 }

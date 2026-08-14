@@ -1,8 +1,8 @@
 /**
  * 记账 — 账单列表
- * 展示所有记账记录，支持按月份、类型（支出/收入）、分类筛选
+ * 支持按月份、类型（支出/收入）、分类、关键词筛选，按日期分组展示
  */
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import {
@@ -18,6 +18,7 @@ import {
   Tag,
   Space,
   Segmented,
+  Input,
 } from 'antd';
 import { IconPlusCircle, IconEdit, IconDelete, IconSearch } from '../components/Icons';
 import type { Dayjs } from 'dayjs';
@@ -26,6 +27,16 @@ import dayjs from 'dayjs';
 const { Option } = Select;
 
 type TypeFilter = 'all' | 'expense' | 'income';
+
+/** 按日期分组的结构 */
+interface DayGroup {
+  date: string;
+  dayLabel: string;
+  weekLabel: string;
+  expense: number;
+  income: number;
+  items: RecordItem[];
+}
 
 const BillList: React.FC = () => {
   const navigate = useNavigate();
@@ -39,6 +50,9 @@ const BillList: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState<Dayjs>(dayjs());
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
   const [selectedType, setSelectedType] = useState<TypeFilter>('all');
+  const [keyword, setKeyword] = useState('');
+  const [debouncedKeyword, setDebouncedKeyword] = useState('');
+  const keywordTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [page, setPage] = useState(1);
   const pageSize = 30;
 
@@ -46,6 +60,18 @@ const BillList: React.FC = () => {
   useEffect(() => {
     api.getCategories().then(setCategories);
   }, []);
+
+  /* 关键词防抖 */
+  useEffect(() => {
+    if (keywordTimer.current) clearTimeout(keywordTimer.current);
+    keywordTimer.current = setTimeout(() => {
+      setDebouncedKeyword(keyword.trim());
+      setPage(1);
+    }, 350);
+    return () => {
+      if (keywordTimer.current) clearTimeout(keywordTimer.current);
+    };
+  }, [keyword]);
 
   // 加载数据
   const loadRecords = useCallback(() => {
@@ -59,6 +85,7 @@ const BillList: React.FC = () => {
         month,
         category_id: selectedCategory || undefined,
         type: selectedType === 'all' ? undefined : selectedType,
+        keyword: debouncedKeyword || undefined,
         page,
         pageSize,
       })
@@ -70,7 +97,7 @@ const BillList: React.FC = () => {
 
     // 月度摘要
     api.getMonthlyStats(year, month).then(setMonthSummary).catch(() => undefined);
-  }, [selectedMonth, selectedCategory, selectedType, page]);
+  }, [selectedMonth, selectedCategory, selectedType, debouncedKeyword, page]);
 
   useEffect(() => {
     loadRecords();
@@ -89,6 +116,31 @@ const BillList: React.FC = () => {
       setPage(1);
     }
   };
+
+  /* 按日期分组 */
+  const groups: DayGroup[] = useMemo(() => {
+    const map = new Map<string, DayGroup>();
+    for (const r of records) {
+      let g = map.get(r.record_date);
+      if (!g) {
+        const d = dayjs(r.record_date);
+        const week = ['日', '一', '二', '三', '四', '五', '六'][d.day()];
+        g = {
+          date: r.record_date,
+          dayLabel: `${d.month() + 1}月${d.date()}日`,
+          weekLabel: `周${week}`,
+          expense: 0,
+          income: 0,
+          items: [],
+        };
+        map.set(r.record_date, g);
+      }
+      if (r.type === 'income') g.income += r.amount;
+      else g.expense += r.amount;
+      g.items.push(r);
+    }
+    return Array.from(map.values());
+  }, [records]);
 
   const fmt = (n: number) => n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -142,7 +194,16 @@ const BillList: React.FC = () => {
               ))}
             </Select>
           </Col>
-          <Col flex="auto" />
+          <Col flex="auto">
+            <Input
+              prefix={<IconSearch size={14} />}
+              placeholder="搜索备注…"
+              allowClear
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              style={{ maxWidth: 220 }}
+            />
+          </Col>
           <Col>
             <Button type="primary" icon={<IconPlusCircle size={16} />} onClick={() => navigate('/add')}>
               记一笔
@@ -175,59 +236,74 @@ const BillList: React.FC = () => {
         )}
       </Card>
 
-      {/* 账单列表 */}
+      {/* 账单列表（按日期分组） */}
       <Spin spinning={loading}>
-        {records.length === 0 ? (
-          <Empty description="暂无记账记录，点击右上角「记一笔」开始吧" />
+        {groups.length === 0 ? (
+          <Empty description={debouncedKeyword ? `没有找到包含「${debouncedKeyword}」的记录` : '暂无记账记录，点击右上角「记一笔」开始吧'} />
         ) : (
           <div>
-            {records.map((record) => {
-              const isIncome = record.type === 'income';
-              return (
-                <div key={record.id} className="record-item">
-                  <div className="record-icon">{record.category_icon}</div>
-                  <div className="record-info">
-                    <div className="record-category">
-                      {record.category_name}
-                      {record.sub_category_name && (
-                        <Tag style={{ marginLeft: 8, fontSize: 11 }} color={isIncome ? 'success' : 'processing'}>
-                          {record.sub_category_name}
-                        </Tag>
-                      )}
-                      {isIncome && (
-                        <Tag style={{ marginLeft: 4, fontSize: 11 }} color="success">
-                          收入
-                        </Tag>
-                      )}
-                    </div>
-                    {record.note && <div className="record-note">{record.note}</div>}
-                  </div>
-                  <div className="record-date">{record.record_date}</div>
-                  <div
-                    className={`amount ${isIncome ? 'amount-income' : ''}`}
-                    style={{ marginRight: 8, minWidth: 70, textAlign: 'right' }}
-                  >
-                    {isIncome ? '+' : ''}{fmt(record.amount)}
-                  </div>
-                  <Space size="small">
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<IconEdit size={16} />}
-                      onClick={() => navigate(`/edit/${record.id}`)}
-                    />
-                    <Popconfirm
-                      title="确定删除这条记录吗？"
-                      onConfirm={() => handleDelete(record.id)}
-                      okText="确定"
-                      cancelText="取消"
-                    >
-                      <Button type="text" size="small" danger icon={<IconDelete size={16} />} />
-                    </Popconfirm>
-                  </Space>
+            {groups.map((group) => (
+              <div className="record-day" key={group.date}>
+                {/* 日期分组头 */}
+                <div className="record-day-header">
+                  <span className="record-day-title">
+                    {group.dayLabel}
+                    <i className="record-day-week">{group.weekLabel}</i>
+                  </span>
+                  <span className="record-day-totals">
+                    {group.expense > 0 && <i className="record-day-expense">支出 ¥{fmt(group.expense)}</i>}
+                    {group.income > 0 && <i className="record-day-income">收入 ¥{fmt(group.income)}</i>}
+                  </span>
                 </div>
-              );
-            })}
+
+                {group.items.map((record) => {
+                  const isIncome = record.type === 'income';
+                  return (
+                    <div key={record.id} className="record-item">
+                      <div className="record-icon">{record.category_icon}</div>
+                      <div className="record-info">
+                        <div className="record-category">
+                          {record.category_name}
+                          {record.sub_category_name && (
+                            <Tag style={{ marginLeft: 8, fontSize: 11 }} color={isIncome ? 'success' : 'processing'}>
+                              {record.sub_category_name}
+                            </Tag>
+                          )}
+                          {isIncome && (
+                            <Tag style={{ marginLeft: 4, fontSize: 11 }} color="success">
+                              收入
+                            </Tag>
+                          )}
+                        </div>
+                        {record.note && <div className="record-note">{record.note}</div>}
+                      </div>
+                      <div
+                        className={`amount ${isIncome ? 'amount-income' : ''}`}
+                        style={{ marginRight: 8, minWidth: 70, textAlign: 'right' }}
+                      >
+                        {isIncome ? '+' : ''}{fmt(record.amount)}
+                      </div>
+                      <Space size="small">
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<IconEdit size={16} />}
+                          onClick={() => navigate(`/edit/${record.id}`)}
+                        />
+                        <Popconfirm
+                          title="确定删除这条记录吗？"
+                          onConfirm={() => handleDelete(record.id)}
+                          okText="确定"
+                          cancelText="取消"
+                        >
+                          <Button type="text" size="small" danger icon={<IconDelete size={16} />} />
+                        </Popconfirm>
+                      </Space>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
 
             {/* 简单分页 */}
             {total > pageSize && (
